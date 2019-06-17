@@ -1,10 +1,10 @@
 const net = require('net')
-const serverIp = '127.0.0.1' //Server IP
-const port = 5000 //Port Number
+const port = 5000
 const interval = 1000 //miliseconds
 
+
 const client = new net.Socket();
-client.connect(port, serverIp, function () {
+client.connect(port, '138.68.99.222', function () {
     console.log('Connected');
 
     setInterval(() => client.write(randomGPS()), interval)

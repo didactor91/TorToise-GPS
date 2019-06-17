@@ -1,9 +1,8 @@
 require('dotenv').config()
 const net = require('net')
-const port = 5000 // Listen Port
+const port = 5000
 const server = net.createServer()
 const call = require('./call')
-const apiUrl = 'http://127.0.0.1/api' // Api url
 
 server.listen(port, function () {
     console.log('Server listening on port: ' + port)
@@ -13,7 +12,7 @@ server.on('connection', function (socket) {
     socket.on('data', function (chunk) {
         const infoSplit = (chunk.toString()).split(',')
 
-        const __url__ = apiUrl
+        const __url__ = 'https://vast-gorge-68373.herokuapp.com/api'
         const __timeout__ = 0
 
         if (infoSplit.length >= 1 && infoSplit[5] && infoSplit[7] && infoSplit[12]) {

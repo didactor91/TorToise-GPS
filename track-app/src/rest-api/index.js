@@ -1,9 +1,7 @@
 const { validate, call } = require('track-utils')
-const apiUrl = 'http://127.0.0.1:8080/api' //rest api url port
-
 
 const restApi = {
-    __url__: `${apiUrl}`,
+    __url__: 'https://vast-gorge-68373.herokuapp.com/api',
     __timeout__: 0,
 
     registerUser(name, surname, email, password) {
