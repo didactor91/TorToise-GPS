@@ -9,7 +9,7 @@
     "react-bulma-components": "^2.3.0",
     "react-dom": "^16.8.6",
     "react-google-maps": "^9.4.5",
-    "react-scripts": "3.0.1",
+    "react-scripts": "5.0.1",
     "react-toastify": "^5.2.1",
     "track-data": "file:../track-data",
     "track-utils": "file:../track-utils"
