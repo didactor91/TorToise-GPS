@@ -1,5 +1,7 @@
 'use strict'
+const fs = require('fs')
 const routeDataset = require('./routes.osrm.half.json')
+const STATE_FILE = process.env.SIM_STATE_FILE || '/tmp/tortoise-sim-state.json'
 
 /**
  * Realistic GPS simulator for 4 trucks driving on European road routes.
@@ -60,6 +62,62 @@ const trucks = ROUTES.map(route => ({
     restStopIndexes: route.restStopIndexes,
     waypoints: route.waypoints
 }))
+
+let truckIndex = 0 // rotate through trucks so each gets a frame per interval
+
+function loadState() {
+    try {
+        if (!fs.existsSync(STATE_FILE)) return
+        const parsed = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'))
+        if (typeof parsed.truckIndex === 'number') {
+            truckIndex = parsed.truckIndex
+        }
+        if (!Array.isArray(parsed.trucks)) return
+
+        const bySerial = new Map(parsed.trucks.map(item => [item.serialNumber, item]))
+        trucks.forEach(truck => {
+            const saved = bySerial.get(truck.serialNumber)
+            if (!saved) return
+
+            if (typeof saved.waypointIndex === 'number') truck.waypointIndex = saved.waypointIndex
+            if (saved.direction === 1 || saved.direction === -1) truck.direction = saved.direction
+            if (typeof saved.progress === 'number') truck.progress = saved.progress
+            if (typeof saved.speedKmh === 'number') truck.speedKmh = saved.speedKmh
+            if (typeof saved.ticksSinceLongRest === 'number') truck.ticksSinceLongRest = saved.ticksSinceLongRest
+            if (typeof saved.nextLongRestAfterTicks === 'number') truck.nextLongRestAfterTicks = saved.nextLongRestAfterTicks
+            if (typeof saved.longRestTicksRemaining === 'number') truck.longRestTicksRemaining = saved.longRestTicksRemaining
+            if (typeof saved.stopTicksRemaining === 'number') truck.stopTicksRemaining = saved.stopTicksRemaining
+            if (typeof saved.heading === 'number') truck.heading = saved.heading
+        })
+    } catch (err) {
+        console.warn(`[simulator] Unable to load state from ${STATE_FILE}: ${err.message}`)
+    }
+}
+
+function saveState() {
+    try {
+        const snapshot = {
+            truckIndex,
+            trucks: trucks.map(truck => ({
+                serialNumber: truck.serialNumber,
+                waypointIndex: truck.waypointIndex,
+                direction: truck.direction,
+                progress: truck.progress,
+                speedKmh: truck.speedKmh,
+                ticksSinceLongRest: truck.ticksSinceLongRest,
+                nextLongRestAfterTicks: truck.nextLongRestAfterTicks,
+                longRestTicksRemaining: truck.longRestTicksRemaining,
+                stopTicksRemaining: truck.stopTicksRemaining,
+                heading: truck.heading
+            }))
+        }
+        fs.writeFileSync(STATE_FILE, JSON.stringify(snapshot))
+    } catch (err) {
+        console.warn(`[simulator] Unable to persist state to ${STATE_FILE}: ${err.message}`)
+    }
+}
+
+loadState()
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -227,8 +285,6 @@ function advanceTruck(truck) {
 
 // ── Public API — one call per truck per interval ──────────────────────────────
 
-let truckIndex = 0   // rotate through trucks so each gets a frame per interval
-
 const simulateGPSInRoute = () => {
     const truck = trucks[truckIndex % trucks.length]
     truckIndex++
@@ -266,6 +322,7 @@ const simulateGPSInRoute = () => {
         '1860#'           // net_cellid + closer
     ].join(',')
 
+    saveState()
     return message
 }
 

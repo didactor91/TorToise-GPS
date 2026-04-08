@@ -1,6 +1,15 @@
 FROM node:22-alpine
+
 WORKDIR /app
-COPY package.json ./
-RUN npm install --production --silent
-COPY . .
+
+# Install simulator workspace dependencies from root lockfile (deterministic build).
+COPY package.json package-lock.json ./
+COPY tracker-simulator/package.json ./tracker-simulator/
+RUN npm ci --workspace=tracker-simulator --include-workspace-root
+
+# Copy simulator source
+COPY tracker-simulator/ ./tracker-simulator/
+
+WORKDIR /app/tracker-simulator
+
 CMD ["node", "index.js"]
