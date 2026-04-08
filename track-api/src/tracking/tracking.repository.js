@@ -32,5 +32,14 @@ module.exports = {
 
     async findOwnerBySerial(serialNumber) {
         return User.findOne({ 'trackers.serialNumber': serialNumber }).lean()
+    },
+
+    async deleteOlderThanBySerials(serialNumbers, cutoffDate) {
+        const result = await Track.deleteMany({
+            serialNumber: { $in: serialNumbers },
+            date: { $lt: cutoffDate }
+        })
+
+        return result.deletedCount || 0
     }
 }
