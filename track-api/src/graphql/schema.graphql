@@ -7,6 +7,8 @@ type User {
   email: String!
   role: String!
   companyId: ID
+  permissionKeys: [String!]!
+  featureKeys: [String!]!
 }
 
 type Company {
@@ -14,6 +16,7 @@ type Company {
   name: String!
   slug: String!
   active: Boolean!
+  featureKeys: [String!]!
 }
 
 type BackofficeUser {
@@ -23,6 +26,7 @@ type BackofficeUser {
   email: String!
   role: String!
   companyId: ID
+  permissionKeys: [String!]!
 }
 
 type Tracker {
@@ -85,12 +89,14 @@ input BackofficeCreateCompanyInput {
   name: String!
   slug: String!
   active: Boolean
+  featureKeys: [String!]
 }
 
 input BackofficeUpdateCompanyInput {
   name: String
   slug: String
   active: Boolean
+  featureKeys: [String!]
 }
 
 input BackofficeCreateUserInput {
@@ -100,6 +106,7 @@ input BackofficeCreateUserInput {
   password: String!
   role: String!
   companyId: ID!
+  permissionKeys: [String!]
 }
 
 input BackofficeUpdateUserInput {
@@ -108,6 +115,7 @@ input BackofficeUpdateUserInput {
   email: String
   role: String
   companyId: ID
+  permissionKeys: [String!]
 }
 
 input AddTrackerInput {

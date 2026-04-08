@@ -42,6 +42,7 @@ export type AuthPayload = {
 
 export type BackofficeCreateCompanyInput = {
   active?: InputMaybe<Scalars['Boolean']['input']>;
+  featureKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   name: Scalars['String']['input'];
   slug: Scalars['String']['input'];
 };
@@ -51,12 +52,14 @@ export type BackofficeCreateUserInput = {
   email: Scalars['String']['input'];
   name: Scalars['String']['input'];
   password: Scalars['String']['input'];
+  permissionKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   role: Scalars['String']['input'];
   surname: Scalars['String']['input'];
 };
 
 export type BackofficeUpdateCompanyInput = {
   active?: InputMaybe<Scalars['Boolean']['input']>;
+  featureKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   name?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
 };
@@ -65,6 +68,7 @@ export type BackofficeUpdateUserInput = {
   companyId?: InputMaybe<Scalars['ID']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  permissionKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   role?: InputMaybe<Scalars['String']['input']>;
   surname?: InputMaybe<Scalars['String']['input']>;
 };
@@ -75,6 +79,7 @@ export type BackofficeUser = {
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  permissionKeys: Array<Scalars['String']['output']>;
   role: Scalars['String']['output'];
   surname: Scalars['String']['output'];
 };
@@ -82,6 +87,7 @@ export type BackofficeUser = {
 export type Company = {
   __typename?: 'Company';
   active: Scalars['Boolean']['output'];
+  featureKeys: Array<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   slug: Scalars['String']['output'];
@@ -306,8 +312,10 @@ export type User = {
   __typename?: 'User';
   companyId?: Maybe<Scalars['ID']['output']>;
   email: Scalars['String']['output'];
+  featureKeys: Array<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  permissionKeys: Array<Scalars['String']['output']>;
   role: Scalars['String']['output'];
   surname: Scalars['String']['output'];
 };
@@ -315,14 +323,14 @@ export type User = {
 export type BackofficeCompaniesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type BackofficeCompaniesQuery = { __typename?: 'Query', backofficeCompanies: Array<{ __typename?: 'Company', id: string, name: string, slug: string, active: boolean }> };
+export type BackofficeCompaniesQuery = { __typename?: 'Query', backofficeCompanies: Array<{ __typename?: 'Company', id: string, name: string, slug: string, active: boolean, featureKeys: Array<string> }> };
 
 export type BackofficeUsersQueryVariables = Exact<{
   companyId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type BackofficeUsersQuery = { __typename?: 'Query', backofficeUsers: Array<{ __typename?: 'BackofficeUser', id: string, name: string, surname: string, email: string, role: string, companyId?: string | null }> };
+export type BackofficeUsersQuery = { __typename?: 'Query', backofficeUsers: Array<{ __typename?: 'BackofficeUser', id: string, name: string, surname: string, email: string, role: string, companyId?: string | null, permissionKeys: Array<string> }> };
 
 export type BackofficeCreateCompanyMutationVariables = Exact<{
   input: BackofficeCreateCompanyInput;
@@ -406,7 +414,7 @@ export type RegisterUserMutation = { __typename?: 'Mutation', registerUser: { __
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, name: string, surname: string, email: string, role: string, companyId?: string | null } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, name: string, surname: string, email: string, role: string, companyId?: string | null, permissionKeys: Array<string>, featureKeys: Array<string> } };
 
 export type UpdateUserMutationVariables = Exact<{
   input: UpdateUserInput;
@@ -466,6 +474,7 @@ export const BackofficeCompaniesDocument = gql`
     name
     slug
     active
+    featureKeys
   }
 }
     `;
@@ -513,6 +522,7 @@ export const BackofficeUsersDocument = gql`
     email
     role
     companyId
+    permissionKeys
   }
 }
     `;
@@ -959,6 +969,8 @@ export const MeDocument = gql`
     email
     role
     companyId
+    permissionKeys
+    featureKeys
   }
 }
     `;

@@ -10,6 +10,11 @@ const COMPANY_COLUMNS: Column<BackofficeCompany>[] = [
     key: 'active',
     label: 'Active',
     render: (row) => (row.active ? 'Yes' : 'No')
+  },
+  {
+    key: 'featureKeys',
+    label: 'Features',
+    render: (row) => row.featureKeys.join(', ')
   }
 ]
 
@@ -18,19 +23,32 @@ const USER_COLUMNS: Column<BackofficeUser>[] = [
   { key: 'surname', label: 'Surname' },
   { key: 'email', label: 'Email' },
   { key: 'role', label: 'Role' },
-  { key: 'companyId', label: 'Company ID' }
+  { key: 'companyId', label: 'Company ID' },
+  {
+    key: 'permissionKeys',
+    label: 'Permissions',
+    render: (row) => row.permissionKeys.join(', ')
+  }
 ]
+
+function splitCsv(input: string): string[] {
+  return input
+    .split(',')
+    .map((token) => token.trim())
+    .filter(Boolean)
+}
 
 function Backoffice() {
   const { companies, users, loading, createCompany, createUser } = useBackoffice()
-  const [companyForm, setCompanyForm] = useState({ name: '', slug: '', active: true })
+  const [companyForm, setCompanyForm] = useState({ name: '', slug: '', active: true, featureKeysCsv: '' })
   const [userForm, setUserForm] = useState({
     name: '',
     surname: '',
     email: '',
     password: '',
     role: 'admin',
-    companyId: ''
+    companyId: '',
+    permissionKeysCsv: ''
   })
 
   const companyOptions = useMemo(
@@ -40,8 +58,13 @@ function Backoffice() {
 
   const onCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault()
-    await createCompany(companyForm.name, companyForm.slug, companyForm.active)
-    setCompanyForm({ name: '', slug: '', active: true })
+    await createCompany(
+      companyForm.name,
+      companyForm.slug,
+      companyForm.active,
+      splitCsv(companyForm.featureKeysCsv)
+    )
+    setCompanyForm({ name: '', slug: '', active: true, featureKeysCsv: '' })
   }
 
   const onCreateUser = async (e: React.FormEvent) => {
@@ -52,7 +75,8 @@ function Backoffice() {
       email: userForm.email,
       password: userForm.password,
       role: userForm.role,
-      companyId: userForm.companyId
+      companyId: userForm.companyId,
+      permissionKeys: splitCsv(userForm.permissionKeysCsv)
     })
     setUserForm({
       name: '',
@@ -60,7 +84,8 @@ function Backoffice() {
       email: '',
       password: '',
       role: 'admin',
-      companyId: ''
+      companyId: '',
+      permissionKeysCsv: ''
     })
   }
 
@@ -89,6 +114,17 @@ function Backoffice() {
               {' '}
               Active
             </label>
+          </div>
+          <div className="field">
+            <label className="label">Feature keys (csv)</label>
+            <div className="control">
+              <input
+                className="input"
+                placeholder="tracking,fleet,poi,backoffice"
+                value={companyForm.featureKeysCsv}
+                onChange={(e) => setCompanyForm(prev => ({ ...prev, featureKeysCsv: e.target.value }))}
+              />
+            </div>
           </div>
           <button className="button is-warning is-rounded" type="submit">Create Company</button>
         </form>
@@ -141,6 +177,15 @@ function Backoffice() {
                   ))}
                 </select>
               </div>
+            </div>
+            <div className="column is-12">
+              <label className="label">Permission keys (csv)</label>
+              <input
+                className="input"
+                placeholder="tracking.read,fleet.read,fleet.create"
+                value={userForm.permissionKeysCsv}
+                onChange={(e) => setUserForm(prev => ({ ...prev, permissionKeysCsv: e.target.value }))}
+              />
             </div>
           </div>
           <button className="button is-warning is-rounded" type="submit">Create User</button>

@@ -47,7 +47,10 @@ function App() {
   const navigate = useNavigate()
   const { handleLogin, handleRegister, handleLogout } = useAuth(setIsLoggedIn)
   const { data: meData } = useMeQuery({ skip: !isLoggedIn })
-  const isStaff = meData?.me?.role === 'staff'
+  const canAccessBackoffice = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    (meData?.me?.permissionKeys?.includes('companies.read') || meData?.me?.permissionKeys?.includes('users.read'))
+  )
 
   // ── Session expiry handler ────────────────────────────────────────────────
   useEffect(() => {
@@ -72,7 +75,7 @@ function App() {
     <ProtectedRoute isLoggedIn={isLoggedIn} element={element} />
 
   const staffGuard = (element: React.ReactElement) =>
-    <ProtectedRoute isLoggedIn={isLoggedIn} allow={isStaff} element={element} />
+    <ProtectedRoute isLoggedIn={isLoggedIn} allow={canAccessBackoffice} element={element} />
 
   return (
     <div>
@@ -83,7 +86,7 @@ function App() {
           onPlaces={handlePlaces}
           onTrackings={handleTrackings}
           onBackoffice={handleBackoffice}
-          showBackoffice={isStaff}
+          showBackoffice={canAccessBackoffice}
           onLogout={handleLogout}
           onDarkMode={handleDarkMode}
           darkmode={darkmode}

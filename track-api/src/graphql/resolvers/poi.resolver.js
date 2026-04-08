@@ -2,6 +2,7 @@
 const service = require('../../poi/poi.service')
 const { toGraphQLError } = require('../error-mapper')
 const { requireAuth } = require('../context')
+const { requireAccess } = require('../../shared/authorization.service')
 
 const poiResolver = {
   Query: {
@@ -13,6 +14,7 @@ const poiResolver = {
     async pois(_, __, ctx) {
       const userId = requireAuth(ctx)
       try {
+        await requireAccess(userId, { feature: 'poi', permission: 'poi.read' })
         const pois = await service.retrieveAllPOI(userId)
         return (pois || []).map(p => ({
           id: p._id.toString(),
@@ -34,6 +36,7 @@ const poiResolver = {
     async poi(_, { id }, ctx) {
       const userId = requireAuth(ctx)
       try {
+        await requireAccess(userId, { feature: 'poi', permission: 'poi.read' })
         const p = await service.retrieveOnePOI(userId, id)
         return { id: p._id.toString(), title: p.title, color: p.color, latitude: p.latitude, longitude: p.longitude }
       } catch (err) {
@@ -51,6 +54,7 @@ const poiResolver = {
     async addPOI(_, { input }, ctx) {
       const userId = requireAuth(ctx)
       try {
+        await requireAccess(userId, { feature: 'poi', permission: 'poi.create' })
         await service.addPOI(userId, input)
         return { success: true, message: 'Ok, POI added.' }
       } catch (err) {
@@ -66,6 +70,7 @@ const poiResolver = {
     async updatePOI(_, { id, input }, ctx) {
       const userId = requireAuth(ctx)
       try {
+        await requireAccess(userId, { feature: 'poi', permission: 'poi.update' })
         await service.updatePOI(userId, id, input)
         return { success: true, message: 'Ok, POI updated.' }
       } catch (err) {
@@ -81,6 +86,7 @@ const poiResolver = {
     async deletePOI(_, { id }, ctx) {
       const userId = requireAuth(ctx)
       try {
+        await requireAccess(userId, { feature: 'poi', permission: 'poi.delete' })
         await service.deletePOI(userId, id)
         return { success: true, message: 'Ok, POI deleted.' }
       } catch (err) {

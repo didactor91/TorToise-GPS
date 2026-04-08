@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const service = require('../../identity/identity.service')
 const { toGraphQLError } = require('../error-mapper')
 const { requireAuth } = require('../context')
+const { requireAccess } = require('../../shared/authorization.service')
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'
 
 const identityResolver = {
@@ -15,6 +16,7 @@ const identityResolver = {
     async me(_, __, ctx) {
       const userId = requireAuth(ctx)
       try {
+        const access = await requireAccess(userId)
         const user = await service.retrieveUser(userId)
         return {
           id: userId,
@@ -22,7 +24,9 @@ const identityResolver = {
           surname: user.surname,
           email: user.email,
           role: user.role || 'admin',
-          companyId: user.companyId ? user.companyId.toString() : null
+          companyId: user.companyId ? user.companyId.toString() : null,
+          permissionKeys: [...access.permissionKeys],
+          featureKeys: [...access.featureKeys]
         }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))

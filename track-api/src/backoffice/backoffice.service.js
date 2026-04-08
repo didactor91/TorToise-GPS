@@ -1,6 +1,8 @@
 const argon2 = require('argon2')
-const { validate, errors: { InputError, LogicError, UnauthorizedError } } = require('track-utils')
+const { validate, errors: { InputError, LogicError } } = require('track-utils')
 const repo = require('./backoffice.repository')
+const { requireAccess } = require('../shared/authorization.service')
+const { ACCESS_VERSION, encodePermissionKeys, encodeFeatureKeys, PERMISSION_KEYS, FEATURE_KEYS } = require('../shared/access-control')
 
 const VALID_ROLES = new Set(['staff', 'owner', 'admin', 'dispatcher', 'viewer'])
 
@@ -10,33 +12,38 @@ function assertValidRole(role) {
 
 const backofficeService = {
     async assertStaff(requesterId) {
-        validate.arguments([{ name: 'requesterId', value: requesterId, type: String, notEmpty: true }])
-        const user = await repo.findUserById(requesterId)
-        if (!user) throw new LogicError(`user with id ${requesterId} doesn't exists`)
-        if (user.role !== 'staff') throw new UnauthorizedError('staff access required')
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
     },
 
     async listCompanies(requesterId) {
-        await this.assertStaff(requesterId)
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
         return repo.listCompanies()
     },
 
-    async createCompany(requesterId, { name, slug, active = true }) {
-        await this.assertStaff(requesterId)
+    async createCompany(requesterId, { name, slug, active = true, featureKeys } = {}) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.create' })
         validate.arguments([
             { name: 'name', value: name, type: String, notEmpty: true },
             { name: 'slug', value: slug, type: String, notEmpty: true }
         ])
         if (typeof active !== 'boolean') throw new InputError('active should be a boolean')
+        if (featureKeys && !Array.isArray(featureKeys)) throw new InputError('featureKeys should be an array')
 
         const existing = await repo.findCompanyBySlug(slug)
         if (existing) throw new LogicError(`company with slug ${slug} already exists`)
 
-        return repo.createCompany({ name, slug, active })
+        const resolvedFeatureKeys = featureKeys && featureKeys.length > 0 ? featureKeys : FEATURE_KEYS
+        return repo.createCompany({
+            name,
+            slug,
+            active,
+            featuresVersion: ACCESS_VERSION,
+            featuresPacked: encodeFeatureKeys(resolvedFeatureKeys)
+        })
     },
 
-    async updateCompany(requesterId, companyId, { name, slug, active } = {}) {
-        await this.assertStaff(requesterId)
+    async updateCompany(requesterId, companyId, { name, slug, active, featureKeys } = {}) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.update' })
         validate.arguments([
             { name: 'companyId', value: companyId, type: String, notEmpty: true }
         ])
@@ -47,6 +54,11 @@ const backofficeService = {
         const patch = {}
         if (name) patch.name = name
         if (typeof active === 'boolean') patch.active = active
+        if (featureKeys) {
+            if (!Array.isArray(featureKeys)) throw new InputError('featureKeys should be an array')
+            patch.featuresVersion = ACCESS_VERSION
+            patch.featuresPacked = encodeFeatureKeys(featureKeys)
+        }
         if (slug) {
             const existing = await repo.findCompanyBySlug(slug)
             if (existing && existing.id !== companyId) {
@@ -59,7 +71,7 @@ const backofficeService = {
     },
 
     async listUsers(requesterId, companyId = null) {
-        await this.assertStaff(requesterId)
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.read' })
         if (companyId) {
             validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
             const company = await repo.findCompanyById(companyId)
@@ -68,8 +80,8 @@ const backofficeService = {
         return repo.listUsers(companyId)
     },
 
-    async createUser(requesterId, { name, surname, email, password, role, companyId }) {
-        await this.assertStaff(requesterId)
+    async createUser(requesterId, { name, surname, email, password, role, companyId, permissionKeys } = {}) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.create' })
         validate.arguments([
             { name: 'name', value: name, type: String, notEmpty: true },
             { name: 'surname', value: surname, type: String, notEmpty: true },
@@ -88,11 +100,25 @@ const backofficeService = {
         if (existing) throw new LogicError(`user with email ${email} already exists`)
 
         const hash = await argon2.hash(password)
-        return repo.createUser({ name, surname, email, password: hash, role, companyId })
+        if (permissionKeys && !Array.isArray(permissionKeys)) throw new InputError('permissionKeys should be an array')
+        const resolvedPermissionKeys = permissionKeys && permissionKeys.length > 0
+            ? permissionKeys
+            : (role === 'staff' ? PERMISSION_KEYS : [])
+
+        return repo.createUser({
+            name,
+            surname,
+            email,
+            password: hash,
+            role,
+            companyId,
+            permissionsVersion: ACCESS_VERSION,
+            permissionsPacked: encodePermissionKeys(resolvedPermissionKeys)
+        })
     },
 
-    async updateUser(requesterId, userId, { name, surname, email, role, companyId } = {}) {
-        await this.assertStaff(requesterId)
+    async updateUser(requesterId, userId, { name, surname, email, role, companyId, permissionKeys } = {}) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.update' })
         validate.arguments([{ name: 'userId', value: userId, type: String, notEmpty: true }])
 
         const user = await repo.findUserById(userId)
@@ -115,6 +141,11 @@ const backofficeService = {
             const company = await repo.findCompanyById(companyId)
             if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
             patch.companyId = companyId
+        }
+        if (permissionKeys) {
+            if (!Array.isArray(permissionKeys)) throw new InputError('permissionKeys should be an array')
+            patch.permissionsVersion = ACCESS_VERSION
+            patch.permissionsPacked = encodePermissionKeys(permissionKeys)
         }
 
         return repo.updateUserById(userId, patch)

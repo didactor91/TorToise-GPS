@@ -2,6 +2,10 @@
 const service = require('../../backoffice/backoffice.service')
 const { toGraphQLError } = require('../error-mapper')
 const { requireAuth } = require('../context')
+const {
+  effectiveFeatureKeysForCompany,
+  effectivePermissionKeysForUser
+} = require('../../shared/access-control')
 
 /**
  * @param {{ _id: { toString: () => string }, name: string, slug: string, active: boolean }} company
@@ -11,7 +15,8 @@ function mapCompany(company) {
     id: company._id.toString(),
     name: company.name,
     slug: company.slug,
-    active: company.active
+    active: company.active,
+    featureKeys: [...effectiveFeatureKeysForCompany(company)]
   }
 }
 
@@ -25,7 +30,8 @@ function mapUser(user) {
     surname: user.surname,
     email: user.email,
     role: user.role,
-    companyId: user.companyId ? user.companyId.toString() : null
+    companyId: user.companyId ? user.companyId.toString() : null,
+    permissionKeys: [...effectivePermissionKeysForUser(user)]
   }
 }
 

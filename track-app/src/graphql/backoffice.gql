@@ -4,6 +4,7 @@ query BackofficeCompanies {
     name
     slug
     active
+    featureKeys
   }
 }
 
@@ -15,6 +16,7 @@ query BackofficeUsers($companyId: ID) {
     email
     role
     companyId
+    permissionKeys
   }
 }
 
