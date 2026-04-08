@@ -3,11 +3,10 @@ import AuthShell from '../shared/AuthShell'
 import logo from '../../common/img/logo.png'
 
 interface Props {
-  onRegister: () => void
   onLogin: () => void
 }
 
-function Landing({ onRegister, onLogin }: Props) {
+function Landing({ onLogin }: Props) {
   return (
     <AuthShell>
       <div style={{ textAlign: 'center' }}>
@@ -21,9 +20,6 @@ function Landing({ onRegister, onLogin }: Props) {
         <div className="buttons is-centered">
           <button className="button is-warning is-rounded is-medium" onClick={onLogin}>
             <strong>Log In</strong>
-          </button>
-          <button className="button is-outlined is-rounded is-medium" onClick={onRegister}>
-            Create account
           </button>
         </div>
       </div>

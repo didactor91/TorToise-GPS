@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Route, Routes, Navigate, useNavigate, useParams } from 'react-router-dom'
 import Landing from './Landing'
-import Register from './Register'
 import Login from './Login'
 import Home from './Home'
 import Profile from './Profile'
+import Users from './Users'
+import UsersNew from './Users/New'
 import Trackings from './Trackings'
 import TrackingsNew from './Trackings/New'
 import TrackingDetail from './TrackingDetail'
@@ -45,8 +46,16 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => !!sessionStorage.getItem('userToken'))
 
   const navigate = useNavigate()
-  const { handleLogin, handleRegister, handleLogout } = useAuth(setIsLoggedIn)
+  const { handleLogin, handleLogout } = useAuth(setIsLoggedIn)
   const { data: meData } = useMeQuery({ skip: !isLoggedIn })
+  const canReadUsers = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('users.read')
+  )
+  const canCreateUsers = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('users.create')
+  )
   const canAccessBackoffice = Boolean(
     meData?.me?.featureKeys?.includes('backoffice') &&
     (meData?.me?.permissionKeys?.includes('companies.read') || meData?.me?.permissionKeys?.includes('users.read'))
@@ -67,6 +76,7 @@ function App() {
   const handlePlaces    = () => navigate('/places')
   const handleTrackings = () => navigate('/trackers')
   const handleProfile   = () => navigate('/profile')
+  const handleUsers = () => navigate('/users')
   const handleBackoffice = () => navigate('/backoffice')
   const handleDarkMode  = () => setDarkmode(prev => !prev)
 
@@ -76,6 +86,10 @@ function App() {
 
   const staffGuard = (element: React.ReactElement) =>
     <ProtectedRoute isLoggedIn={isLoggedIn} allow={canAccessBackoffice} element={element} />
+  const usersGuard = (element: React.ReactElement) =>
+    <ProtectedRoute isLoggedIn={isLoggedIn} allow={canReadUsers} element={element} />
+  const usersCreateGuard = (element: React.ReactElement) =>
+    <ProtectedRoute isLoggedIn={isLoggedIn} allow={canCreateUsers} element={element} />
 
   return (
     <div>
@@ -83,6 +97,8 @@ function App() {
         <Navbar
           onHome={handleHome}
           onProfile={handleProfile}
+          onUsers={handleUsers}
+          showUsers={canReadUsers}
           onPlaces={handlePlaces}
           onTrackings={handleTrackings}
           onBackoffice={handleBackoffice}
@@ -95,13 +111,15 @@ function App() {
       <ToastContainer />
       <Routes>
         {/* ── public ── */}
-        <Route path="/"         element={<Landing  onRegister={() => navigate('/register')} onLogin={() => navigate('/login')} />} />
-        <Route path="/register" element={<Register onRegister={handleRegister} onBack={() => navigate('/')} />} />
+        <Route path="/"         element={<Landing onLogin={() => navigate('/login')} />} />
+        <Route path="/register" element={<Navigate to="/login" replace />} />
         <Route path="/login"    element={<Login    onLogin={handleLogin}        onBack={() => navigate('/')} />} />
 
         {/* ── protected ── */}
         <Route path="/home"    element={guard(<Home darkmode={darkmode} />)} />
         <Route path="/profile" element={guard(<Profile />)} />
+        <Route path="/users" element={usersGuard(<Users canCreate={canCreateUsers} />)} />
+        <Route path="/users/new" element={usersCreateGuard(<UsersNew />)} />
 
         <Route path="/places"     element={guard(<Places />)} />
         <Route path="/places/new" element={guard(<PlacesNew />)} />
