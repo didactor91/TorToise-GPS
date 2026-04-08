@@ -131,7 +131,7 @@ describe('identityService', () => {
                 await service.authenticateUser(_email, password)
             } catch (error) {
                 expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with email ${_email} doesn't exists`)
+                expect(error.message).toBe('invalid credentials')
             }
         })
 
@@ -140,7 +140,7 @@ describe('identityService', () => {
                 await service.authenticateUser(email, 'incorrect password')
             } catch (error) {
                 expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`wrong credentials`)
+                expect(error.message).toBe('invalid credentials')
             }
         })
     })

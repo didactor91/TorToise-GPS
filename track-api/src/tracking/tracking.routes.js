@@ -1,8 +1,10 @@
 const express = require('express')
 const auth = require('../shared/auth.middleware')
+const { createRateLimiter } = require('../shared/rate-limit.middleware')
 const service = require('./tracking.service')
 
 const router = express.Router()
+const tcpIngestRateLimit = createRateLimiter({ windowMs: 60 * 1000, max: 1800 })
 
 router.post('/tracks/add', auth, async (req, res) => {
     const { userId, body: { serialNumber, latitude, longitude, speed, status } } = req
@@ -13,7 +15,7 @@ router.post('/tracks/add', auth, async (req, res) => {
 
 // IMPORTANT: This route is intentionally unauthenticated — TCP hardware trackers
 // do not carry JWT tokens. Unknown serial numbers are silently discarded (200 OK).
-router.post('/tracks/TCP/add', async (req, res) => {
+router.post('/tracks/TCP/add', tcpIngestRateLimit, async (req, res) => {
     const { body: { serialNumber, latitude, longitude, speed, status } } = req
     const result = await service.addTrackTCP({ serialNumber, latitude, longitude, speed, status })
     // null = unknown SN, silently discarded. 200 either way — hardware doesn't retry on 2xx.

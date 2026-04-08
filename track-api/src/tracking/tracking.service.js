@@ -20,6 +20,7 @@ const trackingService = {
             { name: 'status', value: status, type: String, notEmpty: true, optional: true },
             { name: 'date', value: date, type: String, notEmpty: true, optional: true }
         ])
+        validateTelemetry({ latitude, longitude, speed, status })
 
         return (async () => {
             const user = await User.findById(userId)
@@ -47,6 +48,7 @@ const trackingService = {
             { name: 'status', value: status, type: String, notEmpty: true, optional: true },
             { name: 'date', value: date, type: String, notEmpty: true, optional: true }
         ])
+        validateTelemetry({ latitude, longitude, speed, status })
 
         return (async () => {
             const owner = await repo.findOwnerBySerial(serialNumber)
@@ -138,6 +140,24 @@ const trackingService = {
 
             return rangeTracks
         })()
+    }
+}
+
+function validateTelemetry({ latitude, longitude, speed, status }) {
+    if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+        throw new InputError('latitude out of range')
+    }
+
+    if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+        throw new InputError('longitude out of range')
+    }
+
+    if (!Number.isFinite(speed) || speed < 0 || speed > 300) {
+        throw new InputError('speed out of range')
+    }
+
+    if (!['ON', 'OFF'].includes(status)) {
+        throw new InputError('invalid status')
     }
 }
 

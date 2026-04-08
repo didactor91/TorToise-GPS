@@ -23,6 +23,26 @@ const resolvers   = require('./src/graphql/resolvers')
 const { buildContext } = require('./src/graphql/context')
 
 const { env: { PORT = 8080, MONGO_URL } } = process
+const corsOriginEnv = process.env.CORS_ORIGINS
+
+function buildCorsOptions() {
+    if (!corsOriginEnv) return { origin: true, credentials: false }
+
+    const allowlist = corsOriginEnv.split(',')
+        .map(origin => origin.trim())
+        .filter(Boolean)
+
+    return {
+        origin(origin, callback) {
+            // Allow non-browser clients (no Origin header), block unknown browser origins.
+            if (!origin || allowlist.includes(origin)) return callback(null, true)
+            return callback(null, false)
+        },
+        credentials: false
+    }
+}
+
+const corsOptions = buildCorsOptions()
 
 const typeDefs = fs.readFileSync(path.join(__dirname, 'src/graphql/schema.graphql'), 'utf8')
 const schema = makeExecutableSchema({ typeDefs, resolvers })
@@ -31,7 +51,8 @@ const schema = makeExecutableSchema({ typeDefs, resolvers })
     await mongoose.connect(MONGO_URL)
 
     const app = express()
-    app.use(cors())
+    app.set('trust proxy', 1)
+    app.use(cors(corsOptions))
     app.use(express.json())
 
     // REST routes — unchanged
@@ -80,7 +101,7 @@ const schema = makeExecutableSchema({ typeDefs, resolvers })
 
     app.use(
         '/graphql',
-        cors(),
+        cors(corsOptions),
         express.json(),
         expressMiddleware(apolloServer, {
             context: async ({ req }) => buildContext({ req })
