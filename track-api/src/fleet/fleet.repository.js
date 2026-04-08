@@ -1,16 +1,61 @@
-const { models: { User } } = require('track-data')
+const { models: { User, Tracker } } = require('track-data')
+const { mongoose } = require('track-data')
 
 module.exports = {
     async findUserById(id) {
         return User.findById(id)
     },
 
-    async findUserByTrackerSN(serialNumber) {
-        return User.findOne({ 'trackers.serialNumber': serialNumber })
+    async findTrackerBySerial(serialNumber) {
+        return Tracker.findOne({ serialNumber })
     },
 
-    async findUserByLicensePlate(licensePlate) {
-        return User.findOne({ 'trackers.licensePlate': licensePlate })
+    async findTrackerByLicensePlate(licensePlate) {
+        return Tracker.findOne({ licensePlate })
+    },
+
+    async findTrackersByCompany(companyId) {
+        return Tracker.find({ companyId }).lean()
+    },
+
+    async findTrackerByIdAndCompany(trackerID, companyId) {
+        if (!mongoose.Types.ObjectId.isValid(trackerID)) return null
+        return Tracker.findOne({ _id: trackerID, companyId }).lean()
+    },
+
+    async findTrackerBySNAndCompany(serialNumber, companyId) {
+        return Tracker.findOne({ serialNumber, companyId }).lean()
+    },
+
+    async findTrackerByLPAndCompany(licensePlate, companyId) {
+        return Tracker.findOne({ licensePlate, companyId }).lean()
+    },
+
+    async createTracker(data) {
+        return Tracker.create(data)
+    },
+
+    async updateTrackerByIdAndCompany(trackerID, companyId, patch) {
+        if (!mongoose.Types.ObjectId.isValid(trackerID)) return null
+        return Tracker.findOneAndUpdate({ _id: trackerID, companyId }, { $set: patch }, { new: true })
+    },
+
+    async deleteTrackerByIdAndCompany(trackerID, companyId) {
+        if (!mongoose.Types.ObjectId.isValid(trackerID)) return null
+        return Tracker.findOneAndDelete({ _id: trackerID, companyId })
+    },
+
+    async syncLegacyTrackers(companyId, legacyTrackers = []) {
+        for (const tracker of legacyTrackers) {
+            if (!tracker?.serialNumber) continue
+            const existing = await Tracker.findOne({ serialNumber: tracker.serialNumber })
+            if (existing) continue
+            await Tracker.create({
+                companyId,
+                serialNumber: tracker.serialNumber,
+                licensePlate: tracker.licensePlate || `#MIG-${tracker.serialNumber}`
+            })
+        }
     },
 
     async saveUser(user) {

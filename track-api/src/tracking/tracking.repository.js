@@ -1,5 +1,7 @@
 const { models: { Track } } = require('track-data')
 const { models: { User } } = require('track-data')
+const { models: { Tracker } } = require('track-data')
+const { mongoose } = require('track-data')
 
 module.exports = {
     async createTrack(data) {
@@ -30,8 +32,34 @@ module.exports = {
         return Track.find({ serialNumber, date: { $gte: start, $lte: end } }).lean()
     },
 
-    async findOwnerBySerial(serialNumber) {
+    async findTrackerBySerial(serialNumber) {
+        return Tracker.findOne({ serialNumber }).lean()
+    },
+
+    async findLegacyOwnerBySerial(serialNumber) {
         return User.findOne({ 'trackers.serialNumber': serialNumber }).lean()
+    },
+
+    async findTrackerByIdAndCompany(trackerID, companyId) {
+        if (!mongoose.Types.ObjectId.isValid(trackerID)) return null
+        return Tracker.findOne({ _id: trackerID, companyId }).lean()
+    },
+
+    async findTrackersByCompany(companyId) {
+        return Tracker.find({ companyId }).lean()
+    },
+
+    async syncLegacyTrackers(companyId, legacyTrackers = []) {
+        for (const tracker of legacyTrackers) {
+            if (!tracker?.serialNumber) continue
+            const existing = await Tracker.findOne({ serialNumber: tracker.serialNumber })
+            if (existing) continue
+            await Tracker.create({
+                companyId,
+                serialNumber: tracker.serialNumber,
+                licensePlate: tracker.licensePlate || `#MIG-${tracker.serialNumber}`
+            })
+        }
     },
 
     async deleteOlderThanBySerials(serialNumbers, cutoffDate) {

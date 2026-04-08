@@ -25,6 +25,26 @@ const tracker = new Schema({
     licensePlate: { type: String }
 })
 
+const company = new Schema({
+    name: { type: String, required: true },
+    slug: { type: String, required: true, unique: true, index: true },
+    active: { type: Boolean, default: true }
+}, { timestamps: true })
+
+const companyTracker = new Schema({
+    companyId: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
+    serialNumber: { type: String, required: true, unique: true, index: true },
+    licensePlate: { type: String, required: true, index: true }
+}, { timestamps: true })
+
+const poi = new Schema({
+    companyId: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
+    title: { type: String, required: true },
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
+    color: { type: String, required: true }
+}, { timestamps: true })
+
 const user = new Schema({
     name: { type: String, required: true },
     surname: { type: String, required: true },
@@ -35,9 +55,20 @@ const user = new Schema({
         validate: isEmail
     },
     password: { type: String, required: true },
+    companyId: { type: Schema.Types.ObjectId, ref: 'Company', index: true },
+    role: { type: String, enum: ['owner', 'admin', 'dispatcher', 'viewer'], default: 'admin' },
+    // Legacy embedded fields (kept for compatibility and gradual migration).
     pois: [point],
     trackers: [tracker]
 })
 
 
-module.exports = { user, point, tracker, track: TrackSchema }
+module.exports = {
+    user,
+    point,
+    tracker,
+    company,
+    companyTracker,
+    poi,
+    track: TrackSchema
+}
