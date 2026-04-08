@@ -5,6 +5,11 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-master-production
+  cancel-in-progress: false
 
 jobs:
   # ── Tests ───────────────────────────────────────────────────────────────────
@@ -17,8 +22,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -38,6 +43,7 @@ jobs:
   deploy:
     name: Deploy to Hetzner
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: test
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
@@ -48,6 +54,8 @@ jobs:
           host: 204.168.227.78
           username: root
           key: ${{ secrets.HETZNER_SSH_KEY }}
+          command_timeout: 25m
+          script_stop: true
           script: |
             cd /opt/tortoise-gps
             bash deploy/deploy.sh
