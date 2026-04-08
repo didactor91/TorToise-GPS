@@ -1,4 +1,4 @@
-const { simulateGPSInRoute } = require('../randomGPS')
+const { simulateGPSInRoute, SIM_TRACKERS, TRUCK_COUNT } = require('../randomGPS')
 
 describe('simulateGPSInRoute()', () => {
     it('returns a string', () => {
@@ -24,9 +24,14 @@ describe('simulateGPSInRoute()', () => {
     })
 
     it('token[1] (serialNumber) is one of the known serial numbers', () => {
-        const knownSerials = ['9900110011', '9900110012', '9900110013', '9900110014']
+        const knownSerials = SIM_TRACKERS.map(t => t.serialNumber)
         const tokens = simulateGPSInRoute().split(',')
         expect(knownSerials).toContain(tokens[1])
+    })
+
+    it('is configured for 30 trucks', () => {
+        expect(TRUCK_COUNT).toBe(30)
+        expect(SIM_TRACKERS).toHaveLength(30)
     })
 
     it('token[4] (gpsSignal) is either A or V', () => {

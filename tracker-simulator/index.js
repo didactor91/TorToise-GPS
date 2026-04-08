@@ -1,11 +1,12 @@
 require('dotenv').config()
 const fs = require('fs')
 const net = require('net')
-const { simulateGPSInRoute } = require('./randomGPS')
+const { simulateGPSInRoute, TRUCK_COUNT } = require('./randomGPS')
 
 const port = Number(process.env.TCP_PORT) || 5000
 const host = process.env.TCP_HOST || '127.0.0.1'
-const INTERVAL_MS = 3000 // 3 seconds — one truck frame per tick, 4 trucks = 12s full cycle
+const INTERVAL_MS = 3000 // 3 seconds full fleet cycle
+const SEND_GAP_MS = Math.max(10, Math.floor(INTERVAL_MS / Math.max(TRUCK_COUNT, 1)))
 const RECONNECT_MS = 3000
 const HEARTBEAT_FILE = process.env.SIM_HEARTBEAT_FILE || '/tmp/tortoise-sim-heartbeat'
 
@@ -14,6 +15,7 @@ client.setKeepAlive(true, 10_000)
 
 let senderInterval = null
 let reconnectTimer = null
+let staggerTimer = null
 let connected = false
 
 function writeHeartbeat() {
@@ -29,22 +31,46 @@ function stopSending() {
         clearInterval(senderInterval)
         senderInterval = null
     }
+    if (staggerTimer) {
+        clearTimeout(staggerTimer)
+        staggerTimer = null
+    }
+}
+
+function sendOneFrame() {
+    if (!connected) return
+
+    const frame = simulateGPSInRoute()
+    const sn = frame.split(',')[1]
+    client.write(frame, (err) => {
+        if (err) return console.error('[simulator] Write error:', err.message)
+        writeHeartbeat()
+        console.log(`[simulator] -> SN:${sn} | ${frame.substring(0, 60)}...`)
+    })
+}
+
+function sendFleetCycleStaggered() {
+    let sent = 0
+
+    const step = () => {
+        if (!connected || sent >= TRUCK_COUNT) {
+            staggerTimer = null
+            return
+        }
+
+        sendOneFrame()
+        sent++
+        staggerTimer = setTimeout(step, SEND_GAP_MS)
+    }
+
+    step()
 }
 
 function startSending() {
     if (senderInterval) return
 
-    senderInterval = setInterval(() => {
-        if (!connected) return
-
-        const frame = simulateGPSInRoute()
-        const sn = frame.split(',')[1]
-        client.write(frame, (err) => {
-            if (err) return console.error('[simulator] Write error:', err.message)
-            writeHeartbeat()
-            console.log(`[simulator] -> SN:${sn} | ${frame.substring(0, 60)}...`)
-        })
-    }, INTERVAL_MS)
+    sendFleetCycleStaggered()
+    senderInterval = setInterval(sendFleetCycleStaggered, INTERVAL_MS)
 }
 
 function scheduleReconnect() {
@@ -64,7 +90,9 @@ function connect() {
 client.on('connect', function () {
     connected = true
     console.log(`[simulator] Connected to TCP server at ${host}:${port}`)
-    console.log('[simulator] Sending GPS frames every 3s (4 trucks, rotating)...')
+    console.log(
+        `[simulator] Sending staggered GPS frames (${TRUCK_COUNT} trucks / ${INTERVAL_MS}ms cycle / gap ${SEND_GAP_MS}ms)...`
+    )
     writeHeartbeat()
     startSending()
 })

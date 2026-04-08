@@ -17,7 +17,9 @@ describe('simulator retention job', () => {
             expect(config.retentionDays).toBe(60)
             expect(config.intervalMinutes).toBe(60)
             expect(config.initialDelayMinutes).toBe(2)
-            expect(config.simulatorSerials).toEqual(['9900110011', '9900110012', '9900110013', '9900110014'])
+            expect(config.simulatorSerials).toHaveLength(30)
+            expect(config.simulatorSerials[0]).toBe('9900111001')
+            expect(config.simulatorSerials[29]).toBe('9900111030')
         })
 
         it('parses custom env values', () => {

@@ -53,8 +53,8 @@ This single script:
 1. Starts a local MongoDB instance
 2. Starts the backend API on port **8085**
 3. Starts the TCP server on port **5000**
-4. Creates the demo user and assigns the 4 simulator trackers (idempotent — safe to re-run)
-5. Starts the GPS simulator (4 trucks moving in real time over WebSocket)
+4. Creates the demo user and assigns the 30 simulator trackers (idempotent — safe to re-run)
+5. Starts the GPS simulator (30 trucks on 15 routes, paired in opposite direction)
 6. Starts the Vite dev server on port **3000**
 
 **Prerequisites**: Node.js v18+ and MongoDB installed locally.
@@ -79,12 +79,10 @@ Created automatically on first run:
 
 ### Simulated trucks
 
-| Serial | Route | Road |
-|--------|-------|------|
-| `9900110011` | Madrid → Barcelona | A-2 |
-| `9900110012` | Paris → Lyon | A-6 |
-| `9900110013` | Barcelona → Valencia | AP-7 |
-| `9900110014` | Madrid → Sevilla | A-4 |
+- Total: `30` trucks
+- Routes: `15` operational routes
+- Assignment rule: `2` trucks per route, one starts outbound and the other inbound
+- Serial range: `9900111001` to `9900111030`
 
 ### Simulator track retention (MongoDB cleanup)
 
@@ -93,7 +91,7 @@ Created automatically on first run:
 - Default retention: `60` days
 - Default interval: every `60` minutes
 - Default initial delay after API start: `2` minutes
-- Default simulator serials: `9900110011,9900110012,9900110013,9900110014`
+- Default simulator serials: `9900111001` to `9900111030` (30 serials)
 
 Environment variables (optional):
 
