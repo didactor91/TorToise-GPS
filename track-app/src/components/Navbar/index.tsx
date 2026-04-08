@@ -9,9 +9,10 @@ interface NavbarProps {
   onTrackings: () => void
   onLogout: () => void
   onDarkMode: () => void
+  darkmode: boolean
 }
 
-function Navbar({ onHome, onProfile, onPlaces, onTrackings, onLogout, onDarkMode }: NavbarProps) {
+function Navbar({ onHome, onProfile, onPlaces, onTrackings, onLogout, onDarkMode, darkmode }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState<boolean>(false)
 
   const toggle = () => setMenuOpen(prev => !prev)
@@ -44,7 +45,7 @@ function Navbar({ onHome, onProfile, onPlaces, onTrackings, onLogout, onDarkMode
         <div className="navbar-end">
           <div className="navbar-item">
             <a className="button is-dark is-outlined is-rounded" onClick={() => { onDarkMode(); close() }}>
-              <span>Dark Map</span>
+              <span>{darkmode ? '☀️ Light Map' : '🌙 Dark Map'}</span>
             </a>
           </div>
           <div className="navbar-item">

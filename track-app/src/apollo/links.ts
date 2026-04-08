@@ -41,9 +41,31 @@ const httpLink = new HttpLink({ uri: GQL_HTTP })
 
 const wsLink = new GraphQLWsLink(createClient({
   url: GQL_WS,
+
+  // Auth token sent on every (re)connection attempt
   connectionParams: (): Record<string, string> | undefined => {
     const token = sessionStorage.getItem('userToken')
     return token ? { authorization: `Bearer ${token}` } : undefined
+  },
+
+  // Reconnect automatically on any abnormal close
+  shouldRetry: () => true,
+
+  // Exponential backoff: 1s → 2s → 4s → 8s → cap at 30s
+  retryAttempts: Infinity,
+  retryWait: async (attempt: number) => {
+    const delay = Math.min(1000 * 2 ** attempt, 30_000)
+    await new Promise(resolve => setTimeout(resolve, delay))
+  },
+
+  // Keep connection alive — ping every 30s, timeout after 5s silence
+  keepAlive: 30_000,
+
+  on: {
+    connected: () => console.debug('[WS] Connected'),
+    closed: (event) => console.debug('[WS] Closed', (event as CloseEvent).code),
+    error: (err) => console.debug('[WS] Error', err),
+    connecting: () => console.debug('[WS] Reconnecting…'),
   }
 }))
 

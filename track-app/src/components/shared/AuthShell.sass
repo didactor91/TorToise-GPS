@@ -24,3 +24,22 @@
   width: 100%
   max-width: var(--form-max-w)
   backdrop-filter: blur(8px)
+
+  // Ensure Bulma .field blocks never collapse margin
+  .field
+    margin-bottom: var(--space-5)
+
+  .field:last-child
+    margin-bottom: 0
+
+  // Title inside the card gets breathing room below
+  .title
+    margin-bottom: var(--space-6) !important
+
+  // Labels clear and readable
+  .label
+    display: block
+    margin-bottom: var(--space-2)
+    font-weight: 600
+    font-size: var(--text-sm)
+    color: var(--color-text-body)

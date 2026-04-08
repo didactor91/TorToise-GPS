@@ -1,3 +1,4 @@
+import { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   useGetPoIsQuery,
@@ -38,12 +39,29 @@ export function useLiveTracks() {
     onError: (err) => toast.error(err.message)
   })
 
-  // Live subscription
+  // Live subscription — accumulate last known position per serialNumber
+  // Each WS frame carries only 1 truck. We merge into a persistent map so
+  // all trucks are always present on the map, never disappearing.
+  const positionsMapRef = useRef<Map<string, LiveTrack>>(new Map())
+  const [livePositions, setLivePositions] = useState<LiveTrack[]>([])
+
   const { data: liveData } = useLiveTracksUpdatedSubscription()
+
+  useEffect(() => {
+    const incoming = liveData?.liveTracksUpdated ?? []
+    if (!incoming.length) return
+
+    // Upsert each incoming track into the accumulated map
+    incoming.forEach(track => {
+      positionsMapRef.current.set(track.serialNumber, track)
+    })
+
+    // Emit a new array snapshot to trigger map update
+    setLivePositions([...positionsMapRef.current.values()])
+  }, [liveData])
 
   const pois: HomePoi[] = poisData?.pois ?? []
   const trackers: HomeTracker[] = trackersData?.trackers ?? []
-  const liveTracks: LiveTrack[] = liveData?.liveTracksUpdated ?? []
 
   const deletePOI = (id: string) => deletePoiMutation({ variables: { id } })
   const deleteTracker = (id: string) => {
@@ -52,5 +70,5 @@ export function useLiveTracks() {
   }
   const goToDetail = (serialNumber: string) => navigate(`/detail/${serialNumber}`)
 
-  return { pois, trackers, liveTracks, deletePOI, deleteTracker, goToDetail, refetchPois, refetchTrackers }
+  return { pois, trackers, livePositions, deletePOI, deleteTracker, goToDetail, refetchPois, refetchTrackers }
 }

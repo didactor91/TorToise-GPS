@@ -12,6 +12,11 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:8085',
         changeOrigin: true
+      },
+      '/graphql': {
+        target: 'http://127.0.0.1:8085',
+        changeOrigin: true,
+        ws: true   // ← WebSocket subscriptions (ws://localhost:3000/graphql)
       }
     }
   },
