@@ -28,7 +28,7 @@ echo "  ✅ $(git log -1 --format='%h %s')"
 
 # ── 2. Build images ─────────────────────────────────────────────────
 echo "▶ Building Docker images..."
-$COMPOSE build --no-cache track-api track-tcp track-app
+$COMPOSE build --no-cache track-api track-tcp track-app tracker-simulator
 
 # ── 3. Rolling restart ──────────────────────────────────────────────
 echo "▶ Starting services..."
