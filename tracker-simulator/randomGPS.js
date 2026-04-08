@@ -1,89 +1,63 @@
 'use strict'
+const routeDataset = require('./routes.osrm.half.json')
 
 /**
  * Realistic GPS simulator for 4 trucks driving on European road routes.
  *
  * Each truck follows a predefined waypoint route (real road coordinates).
  * Between waypoints the truck interpolates smoothly, simulating actual movement.
- * Speed varies realistically (motorway, urban, stop).
+ * Speed varies realistically (motorway, urban, stop), including long rests.
  */
 
-// ── Real European road routes (lat, lng waypoints) ────────────────────────────
-// Each route is a sequence of real road coordinates the truck passes through.
-const ROUTES = [
-    {
-        // Truck 1: Madrid → Barcelona (A-2 motorway)
-        serialNumber: '9900110011',
-        licensePlate: '1234-ABC-001',
-        waypoints: [
-            [40.4168, -3.7038],   // Madrid
-            [40.4600, -3.3700],   // A-2 salida Alcalá
-            [40.5200, -2.8500],   // Guadalajara
-            [40.6200, -2.1500],   // Brihuega area
-            [40.7800, -1.5300],   // Calatayud
-            [41.2000, -0.8800],   // Ricla
-            [41.3900, -0.4100],   // Zaragoza
-            [41.5200,  0.3500],   // Lleida
-            [41.6600,  1.0800],   // Cervera
-            [41.6600,  1.9000],   // Igualada
-            [41.3879,  2.1699],   // Barcelona
-        ]
-    },
-    {
-        // Truck 2: Paris → Lyon (A6 motorway)
-        serialNumber: '9900110012',
-        licensePlate: '1234-ABC-002',
-        waypoints: [
-            [48.8566,  2.3522],   // Paris
-            [48.6000,  2.4300],   // Évry
-            [48.3600,  2.7000],   // Fontainebleau
-            [47.9800,  2.9800],   // Sens
-            [47.7000,  3.5500],   // Auxerre
-            [47.0500,  4.0500],   // Beaune
-            [46.7200,  4.8300],   // Chalon-sur-Saône
-            [46.3000,  4.8300],   // Mâcon
-            [45.7640,  4.8357],   // Lyon
-        ]
-    },
-    {
-        // Truck 3: Barcelona → Valencia (AP-7 coast road)
-        serialNumber: '9900110013',
-        licensePlate: '1234-ABC-003',
-        waypoints: [
-            [41.3879,  2.1699],   // Barcelona
-            [41.1800,  1.8300],   // Tarragona area
-            [41.0500,  1.1800],   // Tarragona
-            [40.7100,  0.5500],   // Tortosa
-            [40.4000, -0.0800],   // Vinaròs
-            [39.9800, -0.0500],   // Castellón de la Plana
-            [39.4699, -0.3763],   // Valencia
-        ]
-    },
-    {
-        // Truck 4: Madrid → Sevilla (A-4 motorway)
-        serialNumber: '9900110014',
-        licensePlate: '1234-ABC-004',
-        waypoints: [
-            [40.4168, -3.7038],   // Madrid
-            [39.8600, -3.9200],   // Aranjuez
-            [39.3700, -4.0200],   // Madridejos
-            [38.6900, -3.8500],   // Linares area
-            [38.0000, -4.0000],   // Andújar
-            [37.8800, -4.7800],   // Córdoba
-            [37.5400, -5.0000],   // Écija
-            [37.3891, -5.9845],   // Sevilla
-        ]
-    }
+// ── Real European routes loaded from OSRM dataset ─────────────────────────────
+const TRUCK_ASSIGNMENTS = [
+    { serialNumber: '9900110011', licensePlate: '1234-ABC-001', routeId: 'route-001' }, // Paris-Lyon
+    { serialNumber: '9900110012', licensePlate: '1234-ABC-002', routeId: 'route-002' }, // Madrid-Barcelona
+    { serialNumber: '9900110013', licensePlate: '1234-ABC-003', routeId: 'route-003' }, // Barcelona-Valencia
+    { serialNumber: '9900110014', licensePlate: '1234-ABC-004', routeId: 'route-004' }, // Madrid-Sevilla
 ]
+
+function buildRestStopIndexes(pointCount) {
+    // Define plausible long-rest points distributed along the route.
+    const fractions = [0.2, 0.4, 0.6, 0.8]
+    const indexes = fractions
+        .map(f => Math.round((pointCount - 1) * f))
+        .filter(i => i > 0 && i < pointCount - 1)
+    return [...new Set(indexes)]
+}
+
+const routesById = new Map(routeDataset.routes.map(route => [route.id, route]))
+
+const ROUTES = TRUCK_ASSIGNMENTS.map(truck => {
+    const datasetRoute = routesById.get(truck.routeId)
+    if (!datasetRoute || !Array.isArray(datasetRoute.waypoints) || datasetRoute.waypoints.length < 2) {
+        throw new Error(`Invalid or missing route dataset for id: ${truck.routeId}`)
+    }
+
+    return {
+        serialNumber: truck.serialNumber,
+        licensePlate: truck.licensePlate,
+        routeName: datasetRoute.name,
+        restStopIndexes: buildRestStopIndexes(datasetRoute.waypoints.length),
+        waypoints: datasetRoute.waypoints
+    }
+})
 
 // ── Truck state ───────────────────────────────────────────────────────────────
 
 const trucks = ROUTES.map(route => ({
     serialNumber: route.serialNumber,
     waypointIndex: 0,
+    direction: 1, // 1 => outbound, -1 => return on same path
     progress: Math.random(),       // start at random point in first segment
     // Speed in km/h — varies per truck to desynchronize them
     speedKmh: 80 + Math.floor(Math.random() * 40),
+    ticksSinceLongRest: 0,
+    nextLongRestAfterTicks: 30 + Math.floor(Math.random() * 61), // 6–18 min
+    longRestTicksRemaining: 0,
+    stopTicksRemaining: 0,
+    heading: Math.floor(Math.random() * 360),
+    restStopIndexes: route.restStopIndexes,
     waypoints: route.waypoints
 }))
 
@@ -105,6 +79,16 @@ function distanceKm(a, b) {
         Math.cos(b[0] * Math.PI / 180) *
         sinLng * sinLng
     return R * 2 * Math.atan2(Math.sqrt(chord), Math.sqrt(1 - chord))
+}
+
+function bearingDeg(from, to) {
+    const lat1 = from[0] * Math.PI / 180
+    const lat2 = to[0] * Math.PI / 180
+    const dLng = (to[1] - from[1]) * Math.PI / 180
+    const y = Math.sin(dLng) * Math.cos(lat2)
+    const x = Math.cos(lat1) * Math.sin(lat2) -
+        Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng)
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
 }
 
 function formatDDMM(degrees) {
@@ -133,53 +117,123 @@ function date() {
         .map(n => n.toString().padStart(2, '0')).join('')
 }
 
+function randomLongRestThresholdTicks() {
+    // Per-truck threshold for next long rest (one frame per truck every 12s).
+    return 30 + Math.floor(Math.random() * 61) // 30–90 ticks => ~6–18 min
+}
+
+function randomLongRestDurationTicks() {
+    return 10 + Math.floor(Math.random() * 31) // 10–40 ticks => ~2–8 min
+}
+
+function isRestWaypoint(truck) {
+    return truck.restStopIndexes.includes(truck.waypointIndex)
+}
+
+function currentSegment(truck) {
+    const waypoints = truck.waypoints
+    const fromIndex = truck.waypointIndex
+    const toIndex = fromIndex + truck.direction
+    return {
+        from: waypoints[fromIndex],
+        to: waypoints[toIndex],
+        fromIndex,
+        toIndex
+    }
+}
+
 // ── Advance a truck along its route by `intervalSeconds` ─────────────────────
 
 const INTERVAL_SECONDS = 3  // called every 3 seconds
 
 function advanceTruck(truck) {
     const waypoints = truck.waypoints
-    const from = waypoints[truck.waypointIndex]
-    const to = waypoints[truck.waypointIndex + 1] || waypoints[0]
+    let { from, to } = currentSegment(truck)
 
-    const segmentKm = distanceKm(from, to)
+    // Long rest: parked engine OFF for several ticks.
+    if (truck.longRestTicksRemaining > 0) {
+        truck.longRestTicksRemaining--
+        const lat = lerp(from[0], to[0], truck.progress)
+        const lng = lerp(from[1], to[1], truck.progress)
+        return { lat, lng, speed: 0, heading: truck.heading, isOff: true }
+    }
 
-    // Vary speed realistically: slow down near endpoints, occasional traffic
+    // Random short stops (traffic light/loading): 1–4 ticks
+    if (truck.stopTicksRemaining === 0 && Math.random() < 0.08) {
+        truck.stopTicksRemaining = 1 + Math.floor(Math.random() * 4)
+    }
+
+    if (truck.stopTicksRemaining > 0) {
+        truck.stopTicksRemaining--
+        const lat = lerp(from[0], to[0], truck.progress)
+        const lng = lerp(from[1], to[1], truck.progress)
+        return { lat, lng, speed: 0, heading: truck.heading, isOff: false }
+    }
+
+    // Vary speed realistically: traffic + slight slowdowns near segment ends
     const trafficFactor = 0.7 + Math.random() * 0.6   // 0.7–1.3
-    const effectiveSpeed = truck.speedKmh * trafficFactor
-    const progressPerInterval = (effectiveSpeed / 3600) * INTERVAL_SECONDS / segmentKm
+    const endSlowdownFactor = truck.progress > 0.85 ? 0.75 : 1
+    const effectiveSpeed = truck.speedKmh * trafficFactor * endSlowdownFactor
+    let travelKm = (effectiveSpeed / 3600) * INTERVAL_SECONDS
 
-    truck.progress += progressPerInterval
+    // Move across one or more segments while preserving continuity.
+    while (travelKm > 0) {
+        ;({ from, to } = currentSegment(truck))
+        const segmentKm = Math.max(distanceKm(from, to), 0.001)
+        const remainingKm = segmentKm * (1 - truck.progress)
 
-    // Advance to next waypoint when segment complete
-    if (truck.progress >= 1) {
-        truck.progress = truck.progress - 1
-        truck.waypointIndex++
-
-        // Loop back to start when route complete, with a pause simulation
-        if (truck.waypointIndex >= waypoints.length - 1) {
-            truck.waypointIndex = 0
+        if (travelKm >= remainingKm) {
+            travelKm -= remainingKm
+            truck.waypointIndex = truck.waypointIndex + truck.direction
             truck.progress = 0
-            // Change speed slightly for next loop
-            truck.speedKmh = 70 + Math.floor(Math.random() * 50)
+
+            // Reverse direction at route endpoints to simulate round trip.
+            if (truck.waypointIndex >= waypoints.length - 1) {
+                truck.waypointIndex = waypoints.length - 1
+                truck.direction = -1
+                truck.speedKmh = 70 + Math.floor(Math.random() * 50)
+            } else if (truck.waypointIndex <= 0) {
+                truck.waypointIndex = 0
+                truck.direction = 1
+                truck.speedKmh = 70 + Math.floor(Math.random() * 50)
+            }
+
+            // Long rests only make sense at known rest waypoints.
+            if (
+                isRestWaypoint(truck) &&
+                truck.ticksSinceLongRest >= truck.nextLongRestAfterTicks
+            ) {
+                truck.longRestTicksRemaining = randomLongRestDurationTicks()
+                truck.ticksSinceLongRest = 0
+                truck.nextLongRestAfterTicks = randomLongRestThresholdTicks()
+                break
+            }
+        } else {
+            truck.progress += travelKm / segmentKm
+            travelKm = 0
         }
     }
+
+    ;({ from, to } = currentSegment(truck))
+    truck.heading = Math.round(bearingDeg(from, to))
 
     const lat = lerp(from[0], to[0], truck.progress)
     const lng = lerp(from[1], to[1], truck.progress)
 
-    return { lat, lng, speed: effectiveSpeed }
+    truck.ticksSinceLongRest++
+
+    return { lat, lng, speed: effectiveSpeed, heading: truck.heading, isOff: false }
 }
 
 // ── Public API — one call per truck per interval ──────────────────────────────
 
 let truckIndex = 0   // rotate through trucks so each gets a frame per interval
 
-const randomGPS = () => {
+const simulateGPSInRoute = () => {
     const truck = trucks[truckIndex % trucks.length]
     truckIndex++
 
-    const { lat, lng, speed } = advanceTruck(truck)
+    const { lat, lng, speed, heading, isOff } = advanceTruck(truck)
 
     const hemisphere = lat >= 0 ? 'N' : 'S'
     const orientation = lng >= 0 ? 'E' : 'W'
@@ -187,9 +241,10 @@ const randomGPS = () => {
     const rawLat = formatDDMM(lat)
     const rawLng = formatDDDMM(lng)
     const speedStr = speed.toFixed(2).padStart(6, '0')
+    const headingStr = heading.toString().padStart(3, '0')
 
-    // vehicle_status: FFFFBBFF = OFF, FFFF9FFF = ON (always ON for simulation)
-    const vehicleStatus = 'FFFF9FFF'
+    // vehicle_status: FFFFBBFF = OFF, FFFF9FFF = ON
+    const vehicleStatus = isOff ? 'FFFFBBFF' : 'FFFF9FFF'
 
     const message = [
         '*HQ',
@@ -202,7 +257,7 @@ const randomGPS = () => {
         rawLng,
         orientation,
         speedStr,
-        '208',            // direction (heading)
+        headingStr,       // direction (heading)
         date(),
         vehicleStatus,
         '214',            // net_mcc
@@ -214,4 +269,7 @@ const randomGPS = () => {
     return message
 }
 
-module.exports = { randomGPS }
+// Backward-compatible alias for previous API name.
+const randomGPS = simulateGPSInRoute
+
+module.exports = { simulateGPSInRoute, randomGPS }
