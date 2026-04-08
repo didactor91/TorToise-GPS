@@ -1,6 +1,6 @@
 require('dotenv').config()
 const net = require('net')
-const { randomGPS } = require('./randomGPS')
+const { simulateGPSInRoute } = require('./randomGPS')
 
 const port = Number(process.env.TCP_PORT) || 5000
 const host = process.env.TCP_HOST || '127.0.0.1'
@@ -13,7 +13,7 @@ client.connect(port, host, function () {
     console.log('[simulator] Sending GPS frames every 3s (4 trucks, rotating)...')
 
     setInterval(() => {
-        const frame = randomGPS()
+        const frame = simulateGPSInRoute()
         const sn = frame.split(',')[1]
         client.write(frame)
         console.log(`[simulator] -> SN:${sn} | ${frame.substring(0, 60)}...`)
