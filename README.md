@@ -86,6 +86,25 @@ Created automatically on first run:
 | `9900110013` | Barcelona → Valencia | AP-7 |
 | `9900110014` | Madrid → Sevilla | A-4 |
 
+### Simulator track retention (MongoDB cleanup)
+
+`track-api` runs an automatic cleanup job that deletes old `Track` documents **only** for simulator serial numbers.
+
+- Default retention: `60` days
+- Default interval: every `60` minutes
+- Default initial delay after API start: `2` minutes
+- Default simulator serials: `9900110011,9900110012,9900110013,9900110014`
+
+Environment variables (optional):
+
+| Variable | Default | Description |
+|---------|---------|-------------|
+| `SIM_TRACK_CLEANUP_ENABLED` | `true` | Set to `false` to disable the cleanup job |
+| `SIM_TRACK_RETENTION_DAYS` | `60` | Number of days to keep simulator tracks |
+| `SIM_TRACK_CLEANUP_INTERVAL_MINUTES` | `60` | How often cleanup runs |
+| `SIM_TRACK_CLEANUP_INITIAL_DELAY_MINUTES` | `2` | Delay before first cleanup after API start/deploy |
+| `SIM_TRACK_SERIALS` | built-in list | Comma-separated serials to clean (simulator-only) |
+
 ---
 
 ## Docker

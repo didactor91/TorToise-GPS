@@ -17,6 +17,7 @@ const { makeExecutableSchema } = require('@graphql-tools/schema')
 const identityRoutes = require('./src/identity/identity.routes')
 const fleetRoutes    = require('./src/fleet/fleet.routes')
 const trackingRoutes = require('./src/tracking/tracking.routes')
+const { startSimulatorTrackRetentionJob } = require('./src/tracking/simulator-retention.job')
 const poiRoutes      = require('./src/poi/poi.routes')
 
 const resolvers   = require('./src/graphql/resolvers')
@@ -49,6 +50,7 @@ const schema = makeExecutableSchema({ typeDefs, resolvers })
 
 ;(async () => {
     await mongoose.connect(MONGO_URL)
+    startSimulatorTrackRetentionJob()
 
     const app = express()
     app.set('trust proxy', 1)
