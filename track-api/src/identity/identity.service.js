@@ -3,6 +3,7 @@ const { errors: { LogicError, InputError } } = require('track-utils')
 const { validate } = require('track-utils')
 const { models: { User } } = require('track-data')
 const repo = require('./identity.repository')
+const { getOrCreateDefaultCompany } = require('../shared/company-context')
 
 const identityService = {
     registerUser(name, surname, email, password) {
@@ -20,7 +21,15 @@ const identityService = {
             if (existing) throw new LogicError(`user with email ${email} already exists`)
 
             const hash = await argon2.hash(password)
-            const newUser = await repo.create({ name, surname, email, password: hash })
+            const company = await getOrCreateDefaultCompany()
+            const newUser = await repo.create({
+                name,
+                surname,
+                email,
+                password: hash,
+                companyId: company._id,
+                role: 'admin'
+            })
             return newUser.id
         })()
     },
@@ -49,7 +58,9 @@ const identityService = {
         ])
 
         return (async () => {
-            const user = await User.findById(id).select('-_id name surname email pois trackers').lean()
+            const user = await User.findById(id)
+                .select('-_id name surname email companyId role')
+                .lean()
             if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
             return user
         })()

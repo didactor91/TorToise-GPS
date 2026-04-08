@@ -1,6 +1,7 @@
 const { errors: { LogicError, InputError } } = require('track-utils')
 const { validate } = require('track-utils')
 const repo = require('./poi.repository')
+const { ensureUserCompany } = require('../shared/company-context')
 
 const poiService = {
     addPOI(id, poiData) {
@@ -22,7 +23,10 @@ const poiService = {
         return (async () => {
             const user = await repo.findUserById(id)
             if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
+            const companyId = await ensureUserCompany(user)
+            await repo.syncLegacyPois(companyId, user.pois || [])
 
+            await repo.createPOI({ companyId, title, color, latitude, longitude })
             user.pois.push({ title, color, latitude, longitude })
             await repo.saveUser(user)
         })()
@@ -36,7 +40,9 @@ const poiService = {
         return (async () => {
             const user = await repo.findUserById(id)
             if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
-            return user.pois || []
+            const companyId = await ensureUserCompany(user)
+            await repo.syncLegacyPois(companyId, user.pois || [])
+            return repo.findAllByCompany(companyId)
         })()
     },
 
@@ -49,8 +55,15 @@ const poiService = {
         return (async () => {
             const user = await repo.findUserById(id)
             if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
+            const companyId = await ensureUserCompany(user)
+            await repo.syncLegacyPois(companyId, user.pois || [])
 
-            const poi = user.pois.id(poiID)
+            let poi = await repo.findByIdAndCompany(poiID, companyId)
+            if (!poi) {
+                const legacy = user.pois.id(poiID)
+                if (!legacy) throw new LogicError(`POI with id ${poiID} doesn't exists`)
+                poi = legacy.toObject()
+            }
             if (!poi) throw new LogicError(`POI with id ${poiID} doesn't exists`)
             return poi
         })()
@@ -66,16 +79,35 @@ const poiService = {
         return (async () => {
             const user = await repo.findUserById(id)
             if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
+            const companyId = await ensureUserCompany(user)
+            await repo.syncLegacyPois(companyId, user.pois || [])
 
-            const index = user.pois.findIndex(item => item._id.toString() === poiID)
-            if (index < 0) throw new LogicError(`POI with id ${poiID} doesn't exists`)
+            let poi = await repo.findByIdAndCompany(poiID, companyId)
+            const legacyPoi = user.pois.id(poiID)
+            if (!poi && !legacyPoi) throw new LogicError(`POI with id ${poiID} doesn't exists`)
+            if (!poi && legacyPoi) {
+                const all = await repo.findAllByCompany(companyId)
+                poi = all.find(item =>
+                    item.title === legacyPoi.title &&
+                    item.latitude === legacyPoi.latitude &&
+                    item.longitude === legacyPoi.longitude
+                )
+            }
+            if (!poi) throw new LogicError(`POI with id ${poiID} doesn't exists`)
 
-            user.pois[index].title = poiData.title || user.pois[index].title
-            user.pois[index].color = poiData.color || user.pois[index].color
-            user.pois[index].latitude = poiData.latitude || user.pois[index].latitude
-            user.pois[index].longitude = poiData.longitude || user.pois[index].longitude
-
-            await repo.saveUser(user)
+            await repo.updateByIdAndCompany(poi._id || poiID, companyId, {
+                title: poiData.title || poi.title,
+                color: poiData.color || poi.color,
+                latitude: poiData.latitude || poi.latitude,
+                longitude: poiData.longitude || poi.longitude
+            })
+            if (legacyPoi) {
+                legacyPoi.title = poiData.title || legacyPoi.title
+                legacyPoi.color = poiData.color || legacyPoi.color
+                legacyPoi.latitude = poiData.latitude || legacyPoi.latitude
+                legacyPoi.longitude = poiData.longitude || legacyPoi.longitude
+                await repo.saveUser(user)
+            }
         })()
     },
 
@@ -88,12 +120,30 @@ const poiService = {
         return (async () => {
             const user = await repo.findUserById(id)
             if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
+            const companyId = await ensureUserCompany(user)
+            await repo.syncLegacyPois(companyId, user.pois || [])
 
-            const index = user.pois.findIndex(item => item._id.toString() === poiID)
-            if (index < 0) throw new LogicError(`POI with id ${poiID} doesn't exists`)
+            let poi = await repo.findByIdAndCompany(poiID, companyId)
+            const legacyIndex = user.pois.findIndex(item => item._id.toString() === poiID)
+            if (!poi && legacyIndex < 0) throw new LogicError(`POI with id ${poiID} doesn't exists`)
 
-            user.pois.splice(index, 1)
-            await repo.saveUser(user)
+            if (poi) {
+                await repo.deleteByIdAndCompany(poiID, companyId)
+            }
+            if (legacyIndex >= 0) {
+                const legacyPoi = user.pois[legacyIndex]
+                if (!poi) {
+                    const all = await repo.findAllByCompany(companyId)
+                    poi = all.find(item =>
+                        item.title === legacyPoi.title &&
+                        item.latitude === legacyPoi.latitude &&
+                        item.longitude === legacyPoi.longitude
+                    )
+                    if (poi) await repo.deleteByIdAndCompany(poi._id, companyId)
+                }
+                user.pois.splice(legacyIndex, 1)
+                await repo.saveUser(user)
+            }
         })()
     }
 }

@@ -2,6 +2,7 @@ const { errors: { LogicError, InputError } } = require('track-utils')
 const { validate } = require('track-utils')
 const { models: { User } } = require('track-data')
 const repo = require('./tracking.repository')
+const { ensureUserCompany } = require('../shared/company-context')
 
 const trackingService = {
     addTrack(userId, trackData) {
@@ -25,9 +26,14 @@ const trackingService = {
         return (async () => {
             const user = await User.findById(userId)
             if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
+            const companyId = await ensureUserCompany(user)
+            await repo.syncLegacyTrackers(companyId, user.trackers || [])
 
-            const index = user.trackers.findIndex(item => item.serialNumber === serialNumber)
-            if (index < 0) throw new LogicError(`Tracker with SN ${serialNumber} doesn't exists`)
+            const tracker = await repo.findTrackerBySerial(serialNumber)
+            const legacyOwnsSerial = user.trackers.some(item => item.serialNumber === serialNumber)
+            if ((!tracker || tracker.companyId.toString() !== companyId.toString()) && !legacyOwnsSerial) {
+                throw new LogicError(`Tracker with SN ${serialNumber} doesn't exists`)
+            }
 
             return repo.createTrack({ serialNumber, latitude, longitude, speed, status, date })
         })()
@@ -51,8 +57,13 @@ const trackingService = {
         validateTelemetry({ latitude, longitude, speed, status })
 
         return (async () => {
-            const owner = await repo.findOwnerBySerial(serialNumber)
-            if (!owner) return null  // unknown SN — silent discard, no error
+            let tracker = await repo.findTrackerBySerial(serialNumber)
+            if (!tracker) {
+                const owner = await repo.findLegacyOwnerBySerial(serialNumber)
+                if (!owner) return null
+                const legacy = owner.trackers.find(t => t.serialNumber === serialNumber)
+                tracker = { serialNumber, licensePlate: legacy?.licensePlate || null }
+            }
 
             const track = await repo.createTrack({ serialNumber, latitude, longitude, speed, status, date })
 
@@ -65,7 +76,7 @@ const trackingService = {
                     speed,
                     status,
                     date: new Date().toISOString(),
-                    licensePlate: owner.trackers.find(t => t.serialNumber === serialNumber)?.licensePlate || null
+                    licensePlate: tracker.licensePlate || null
                 }]
             })
 
@@ -82,8 +93,14 @@ const trackingService = {
         return (async () => {
             const user = await User.findById(userId)
             if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
+            const companyId = await ensureUserCompany(user)
+            await repo.syncLegacyTrackers(companyId, user.trackers || [])
 
-            const tracker = user.trackers.id(trackerID)
+            let tracker = await repo.findTrackerByIdAndCompany(trackerID, companyId)
+            if (!tracker) {
+                const legacy = user.trackers.id(trackerID)
+                if (legacy) tracker = { serialNumber: legacy.serialNumber }
+            }
             if (!tracker) throw new LogicError(`Tracker with id ${trackerID} doesn't exists`)
 
             return repo.findLastBySerial(tracker.serialNumber)
@@ -98,14 +115,19 @@ const trackingService = {
         return (async () => {
             const user = await User.findById(userId).lean()
             if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
-            if (!user.trackers.length) return []
+            const hydratedUser = await User.findById(userId)
+            const companyId = await ensureUserCompany(hydratedUser)
+            await repo.syncLegacyTrackers(companyId, hydratedUser.trackers || [])
+
+            const companyTrackers = await repo.findTrackersByCompany(companyId)
+            if (!companyTrackers.length) return []
 
             // Single aggregation query for all trackers — no N+1
-            const serialNumbers = user.trackers.map(t => t.serialNumber)
+            const serialNumbers = companyTrackers.map(t => t.serialNumber)
             const lastBySerial = await repo.findLastBySerials(serialNumbers)
 
             // Build a lookup map: serialNumber → licensePlate
-            const lpMap = new Map(user.trackers.map(t => [t.serialNumber, t.licensePlate]))
+            const lpMap = new Map(companyTrackers.map(t => [t.serialNumber, t.licensePlate]))
 
             return [...lastBySerial.entries()].map(([sn, track]) => ({
                 ...track,
@@ -128,8 +150,14 @@ const trackingService = {
         return (async () => {
             const user = await User.findById(userId)
             if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
+            const companyId = await ensureUserCompany(user)
+            await repo.syncLegacyTrackers(companyId, user.trackers || [])
 
-            const tracker = user.trackers.id(trackerID)
+            let tracker = await repo.findTrackerByIdAndCompany(trackerID, companyId)
+            if (!tracker) {
+                const legacy = user.trackers.id(trackerID)
+                if (legacy) tracker = { serialNumber: legacy.serialNumber }
+            }
             if (!tracker) throw new LogicError(`Tracker with id ${trackerID} doesn't exists`)
 
             const rangeTracks = await repo.findRangeBySerial(tracker.serialNumber, startTime, endTime)
