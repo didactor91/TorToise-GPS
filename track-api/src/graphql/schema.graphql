@@ -5,6 +5,24 @@ type User {
   name: String!
   surname: String!
   email: String!
+  role: String!
+  companyId: ID
+}
+
+type Company {
+  id: ID!
+  name: String!
+  slug: String!
+  active: Boolean!
+}
+
+type BackofficeUser {
+  id: ID!
+  name: String!
+  surname: String!
+  email: String!
+  role: String!
+  companyId: ID
 }
 
 type Tracker {
@@ -63,6 +81,35 @@ input UpdateUserInput {
   email: String
 }
 
+input BackofficeCreateCompanyInput {
+  name: String!
+  slug: String!
+  active: Boolean
+}
+
+input BackofficeUpdateCompanyInput {
+  name: String
+  slug: String
+  active: Boolean
+}
+
+input BackofficeCreateUserInput {
+  name: String!
+  surname: String!
+  email: String!
+  password: String!
+  role: String!
+  companyId: ID!
+}
+
+input BackofficeUpdateUserInput {
+  name: String
+  surname: String
+  email: String
+  role: String
+  companyId: ID
+}
+
 input AddTrackerInput {
   serialNumber: String!
   licensePlate: String
@@ -98,6 +145,8 @@ type Query {
   trackRange(trackerId: ID!, start: DateTime!, end: DateTime!): [Track!]!
   pois: [POI!]!
   poi(id: ID!): POI!
+  backofficeCompanies: [Company!]!
+  backofficeUsers(companyId: ID): [BackofficeUser!]!
 }
 
 type Mutation {
@@ -111,6 +160,16 @@ type Mutation {
   addPOI(input: AddPOIInput!): MutationResult!
   updatePOI(id: ID!, input: UpdatePOIInput!): MutationResult!
   deletePOI(id: ID!): MutationResult!
+  backofficeCreateCompany(input: BackofficeCreateCompanyInput!): MutationResult!
+  backofficeUpdateCompany(
+    id: ID!
+    input: BackofficeUpdateCompanyInput!
+  ): MutationResult!
+  backofficeCreateUser(input: BackofficeCreateUserInput!): MutationResult!
+  backofficeUpdateUser(
+    id: ID!
+    input: BackofficeUpdateUserInput!
+  ): MutationResult!
 }
 
 type Subscription {

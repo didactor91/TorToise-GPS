@@ -1,0 +1,47 @@
+const { models: { Company, User }, mongoose } = require('track-data')
+
+module.exports = {
+    async findUserById(id) {
+        return User.findById(id)
+    },
+
+    async findUserByEmail(email) {
+        return User.findOne({ email })
+    },
+
+    async findCompanyBySlug(slug) {
+        return Company.findOne({ slug })
+    },
+
+    async findCompanyById(id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) return null
+        return Company.findById(id)
+    },
+
+    async listCompanies() {
+        return Company.find().sort({ createdAt: -1 }).lean()
+    },
+
+    async createCompany(data) {
+        return Company.create(data)
+    },
+
+    async updateCompanyById(id, patch) {
+        if (!mongoose.Types.ObjectId.isValid(id)) return null
+        return Company.findByIdAndUpdate(id, { $set: patch }, { new: true })
+    },
+
+    async listUsers(companyId) {
+        const query = companyId ? { companyId } : {}
+        return User.find(query).sort({ createdAt: -1 }).lean()
+    },
+
+    async createUser(data) {
+        return User.create(data)
+    },
+
+    async updateUserById(id, patch) {
+        if (!mongoose.Types.ObjectId.isValid(id)) return null
+        return User.findByIdAndUpdate(id, { $set: patch }, { new: true })
+    }
+}

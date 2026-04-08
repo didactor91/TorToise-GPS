@@ -1,0 +1,50 @@
+query BackofficeCompanies {
+  backofficeCompanies {
+    id
+    name
+    slug
+    active
+  }
+}
+
+query BackofficeUsers($companyId: ID) {
+  backofficeUsers(companyId: $companyId) {
+    id
+    name
+    surname
+    email
+    role
+    companyId
+  }
+}
+
+mutation BackofficeCreateCompany($input: BackofficeCreateCompanyInput!) {
+  backofficeCreateCompany(input: $input) {
+    success
+    message
+  }
+}
+
+mutation BackofficeUpdateCompany(
+  $id: ID!
+  $input: BackofficeUpdateCompanyInput!
+) {
+  backofficeUpdateCompany(id: $id, input: $input) {
+    success
+    message
+  }
+}
+
+mutation BackofficeCreateUser($input: BackofficeCreateUserInput!) {
+  backofficeCreateUser(input: $input) {
+    success
+    message
+  }
+}
+
+mutation BackofficeUpdateUser($id: ID!, $input: BackofficeUpdateUserInput!) {
+  backofficeUpdateUser(id: $id, input: $input) {
+    success
+    message
+  }
+}

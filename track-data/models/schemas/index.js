@@ -56,7 +56,7 @@ const user = new Schema({
     },
     password: { type: String, required: true },
     companyId: { type: Schema.Types.ObjectId, ref: 'Company', index: true },
-    role: { type: String, enum: ['owner', 'admin', 'dispatcher', 'viewer'], default: 'admin' },
+    role: { type: String, enum: ['staff', 'owner', 'admin', 'dispatcher', 'viewer'], default: 'admin' },
     // Legacy embedded fields (kept for compatibility and gradual migration).
     pois: [point],
     trackers: [tracker]

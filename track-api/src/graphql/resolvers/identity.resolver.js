@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const service = require('../../identity/identity.service')
 const { toGraphQLError } = require('../error-mapper')
 const { requireAuth } = require('../context')
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'
 
 const identityResolver = {
   Query: {
@@ -15,9 +16,16 @@ const identityResolver = {
       const userId = requireAuth(ctx)
       try {
         const user = await service.retrieveUser(userId)
-        return { id: userId, ...user }
+        return {
+          id: userId,
+          name: user.name,
+          surname: user.surname,
+          email: user.email,
+          role: user.role || 'admin',
+          companyId: user.companyId ? user.companyId.toString() : null
+        }
       } catch (err) {
-        throw toGraphQLError(err)
+        throw toGraphQLError(/** @type {Error} */ (err))
       }
     }
   },
@@ -32,7 +40,7 @@ const identityResolver = {
         await service.registerUser(input.name, input.surname, input.email, input.password)
         return { success: true, message: 'Ok, user registered.' }
       } catch (err) {
-        throw toGraphQLError(err)
+        throw toGraphQLError(/** @type {Error} */ (err))
       }
     },
 
@@ -43,10 +51,10 @@ const identityResolver = {
     async loginUser(_, { email, password }) {
       try {
         const sub = await service.authenticateUser(email, password)
-        const token = jwt.sign({ sub }, process.env.JWT_SECRET, { expiresIn: '8h' })
+        const token = jwt.sign({ sub }, JWT_SECRET, { expiresIn: '8h' })
         return { token }
       } catch (err) {
-        throw toGraphQLError(err)
+        throw toGraphQLError(/** @type {Error} */ (err))
       }
     },
 
@@ -61,7 +69,7 @@ const identityResolver = {
         await service.updateUser(userId, input)
         return { success: true, message: 'Ok, user updated.' }
       } catch (err) {
-        throw toGraphQLError(err)
+        throw toGraphQLError(/** @type {Error} */ (err))
       }
     },
 
@@ -76,7 +84,7 @@ const identityResolver = {
         await service.deleteUser(userId)
         return { success: true, message: 'Ok, user removed.' }
       } catch (err) {
-        throw toGraphQLError(err)
+        throw toGraphQLError(/** @type {Error} */ (err))
       }
     }
   }
