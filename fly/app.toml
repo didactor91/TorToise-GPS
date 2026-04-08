@@ -1,0 +1,27 @@
+# fly/app.toml — TorToise GPS frontend (nginx + React SPA)
+# Deploy with: fly deploy --config fly/app.toml --dockerfile track-app/Dockerfile
+#              --build-arg VITE_API_URL=https://tortoise-api.fly.dev/api
+# First time:  fly launch --config fly/app.toml --no-deploy
+
+app = 'tortoise-app'
+primary_region = 'mad'   # Madrid — change to your nearest region
+
+[build]
+  dockerfile = 'track-app/Dockerfile'
+
+  [build.args]
+    # Points the frontend bundle to the deployed API.
+    # The nginx proxy (/api, /graphql) is only used in local Docker.
+    # In Fly, the frontend talks directly to tortoise-api.fly.dev.
+    VITE_API_URL = 'https://tortoise-api.fly.dev/api'
+
+[http_service]
+  internal_port       = 80
+  force_https         = true
+  auto_stop_machines  = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size   = 'shared-cpu-1x'
+  memory = '256mb'

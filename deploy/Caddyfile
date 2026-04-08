@@ -1,0 +1,22 @@
+tortoisegps.didtor.dev {
+    # ── Frontend SPA ─────────────────────────────────────────────────
+    reverse_proxy /api*     track-api:8080
+    reverse_proxy /graphql* track-api:8080
+    reverse_proxy           track-app:80
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Logging
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}
