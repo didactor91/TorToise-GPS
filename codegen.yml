@@ -1,5 +1,7 @@
 overwrite: true
-schema: "http://localhost:8085/graphql"
+# GRAPHQL_SCHEMA_URL can be overridden in CI:
+#   GRAPHQL_SCHEMA_URL=https://api.yourdomain.com/graphql npm run codegen
+schema: ${GRAPHQL_SCHEMA_URL:-http://localhost:8085/graphql}
 documents: "track-app/src/graphql/**/*.gql"
 generates:
   track-app/src/generated/graphql.ts:
@@ -7,7 +9,9 @@ generates:
       - add:
           content: |
             // AUTO-GENERATED — do not edit manually
-            // Run: npm run codegen (requires API server at localhost:8085)
+            // Run: npm run codegen (requires API server)
+            // Local:  npm run codegen
+            // CI/CD:  GRAPHQL_SCHEMA_URL=https://api.yourdomain.com/graphql npm run codegen
       - typescript
       - typescript-operations
       - typescript-react-apollo

@@ -60,6 +60,9 @@ services:
     build:
       context: .
       dockerfile: track-app/Dockerfile
+      args:
+        # Relative URL — nginx proxies /api and /graphql internally within Docker
+        VITE_API_URL: /api
     container_name: tortoise-track-app
     restart: unless-stopped
     ports:

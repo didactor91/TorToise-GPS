@@ -7,8 +7,19 @@ import { setContext } from '@apollo/client/link/context'
 import { isTokenExpired, notifySessionExpired } from './session'
 
 const apiUrl: string | undefined = import.meta.env.VITE_API_URL
-const GQL_HTTP = (apiUrl || '/api').replace('/api', '') + '/graphql'
-const GQL_WS   = GQL_HTTP.replace(/^http/, 'ws')
+
+// HTTP endpoint for queries & mutations
+// - Dev:  VITE_API_URL=/api  → GQL_HTTP = '/graphql'  (proxied by Vite to localhost:8085)
+// - Prod: VITE_API_URL=https://api.example.com/api → GQL_HTTP = 'https://api.example.com/graphql'
+const GQL_HTTP = (apiUrl || '/api').replace(/\/api$/, '') + '/graphql'
+
+// WebSocket endpoint for subscriptions
+// Always match the security level of the page:
+//   http(s)://... → ws(s)://...
+// When GQL_HTTP is a relative path ('/graphql'), derive from window.location.
+const GQL_WS = GQL_HTTP.startsWith('http')
+  ? GQL_HTTP.replace(/^http/, 'ws')
+  : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/graphql`
 
 // Pre-flight expiry check — abort before sending if token is stale
 const sessionLink = new ApolloLink((operation, forward) => {
