@@ -1,6 +1,7 @@
 #!/bin/bash
 # deploy/deploy.sh — Deploy or update TorToise GPS
 # Run from the repo root: bash deploy/deploy.sh
+{
 set -euo pipefail
 
 APP_DIR="/opt/tortoise-gps"
@@ -66,3 +67,4 @@ echo "  🌐  https://tortoisegps.didtor.dev"
 echo "  📡  GPS TCP: 204.168.227.78:5000"
 echo "  🔑  livedemo@example.com / LiveDemo"
 echo "══════════════════════════════════════════"
+}
