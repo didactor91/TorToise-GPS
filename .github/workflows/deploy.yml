@@ -7,7 +7,7 @@ on:
     branches: [master]
 
 jobs:
-  # ── Test ────────────────────────────────────────────────────────────────────
+  # ── Tests ───────────────────────────────────────────────────────────────────
   test:
     name: Tests
     runs-on: ubuntu-latest
@@ -34,53 +34,20 @@ jobs:
       - name: TypeScript check (frontend)
         run: cd track-app && npx tsc --noEmit
 
-  # ── Deploy API ──────────────────────────────────────────────────────────────
-  deploy-api:
-    name: Deploy track-api
+  # ── Deploy to Hetzner ───────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Hetzner
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy track-api
-        run: fly deploy --config fly/api.toml --dockerfile track-api/Dockerfile --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-  # ── Deploy TCP ──────────────────────────────────────────────────────────────
-  deploy-tcp:
-    name: Deploy track-tcp
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy track-tcp
-        run: fly deploy --config fly/tcp.toml --dockerfile track-tcp/Dockerfile --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-  # ── Deploy App ──────────────────────────────────────────────────────────────
-  deploy-app:
-    name: Deploy track-app
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy track-app
-        run: fly deploy --config fly/app.toml --dockerfile track-app/Dockerfile --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: 204.168.227.78
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            cd /opt/tortoise-gps
+            bash deploy/deploy.sh

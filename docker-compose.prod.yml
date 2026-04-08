@@ -1,0 +1,90 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: tortoise-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    # No port exposed publicly — only accessible internally
+    networks:
+      - internal
+
+  track-api:
+    build:
+      context: .
+      dockerfile: track-api/Dockerfile
+    container_name: tortoise-track-api
+    restart: unless-stopped
+    environment:
+      PORT: 8080
+      MONGO_URL: ${MONGO_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - mongo
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  track-tcp:
+    build:
+      context: .
+      dockerfile: track-tcp/Dockerfile
+    container_name: tortoise-track-tcp
+    restart: unless-stopped
+    ports:
+      - "5000:5000"   # Public — GPS hardware connects here
+    environment:
+      TCP_PORT: 5000
+      API_URL: http://track-api:8080/api
+    depends_on:
+      track-api:
+        condition: service_healthy
+    networks:
+      - internal
+
+  track-app:
+    build:
+      context: .
+      dockerfile: track-app/Dockerfile
+      args:
+        # Points to the public subdomain — baked into the JS bundle at build time
+        VITE_API_URL: https://tortoisegps.didtor.dev/api
+    container_name: tortoise-track-app
+    restart: unless-stopped
+    networks:
+      - internal
+    depends_on:
+      track-api:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: tortoise-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - internal
+    depends_on:
+      - track-app
+      - track-api
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  caddy-data:
+  caddy-config:
