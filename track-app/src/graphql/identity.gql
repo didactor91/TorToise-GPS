@@ -17,6 +17,8 @@ query Me {
     email
     role
     companyId
+    permissionKeys
+    featureKeys
   }
 }
 mutation UpdateUser($input: UpdateUserInput!) {

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { useLoginUserMutation, useRegisterUserMutation } from '../generated/graphql'
+import { useLoginUserMutation } from '../generated/graphql'
 
 export function useAuth(setIsLoggedIn: (v: boolean) => void) {
   const navigate = useNavigate()
@@ -18,16 +18,8 @@ export function useAuth(setIsLoggedIn: (v: boolean) => void) {
     }
   })
 
-  const [registerMutation] = useRegisterUserMutation({
-    onCompleted: () => navigate('/login'),
-    onError: (err) => toast.error(err.message)
-  })
-
   const handleLogin = (email: string, password: string) =>
     loginMutation({ variables: { email, password } })
-
-  const handleRegister = (name: string, surname: string, email: string, password: string) =>
-    registerMutation({ variables: { input: { name, surname, email, password } } })
 
   const handleLogout = () => {
     sessionStorage.clear()
@@ -35,5 +27,5 @@ export function useAuth(setIsLoggedIn: (v: boolean) => void) {
     navigate('/')
   }
 
-  return { handleLogin, handleRegister, handleLogout }
+  return { handleLogin, handleLogout }
 }

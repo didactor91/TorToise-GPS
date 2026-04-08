@@ -16,6 +16,7 @@ export type BackofficeCompany = {
     name: string
     slug: string
     active: boolean
+    featureKeys: string[]
 }
 
 export type BackofficeUser = {
@@ -25,6 +26,7 @@ export type BackofficeUser = {
     email: string
     role: string
     companyId: string | null
+    permissionKeys: string[]
 }
 
 export function useBackoffice() {
@@ -56,7 +58,8 @@ export function useBackoffice() {
             id: c.id,
             name: c.name,
             slug: c.slug,
-            active: c.active
+            active: c.active,
+            featureKeys: c.featureKeys ?? []
         })),
         [companiesQuery.data]
     )
@@ -68,18 +71,19 @@ export function useBackoffice() {
             surname: u.surname,
             email: u.email,
             role: u.role,
-            companyId: u.companyId ?? null
+            companyId: u.companyId ?? null,
+            permissionKeys: u.permissionKeys ?? []
         })),
         [usersQuery.data]
     )
 
-    const createCompany = async (name: string, slug: string, active: boolean) => {
-        const res = await createCompanyMutation({ variables: { input: { name, slug, active } } })
+    const createCompany = async (name: string, slug: string, active: boolean, featureKeys?: string[]) => {
+        const res = await createCompanyMutation({ variables: { input: { name, slug, active, featureKeys } } })
         if (res.data?.backofficeCreateCompany.success) toast.success(res.data.backofficeCreateCompany.message)
     }
 
-    const updateCompany = async (id: string, name: string, slug: string, active: boolean) => {
-        const res = await updateCompanyMutation({ variables: { id, input: { name, slug, active } } })
+    const updateCompany = async (id: string, name: string, slug: string, active: boolean, featureKeys?: string[]) => {
+        const res = await updateCompanyMutation({ variables: { id, input: { name, slug, active, featureKeys } } })
         if (res.data?.backofficeUpdateCompany.success) toast.success(res.data.backofficeUpdateCompany.message)
     }
 
@@ -90,6 +94,7 @@ export function useBackoffice() {
         password: string
         role: string
         companyId: string
+        permissionKeys?: string[]
     }) => {
         const res = await createUserMutation({ variables: { input } })
         if (res.data?.backofficeCreateUser.success) toast.success(res.data.backofficeCreateUser.message)
@@ -101,6 +106,7 @@ export function useBackoffice() {
         email?: string
         role?: string
         companyId?: string
+        permissionKeys?: string[]
     }) => {
         const res = await updateUserMutation({ variables: { id, input } })
         if (res.data?.backofficeUpdateUser.success) toast.success(res.data.backofficeUpdateUser.message)

@@ -3,6 +3,7 @@ const service = require('../../tracking/tracking.service')
 const pubsub = require('../pubsub')
 const { toGraphQLError } = require('../error-mapper')
 const { requireAuth } = require('../context')
+const { requireAccess } = require('../../shared/authorization.service')
 
 const trackingResolver = {
   Query: {
@@ -14,6 +15,7 @@ const trackingResolver = {
     async lastTracks(_, __, ctx) {
       const userId = requireAuth(ctx)
       try {
+        await requireAccess(userId, { feature: 'tracking', permission: 'tracking.read' })
         const tracks = await service.retrieveAllLastTracks(userId)
         return (tracks || []).map(t => ({
           serialNumber: t.serialNumber,
@@ -37,6 +39,7 @@ const trackingResolver = {
     async lastTrack(_, { trackerId }, ctx) {
       const userId = requireAuth(ctx)
       try {
+        await requireAccess(userId, { feature: 'tracking', permission: 'tracking.read' })
         const track = await service.retrieveLastTrack(userId, trackerId)
         if (!track) return null
         return {
@@ -61,6 +64,7 @@ const trackingResolver = {
     async trackRange(_, { trackerId, start, end }, ctx) {
       const userId = requireAuth(ctx)
       try {
+        await requireAccess(userId, { feature: 'tracking', permission: 'tracking.read' })
         const tracks = await service.retrieveRangeOfTracks(
           userId,
           trackerId,
@@ -89,8 +93,9 @@ const trackingResolver = {
        * @param {unknown} __
        * @param {{ userId: string|null }} ctx
        */
-      subscribe: (_, __, ctx) => {
-        requireAuth(ctx) // throws UNAUTHENTICATED if no userId
+      subscribe: async (_, __, ctx) => {
+        const userId = requireAuth(ctx) // throws UNAUTHENTICATED if no userId
+        await requireAccess(userId, { feature: 'tracking', permission: 'tracking.read' })
         return pubsub.asyncIterator(['LIVE_TRACKS_UPDATED'])
       }
     }

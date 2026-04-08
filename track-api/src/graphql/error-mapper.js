@@ -4,7 +4,7 @@ const { errors: { LogicError, InputError, UnauthorizedError } } = require('track
 
 /**
  * Converts a domain error to a GraphQLError with the appropriate extension code.
- * @param {Error} err
+ * @param {unknown} err
  * @returns {GraphQLError}
  */
 function toGraphQLError(err) {

@@ -5,6 +5,8 @@ import './index.sass'
 interface NavbarProps {
   onHome: () => void
   onProfile: () => void
+  onUsers?: () => void
+  showUsers?: boolean
   onPlaces: () => void
   onTrackings: () => void
   onBackoffice?: () => void
@@ -17,6 +19,8 @@ interface NavbarProps {
 function Navbar({
   onHome,
   onProfile,
+  onUsers,
+  showUsers = false,
   onPlaces,
   onTrackings,
   onBackoffice,
@@ -50,6 +54,9 @@ function Navbar({
         <div className="navbar-start">
           <a className="navbar-item" onClick={() => { onHome(); close() }}>Home</a>
           <a className="navbar-item" onClick={() => { onProfile(); close() }}>Profile</a>
+          {showUsers && onUsers && (
+            <a className="navbar-item" onClick={() => { onUsers(); close() }}>Users</a>
+          )}
           <a className="navbar-item" onClick={() => { onPlaces(); close() }}>Places</a>
           <a className="navbar-item" onClick={() => { onTrackings(); close() }}>Trackers</a>
           {showBackoffice && onBackoffice && (

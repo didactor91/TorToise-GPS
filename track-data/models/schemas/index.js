@@ -28,7 +28,9 @@ const tracker = new Schema({
 const company = new Schema({
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true, index: true },
-    active: { type: Boolean, default: true }
+    active: { type: Boolean, default: true },
+    featuresPacked: { type: String, default: '' },
+    featuresVersion: { type: Number, default: 1 }
 }, { timestamps: true })
 
 const companyTracker = new Schema({
@@ -57,6 +59,8 @@ const user = new Schema({
     password: { type: String, required: true },
     companyId: { type: Schema.Types.ObjectId, ref: 'Company', index: true },
     role: { type: String, enum: ['staff', 'owner', 'admin', 'dispatcher', 'viewer'], default: 'admin' },
+    permissionsPacked: { type: String, default: '' },
+    permissionsVersion: { type: Number, default: 1 },
     // Legacy embedded fields (kept for compatibility and gradual migration).
     pois: [point],
     trackers: [tracker]
