@@ -72,6 +72,7 @@ function App() {
           onTrackings={handleTrackings}
           onLogout={handleLogout}
           onDarkMode={handleDarkMode}
+          darkmode={darkmode}
         />
       )}
       <ToastContainer />
