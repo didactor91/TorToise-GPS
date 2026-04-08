@@ -49,11 +49,11 @@ done
 echo "▶ Bootstrapping demo user..."
 docker run --rm \
     --network "$(docker network ls --filter name=tortoise --format '{{.Name}}' | head -1)" \
-    -e API_URL=http://track-api:8080/api \
+    -v "$APP_DIR/tracker-simulator:/app/tracker-simulator" \
+    -e API_URL=http://tortoise-track-api:8080/api \
     -w /app/tracker-simulator \
     node:22-alpine \
-    sh -c "npm install --silent && node setup.js" 2>/dev/null || \
-    API_URL=https://tortoisegps.didtor.dev/api node "$APP_DIR/tracker-simulator/setup.js"
+    sh -c "npm install --silent && node setup.js"
 
 # ── 6. Status ───────────────────────────────────────────────────────
 echo ""
