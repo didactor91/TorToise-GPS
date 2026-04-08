@@ -79,6 +79,25 @@ wait_for_simulator_stable() {
     return 1
 }
 
+wait_for_simulator_points() {
+    local attempts="${1:-12}"
+    local sleep_seconds="${2:-5}"
+
+    echo "▶ Checking simulator emits points..."
+    for i in $(seq 1 "$attempts"); do
+        if docker logs --since 25s "$SIM_CONTAINER" 2>&1 | grep -q '\[simulator\] -> SN:'; then
+            echo "  ✅ Simulator is emitting points"
+            return 0
+        fi
+        echo "  ... no GPS frames yet ($i/$attempts)"
+        sleep "$sleep_seconds"
+    done
+
+    echo "  ❌ Simulator is not emitting points. Last logs:"
+    docker logs --tail 120 "$SIM_CONTAINER" || true
+    return 1
+}
+
 # ── Guard: env file must exist ──────────────────────────────────────
 if [ ! -f "$ENV_FILE" ]; then
     echo "❌ $ENV_FILE not found."
@@ -106,6 +125,7 @@ wait_for_http "http://localhost/api/health" "API"
 wait_for_http "http://localhost" "Frontend (Caddy)"
 wait_for_tcp "127.0.0.1" "5000" "GPS ingest"
 wait_for_simulator_stable
+wait_for_simulator_points
 
 # ── 5. Bootstrap demo user (idempotent) ─────────────────────────────
 echo "▶ Bootstrapping demo user..."
@@ -119,6 +139,7 @@ docker run --rm \
 
 # Confirm simulator remains stable after bootstrap task.
 wait_for_simulator_stable 6 5
+wait_for_simulator_points 6 5
 
 # ── 6. Status ───────────────────────────────────────────────────────
 echo ""

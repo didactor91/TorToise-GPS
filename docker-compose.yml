@@ -66,6 +66,10 @@ services:
       TCP_PORT: 5000
       TCP_HOST: track-tcp
       API_URL: http://track-api:8080/api
+      SIM_STATE_FILE: /sim-state/state.json
+      SIM_HEARTBEAT_FILE: /sim-state/heartbeat
+    volumes:
+      - simulator-state:/sim-state
     depends_on:
       - track-tcp
 
@@ -86,3 +90,4 @@ services:
 
 volumes:
   mongo-data:
+  simulator-state:
