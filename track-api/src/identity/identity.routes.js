@@ -1,11 +1,13 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const auth = require('../shared/auth.middleware')
+const { createRateLimiter } = require('../shared/rate-limit.middleware')
 const service = require('./identity.service')
 
 const { env: { JWT_SECRET } } = process
 
 const router = express.Router()
+const loginRateLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20 })
 
 router.post('/users', async (req, res) => {
     const { body: { name, surname, email, password } } = req
@@ -14,7 +16,7 @@ router.post('/users', async (req, res) => {
     res.status(201).json({ message: 'Ok, user registered.' })
 })
 
-router.post('/users/auth', async (req, res) => {
+router.post('/users/auth', loginRateLimit, async (req, res) => {
     const { body: { email, password } } = req
 
     const sub = await service.authenticateUser(email, password)

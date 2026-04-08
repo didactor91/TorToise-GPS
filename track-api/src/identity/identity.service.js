@@ -35,9 +35,11 @@ const identityService = {
 
         return (async () => {
             const user = await repo.findByEmail(email)
-            if (!user) throw new LogicError(`user with email ${email} doesn't exists`)
+            // Deliberately return the same error for user-not-found and bad password
+            // to prevent user enumeration.
+            if (!user) throw new LogicError('invalid credentials')
             if (await argon2.verify(user.password, password)) return user.id
-            else throw new LogicError('wrong credentials')
+            else throw new LogicError('invalid credentials')
         })()
     },
 

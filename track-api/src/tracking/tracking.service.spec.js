@@ -23,7 +23,7 @@ describe('trackingService', () => {
         let trackerData, trackerData2
 
         beforeEach(async () => {
-            lat = Math.random() * 100
+            lat = -80 + Math.random() * 160
             lon = Math.random() * 10
             _password = await argon2.hash(password)
             trackerData2 = { serialNumber: '1234567890', licensePlate: '1234-ABC' }
@@ -128,7 +128,7 @@ describe('trackingService', () => {
         let trackerData, trackerData2
 
         beforeEach(async () => {
-            lat = Math.random() * 100
+            lat = -80 + Math.random() * 160
             lon = Math.random() * 10
             _password = await argon2.hash(password)
             trackerData2 = { serialNumber: '1234567890', licensePlate: '1234-ABC' }
@@ -244,6 +244,24 @@ describe('trackingService', () => {
                 expect(error.message).toBe('incorrect track info')
             }
         })
+
+        it('should fail on out-of-range latitude', async () => {
+            const trackData = {
+                serialNumber: '1234567890',
+                latitude: 123.456,
+                longitude: lon,
+                speed: 50,
+                status: 'ON',
+                date: new Date().toISOString()
+            }
+
+            try {
+                await trackingService.addTrackTCP(trackData)
+            } catch (error) {
+                expect(error).toBeInstanceOf(InputError)
+                expect(error.message).toBe('latitude out of range')
+            }
+        })
     })
 
     describe('retrieveLastTrack', () => {
@@ -252,7 +270,7 @@ describe('trackingService', () => {
         let lat, lon
 
         beforeEach(async () => {
-            lat = Math.random() * 100
+            lat = -80 + Math.random() * 160
             lon = Math.random() * 10
             _password = await argon2.hash(password)
             user = await User.create({
@@ -334,7 +352,7 @@ describe('trackingService', () => {
         let lat, lon
 
         beforeEach(async () => {
-            lat = Math.random() * 100
+            lat = -80 + Math.random() * 160
             lon = Math.random() * 10
             _password = await argon2.hash(password)
             user = await User.create({
