@@ -9,11 +9,12 @@ interface HomeProps {
 }
 
 function Home({ darkmode }: HomeProps) {
-  const { pois, trackers, liveTracks, deletePOI, deleteTracker, goToDetail } = useLiveTracks()
+  const { pois, trackers, livePositions, deletePOI, deleteTracker, goToDetail } = useLiveTracks()
 
   const mapRef = useRef<L.Map | null>(null)
   const poiMarkRef = useRef<L.Marker[]>([])
-  const truckMarkRef = useRef<L.Marker[]>([])
+  // Truck markers indexed by serialNumber for O(1) update without destroy/recreate
+  const truckMarkRef = useRef<Map<string, L.Marker>>(new Map())
   const tileLightRef = useRef<L.TileLayer | null>(null)
   const tileDarkRef = useRef<L.TileLayer | null>(null)
 
@@ -35,7 +36,7 @@ function Home({ darkmode }: HomeProps) {
 
   const clearTruckMarkers = () => {
     truckMarkRef.current.forEach(m => m.remove())
-    truckMarkRef.current = []
+    truckMarkRef.current.clear()
   }
 
   const renderPOIMarkers = (items: HomePoi[]) => {
@@ -56,28 +57,50 @@ function Home({ darkmode }: HomeProps) {
     })
   }
 
-  const renderTruckMarkers = (trucks: LiveTrack[] | HomeTracker[]) => {
+  const makeTruckIcon = (status?: string | null) => {
+    const bgColor = status === 'ON' ? '#22c55e' : '#ef4444'
+    return L.divIcon({
+      className: '',
+      html: `<div style="background:${bgColor};width:30px;height:30px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;">🚚</div>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    })
+  }
+
+  /**
+   * Upsert truck markers — never destroys existing markers.
+   * - New truck → create marker and add to map
+   * - Known truck → move existing marker with setLatLng + update icon
+   * This prevents the flicker/disappear effect caused by destroy+recreate.
+   */
+  const upsertTruckMarkers = (trucks: Array<LiveTrack | HomeTracker>) => {
     if (!mapRef.current) return
-    clearTruckMarkers()
     trucks.forEach(truck => {
-      const bgColor = 'status' in truck && truck.status === 'ON' ? '#22c55e' : '#ef4444'
-      const truckIcon = L.divIcon({
-        className: '',
-        html: `<div style="background:${bgColor};width:30px;height:30px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;">🚚</div>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 30]
-      })
-      const lat = 'latitude' in truck ? truck.latitude : 0
-      const lng = 'longitude' in truck ? truck.longitude : 0
-      const speed = 'speed' in truck ? truck.speed : 0
-      const marker = L.marker([lat, lng], {
-        icon: truckIcon,
-        title: `SN: ${truck.serialNumber} - Speed: ${speed} Km/h`
-      })
-      const popupHtml = `<h2>LP: ${truck.licensePlate}</h2><p>SN: ${truck.serialNumber}</p><hr/><button id="detailTracker" value="${truck.serialNumber}">DETAIL</button><hr/><button id="deleteTracker" value="${truck.serialNumber}">DELETE</button>`
-      marker.bindPopup(popupHtml)
-      marker.addTo(mapRef.current!)
-      truckMarkRef.current.push(marker)
+      const lat = 'latitude' in truck ? (truck.latitude ?? 0) : 0
+      const lng = 'longitude' in truck ? (truck.longitude ?? 0) : 0
+      const speed = 'speed' in truck ? (truck.speed ?? 0) : 0
+      const status = 'status' in truck ? truck.status : undefined
+      const sn = truck.serialNumber
+      const lp = truck.licensePlate ?? sn
+      const popupHtml = `<h2>LP: ${lp}</h2><p>SN: ${sn}</p><hr/><button id="detailTracker" value="${sn}">DETAIL</button><hr/><button id="deleteTracker" value="${sn}">DELETE</button>`
+
+      const existing = truckMarkRef.current.get(sn)
+      if (existing) {
+        // Move existing marker — no flicker
+        existing.setLatLng([lat, lng])
+        existing.setIcon(makeTruckIcon(status))
+        existing.setPopupContent(popupHtml)
+        existing.options.title = `SN: ${sn} - Speed: ${speed} Km/h`
+      } else {
+        // First time seeing this truck — create marker
+        const marker = L.marker([lat, lng], {
+          icon: makeTruckIcon(status),
+          title: `SN: ${sn} - Speed: ${speed} Km/h`
+        })
+        marker.bindPopup(popupHtml)
+        marker.addTo(mapRef.current!)
+        truckMarkRef.current.set(sn, marker)
+      }
     })
   }
 
@@ -134,17 +157,19 @@ function Home({ darkmode }: HomeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pois])
 
-  // Update truck markers imperatively on live subscription data
+  // Update truck markers on live subscription data — upsert, never destroy
   useEffect(() => {
-    if (!mapRef.current || !liveTracks.length) return
-    renderTruckMarkers(liveTracks)
+    if (!mapRef.current || !livePositions.length) return
+    upsertTruckMarkers(livePositions)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveTracks])
+  }, [livePositions])
 
-  // Re-render truck markers whenever tracker list changes (initial load)
+  // Initial truck markers from tracker list (before any WS frame arrives)
   useEffect(() => {
     if (!mapRef.current || !trackers.length) return
-    renderTruckMarkers(trackers)
+    // Only paint trackers that don't have a live position yet
+    const unknown = trackers.filter(t => !truckMarkRef.current.has(t.serialNumber))
+    if (unknown.length) upsertTruckMarkers(unknown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackers])
 
