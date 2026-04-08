@@ -4,6 +4,7 @@ const identityResolver = require('./identity.resolver')
 const fleetResolver = require('./fleet.resolver')
 const poiResolver = require('./poi.resolver')
 const trackingResolver = require('./tracking.resolver')
+const backofficeResolver = require('./backoffice.resolver')
 
 const DateTimeScalar = new GraphQLScalarType({
   name: 'DateTime',
@@ -20,13 +21,15 @@ const resolvers = {
     ...identityResolver.Query,
     ...fleetResolver.Query,
     ...poiResolver.Query,
-    ...trackingResolver.Query
+    ...trackingResolver.Query,
+    ...backofficeResolver.Query
   },
 
   Mutation: {
     ...identityResolver.Mutation,
     ...fleetResolver.Mutation,
-    ...poiResolver.Mutation
+    ...poiResolver.Mutation,
+    ...backofficeResolver.Mutation
   },
 
   Subscription: {

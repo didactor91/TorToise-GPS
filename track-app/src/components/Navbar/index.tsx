@@ -7,12 +7,24 @@ interface NavbarProps {
   onProfile: () => void
   onPlaces: () => void
   onTrackings: () => void
+  onBackoffice?: () => void
+  showBackoffice?: boolean
   onLogout: () => void
   onDarkMode: () => void
   darkmode: boolean
 }
 
-function Navbar({ onHome, onProfile, onPlaces, onTrackings, onLogout, onDarkMode, darkmode }: NavbarProps) {
+function Navbar({
+  onHome,
+  onProfile,
+  onPlaces,
+  onTrackings,
+  onBackoffice,
+  showBackoffice = false,
+  onLogout,
+  onDarkMode,
+  darkmode
+}: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState<boolean>(false)
 
   const toggle = () => setMenuOpen(prev => !prev)
@@ -40,6 +52,9 @@ function Navbar({ onHome, onProfile, onPlaces, onTrackings, onLogout, onDarkMode
           <a className="navbar-item" onClick={() => { onProfile(); close() }}>Profile</a>
           <a className="navbar-item" onClick={() => { onPlaces(); close() }}>Places</a>
           <a className="navbar-item" onClick={() => { onTrackings(); close() }}>Trackers</a>
+          {showBackoffice && onBackoffice && (
+            <a className="navbar-item" onClick={() => { onBackoffice(); close() }}>Backoffice</a>
+          )}
         </div>
 
         <div className="navbar-end">

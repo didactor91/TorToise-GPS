@@ -10,19 +10,25 @@ import TrackingsNew from './Trackings/New'
 import TrackingDetail from './TrackingDetail'
 import Places from './Places'
 import PlacesNew from './Places/New'
+import Backoffice from './Backoffice'
 import { onSessionExpired } from '../apollo/session'
 import Navbar from './Navbar'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '../hooks/useAuth'
+import { useMeQuery } from '../generated/graphql'
 
 interface ProtectedRouteProps {
   isLoggedIn: boolean
   element: React.ReactElement
+  allow?: boolean
+  redirectTo?: string
 }
 
-function ProtectedRoute({ isLoggedIn, element }: ProtectedRouteProps) {
-  return isLoggedIn ? element : <Navigate to="/login" replace />
+function ProtectedRoute({ isLoggedIn, element, allow = true, redirectTo = '/home' }: ProtectedRouteProps) {
+  if (!isLoggedIn) return <Navigate to="/login" replace />
+  if (!allow) return <Navigate to={redirectTo} replace />
+  return element
 }
 
 interface TrackingDetailRouteProps {
@@ -40,6 +46,8 @@ function App() {
 
   const navigate = useNavigate()
   const { handleLogin, handleRegister, handleLogout } = useAuth(setIsLoggedIn)
+  const { data: meData } = useMeQuery({ skip: !isLoggedIn })
+  const isStaff = meData?.me?.role === 'staff'
 
   // ── Session expiry handler ────────────────────────────────────────────────
   useEffect(() => {
@@ -56,11 +64,15 @@ function App() {
   const handlePlaces    = () => navigate('/places')
   const handleTrackings = () => navigate('/trackers')
   const handleProfile   = () => navigate('/profile')
+  const handleBackoffice = () => navigate('/backoffice')
   const handleDarkMode  = () => setDarkmode(prev => !prev)
 
   // ── shorthand for protected routes ───────────────────────────────────────
   const guard = (element: React.ReactElement) =>
     <ProtectedRoute isLoggedIn={isLoggedIn} element={element} />
+
+  const staffGuard = (element: React.ReactElement) =>
+    <ProtectedRoute isLoggedIn={isLoggedIn} allow={isStaff} element={element} />
 
   return (
     <div>
@@ -70,6 +82,8 @@ function App() {
           onProfile={handleProfile}
           onPlaces={handlePlaces}
           onTrackings={handleTrackings}
+          onBackoffice={handleBackoffice}
+          showBackoffice={isStaff}
           onLogout={handleLogout}
           onDarkMode={handleDarkMode}
           darkmode={darkmode}
@@ -91,6 +105,7 @@ function App() {
 
         <Route path="/trackers"     element={guard(<Trackings />)} />
         <Route path="/trackers/new" element={guard(<TrackingsNew />)} />
+        <Route path="/backoffice" element={staffGuard(<Backoffice />)} />
 
         <Route path="/detail/:serialNumber" element={guard(<TrackingDetailRoute darkmode={darkmode} />)} />
 

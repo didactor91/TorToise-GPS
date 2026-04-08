@@ -8,7 +8,8 @@
     "watch": "nodemon .",
     "debug": "node debug .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "promote:staff": "node scripts/promote-staff.js"
   },
   "keywords": [],
   "author": "",

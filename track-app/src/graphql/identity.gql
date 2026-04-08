@@ -4,14 +4,30 @@ mutation LoginUser($email: String!, $password: String!) {
   }
 }
 mutation RegisterUser($input: RegisterUserInput!) {
-  registerUser(input: $input) { success message }
+  registerUser(input: $input) {
+    success
+    message
+  }
 }
 query Me {
-  me { id name surname email }
+  me {
+    id
+    name
+    surname
+    email
+    role
+    companyId
+  }
 }
 mutation UpdateUser($input: UpdateUserInput!) {
-  updateUser(input: $input) { success message }
+  updateUser(input: $input) {
+    success
+    message
+  }
 }
 mutation DeleteUser {
-  deleteUser { success message }
+  deleteUser {
+    success
+    message
+  }
 }
