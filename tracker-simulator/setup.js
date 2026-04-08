@@ -7,13 +7,16 @@
  * Rules:
  *  1. If livedemo@example.com does NOT exist → register it.
  *  2. If livedemo@example.com exists → authenticate.
- *  3. For each of the 4 simulator serial numbers:
- *       a. If the tracker already belongs to livedemo → skip.
- *       b. If the tracker belongs to ANOTHER user → warn and skip.
- *       c. If nobody owns it → add it to livedemo.
+ *  3. Enforce strict demo whitelist in livedemo:
+ *       a. Any non-demo tracker currently attached to livedemo → remove it.
+ *       b. For each demo serial:
+ *          - If already in livedemo → skip.
+ *          - If owned by another user → warn and skip.
+ *          - If unassigned → add to livedemo.
  */
 
 require('dotenv').config()
+const { SIM_TRACKERS } = require('./simulator.constants')
 
 const API_URL = process.env.API_URL || 'http://localhost:8085/api'
 
@@ -21,13 +24,7 @@ const LIVEDEMO_EMAIL    = 'livedemo@example.com'
 const LIVEDEMO_PASSWORD = 'LiveDemo'
 const LIVEDEMO_NAME     = 'Live'
 const LIVEDEMO_SURNAME  = 'Demo'
-
-const SIM_TRACKERS = [
-    { serialNumber: '9900110011', licensePlate: 'SIM-0011' },
-    { serialNumber: '9900110012', licensePlate: 'SIM-0012' },
-    { serialNumber: '9900110013', licensePlate: 'SIM-0013' },
-    { serialNumber: '9900110014', licensePlate: 'SIM-0014' },
-]
+const DEMO_SERIALS = new Set(SIM_TRACKERS.map(t => t.serialNumber))
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -113,9 +110,30 @@ async function main() {
     const ownedSNs = new Set(existingTrackers.map(t => t.serialNumber))
     log('📋', `livedemo currently has ${existingTrackers.length} tracker(s): [${[...ownedSNs].join(', ') || 'none'}]`)
 
-    // ── 3. Assign each simulator tracker ─────────────────────────────────────
+    // ── 3. Enforce whitelist: remove non-demo trackers from livedemo ─────────
+    for (const tracker of existingTrackers) {
+        if (DEMO_SERIALS.has(tracker.serialNumber)) continue
+
+        try {
+            await api(`/trackers/${tracker._id}/delete`, {
+                method: 'DELETE',
+                token
+            })
+            log('🧹', `Removed non-demo tracker from livedemo: SN ${tracker.serialNumber}`)
+            ownedSNs.delete(tracker.serialNumber)
+        } catch (err) {
+            log('❌', `Failed to remove non-demo tracker SN ${tracker.serialNumber}: ${err.message}`)
+        }
+    }
+
+    // ── 4. Assign each simulator tracker ─────────────────────────────────────
     for (const tracker of SIM_TRACKERS) {
         const { serialNumber, licensePlate } = tracker
+
+        if (!DEMO_SERIALS.has(serialNumber)) {
+            log('⛔', `Refusing to assign non-demo serial ${serialNumber}`)
+            continue
+        }
 
         // a. Already owned by livedemo
         if (ownedSNs.has(serialNumber)) {
@@ -142,7 +160,7 @@ async function main() {
         }
     }
 
-    // ── 4. Final state ────────────────────────────────────────────────────────
+    // ── 5. Final state ────────────────────────────────────────────────────────
     let finalTrackers = []
     try {
         finalTrackers = await api('/trackers', { token }) || []

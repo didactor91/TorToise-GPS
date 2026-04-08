@@ -5,7 +5,10 @@ const MINUTE_MS = 60 * 1000
 const DEFAULT_RETENTION_DAYS = 60
 const DEFAULT_INTERVAL_MINUTES = 60
 const DEFAULT_INITIAL_DELAY_MINUTES = 2
-const DEFAULT_SIMULATOR_SERIALS = ['9900110011', '9900110012', '9900110013', '9900110014']
+const DEFAULT_SIMULATOR_SERIALS = Array.from(
+    { length: 30 },
+    (_, index) => String(9900111000 + index + 1)
+)
 
 function parsePositiveInteger(rawValue, fallback) {
     const parsed = Number.parseInt(rawValue, 10)

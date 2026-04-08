@@ -1,23 +1,20 @@
 'use strict'
 const fs = require('fs')
 const routeDataset = require('./routes.osrm.half.json')
+const { ROUTE_COUNT, TRUCKS_PER_ROUTE, TOTAL_TRUCKS, SIM_TRACKERS } = require('./simulator.constants')
 const STATE_FILE = process.env.SIM_STATE_FILE || '/tmp/tortoise-sim-state.json'
 
 /**
- * Realistic GPS simulator for 4 trucks driving on European road routes.
+ * Realistic GPS simulator for 30 trucks on 15 routes.
  *
- * Each truck follows a predefined waypoint route (real road coordinates).
- * Between waypoints the truck interpolates smoothly, simulating actual movement.
- * Speed varies realistically (motorway, urban, stop), including long rests.
+ * Each route has 2 trucks assigned in opposite directions:
+ * one starts outbound, the other starts inbound (reverse).
+ *
+ * Base routes are loaded from OSRM dataset. If fewer than 15 routes are present,
+ * additional operational routes are derived as contiguous sub-routes.
  */
 
-// ── Real European routes loaded from OSRM dataset ─────────────────────────────
-const TRUCK_ASSIGNMENTS = [
-    { serialNumber: '9900110011', licensePlate: '1234-ABC-001', routeId: 'route-001' }, // Paris-Lyon
-    { serialNumber: '9900110012', licensePlate: '1234-ABC-002', routeId: 'route-002' }, // Madrid-Barcelona
-    { serialNumber: '9900110013', licensePlate: '1234-ABC-003', routeId: 'route-003' }, // Barcelona-Valencia
-    { serialNumber: '9900110014', licensePlate: '1234-ABC-004', routeId: 'route-004' }, // Madrid-Sevilla
-]
+const INTERVAL_SECONDS = 3
 
 function buildRestStopIndexes(pointCount) {
     // Define plausible long-rest points distributed along the route.
@@ -28,20 +25,94 @@ function buildRestStopIndexes(pointCount) {
     return [...new Set(indexes)]
 }
 
-const routesById = new Map(routeDataset.routes.map(route => [route.id, route]))
+function buildRouteCatalog(datasetRoutes, targetCount = ROUTE_COUNT) {
+    const validRoutes = datasetRoutes
+        .filter(route => Array.isArray(route.waypoints) && route.waypoints.length >= 2)
+        .map(route => ({
+            name: route.name || route.id,
+            waypoints: route.waypoints
+        }))
 
+    if (!validRoutes.length) {
+        throw new Error('No valid routes found in routes dataset')
+    }
+
+    const routes = []
+    for (const baseRoute of validRoutes) {
+        routes.push({ name: baseRoute.name, waypoints: baseRoute.waypoints })
+        if (routes.length >= targetCount) break
+    }
+
+    // Derive additional contiguous sub-routes when dataset provides fewer than target routes.
+    const windows = [
+        [0.05, 0.65],
+        [0.2, 0.85],
+        [0.35, 0.95],
+        [0.1, 0.55],
+        [0.45, 0.9]
+    ]
+
+    let pass = 0
+    while (routes.length < targetCount) {
+        for (const baseRoute of validRoutes) {
+            const points = baseRoute.waypoints
+            const [startFrac, endFrac] = windows[pass % windows.length]
+            let startIndex = Math.floor((points.length - 1) * startFrac)
+            let endIndex = Math.ceil((points.length - 1) * endFrac)
+
+            if (endIndex - startIndex < 2) {
+                startIndex = 0
+                endIndex = points.length - 1
+            }
+
+            const subRoute = points.slice(startIndex, endIndex + 1)
+            routes.push({
+                name: `${baseRoute.name} segment ${pass + 1}`,
+                waypoints: subRoute
+            })
+
+            if (routes.length >= targetCount) break
+        }
+        pass++
+    }
+
+    return routes.slice(0, targetCount).map((route, index) => ({
+        id: `route-${String(index + 1).padStart(3, '0')}`,
+        name: route.name,
+        waypoints: route.waypoints
+    }))
+}
+
+const ROUTE_CATALOG = buildRouteCatalog(routeDataset.routes, ROUTE_COUNT)
+
+const TRUCK_ASSIGNMENTS = ROUTE_CATALOG.flatMap((route, routeIndex) => {
+    const outboundTruck = SIM_TRACKERS[routeIndex * TRUCKS_PER_ROUTE]
+    const inboundTruck = SIM_TRACKERS[routeIndex * TRUCKS_PER_ROUTE + 1]
+
+    return [
+        { ...outboundTruck, routeId: route.id, startsInbound: false },
+        { ...inboundTruck, routeId: route.id, startsInbound: true }
+    ]
+})
+
+if (ROUTE_CATALOG.length !== ROUTE_COUNT || TRUCK_ASSIGNMENTS.length !== TOTAL_TRUCKS) {
+    throw new Error(`Invalid simulator topology: routes=${ROUTE_CATALOG.length}, trucks=${TRUCK_ASSIGNMENTS.length}`)
+}
+
+const routesById = new Map(ROUTE_CATALOG.map(route => [route.id, route]))
 const ROUTES = TRUCK_ASSIGNMENTS.map(truck => {
-    const datasetRoute = routesById.get(truck.routeId)
-    if (!datasetRoute || !Array.isArray(datasetRoute.waypoints) || datasetRoute.waypoints.length < 2) {
+    const route = routesById.get(truck.routeId)
+    if (!route || !Array.isArray(route.waypoints) || route.waypoints.length < 2) {
         throw new Error(`Invalid or missing route dataset for id: ${truck.routeId}`)
     }
 
     return {
         serialNumber: truck.serialNumber,
         licensePlate: truck.licensePlate,
-        routeName: datasetRoute.name,
-        restStopIndexes: buildRestStopIndexes(datasetRoute.waypoints.length),
-        waypoints: datasetRoute.waypoints
+        routeName: route.name,
+        startsInbound: truck.startsInbound,
+        restStopIndexes: buildRestStopIndexes(route.waypoints.length),
+        waypoints: route.waypoints
     }
 })
 
@@ -49,13 +120,13 @@ const ROUTES = TRUCK_ASSIGNMENTS.map(truck => {
 
 const trucks = ROUTES.map(route => ({
     serialNumber: route.serialNumber,
-    waypointIndex: 0,
-    direction: 1, // 1 => outbound, -1 => return on same path
+    waypointIndex: route.startsInbound ? route.waypoints.length - 1 : 0,
+    direction: route.startsInbound ? -1 : 1, // 1 => outbound, -1 => inbound
     progress: Math.random(),       // start at random point in first segment
     // Speed in km/h — varies per truck to desynchronize them
     speedKmh: 80 + Math.floor(Math.random() * 40),
     ticksSinceLongRest: 0,
-    nextLongRestAfterTicks: 30 + Math.floor(Math.random() * 61), // 6–18 min
+    nextLongRestAfterTicks: randomLongRestThresholdTicks(),
     longRestTicksRemaining: 0,
     stopTicksRemaining: 0,
     heading: Math.floor(Math.random() * 360),
@@ -79,9 +150,12 @@ function loadState() {
             const saved = bySerial.get(truck.serialNumber)
             if (!saved) return
 
-            if (typeof saved.waypointIndex === 'number') truck.waypointIndex = saved.waypointIndex
+            if (typeof saved.waypointIndex === 'number') {
+                const maxIndex = truck.waypoints.length - 1
+                truck.waypointIndex = Math.max(0, Math.min(maxIndex, Math.floor(saved.waypointIndex)))
+            }
             if (saved.direction === 1 || saved.direction === -1) truck.direction = saved.direction
-            if (typeof saved.progress === 'number') truck.progress = saved.progress
+            if (typeof saved.progress === 'number') truck.progress = Math.max(0, Math.min(1, saved.progress))
             if (typeof saved.speedKmh === 'number') truck.speedKmh = saved.speedKmh
             if (typeof saved.ticksSinceLongRest === 'number') truck.ticksSinceLongRest = saved.ticksSinceLongRest
             if (typeof saved.nextLongRestAfterTicks === 'number') truck.nextLongRestAfterTicks = saved.nextLongRestAfterTicks
@@ -176,12 +250,13 @@ function date() {
 }
 
 function randomLongRestThresholdTicks() {
-    // Per-truck threshold for next long rest (one frame per truck every 12s).
-    return 30 + Math.floor(Math.random() * 61) // 30–90 ticks => ~6–18 min
+    // 120–360 ticks with 3s updates => ~6–18 min.
+    return 120 + Math.floor(Math.random() * 241)
 }
 
 function randomLongRestDurationTicks() {
-    return 10 + Math.floor(Math.random() * 31) // 10–40 ticks => ~2–8 min
+    // 40–160 ticks with 3s updates => ~2–8 min.
+    return 40 + Math.floor(Math.random() * 121)
 }
 
 function isRestWaypoint(truck) {
@@ -201,8 +276,6 @@ function currentSegment(truck) {
 }
 
 // ── Advance a truck along its route by `intervalSeconds` ─────────────────────
-
-const INTERVAL_SECONDS = 3  // called every 3 seconds
 
 function advanceTruck(truck) {
     const waypoints = truck.waypoints
@@ -329,4 +402,9 @@ const simulateGPSInRoute = () => {
 // Backward-compatible alias for previous API name.
 const randomGPS = simulateGPSInRoute
 
-module.exports = { simulateGPSInRoute, randomGPS }
+module.exports = {
+    simulateGPSInRoute,
+    randomGPS,
+    TRUCK_COUNT: TOTAL_TRUCKS,
+    SIM_TRACKERS
+}
