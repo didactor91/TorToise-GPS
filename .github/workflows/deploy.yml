@@ -1,0 +1,86 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  # ── Test ────────────────────────────────────────────────────────────────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run all workspace tests
+        run: |
+          npm run test:api
+          npm run test:tcp
+          npm run test:utils
+          npm run test:data
+          npm run test:sim
+
+      - name: TypeScript check (frontend)
+        run: cd track-app && npx tsc --noEmit
+
+  # ── Deploy API ──────────────────────────────────────────────────────────────
+  deploy-api:
+    name: Deploy track-api
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy track-api
+        run: fly deploy --config fly/api.toml --dockerfile track-api/Dockerfile --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  # ── Deploy TCP ──────────────────────────────────────────────────────────────
+  deploy-tcp:
+    name: Deploy track-tcp
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy track-tcp
+        run: fly deploy --config fly/tcp.toml --dockerfile track-tcp/Dockerfile --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  # ── Deploy App ──────────────────────────────────────────────────────────────
+  deploy-app:
+    name: Deploy track-app
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy track-app
+        run: fly deploy --config fly/app.toml --dockerfile track-app/Dockerfile --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
