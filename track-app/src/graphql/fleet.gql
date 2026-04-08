@@ -1,0 +1,15 @@
+query GetTrackers {
+  trackers { id serialNumber licensePlate }
+}
+query TrackerBySN($serialNumber: String!) {
+  trackerBySN(serialNumber: $serialNumber) { id serialNumber licensePlate }
+}
+mutation AddTracker($input: AddTrackerInput!) {
+  addTracker(input: $input) { success message }
+}
+mutation DeleteTracker($id: ID!) {
+  deleteTracker(id: $id) { success message }
+}
+mutation UpdateTracker($id: ID!, $input: UpdateTrackerInput!) {
+  updateTracker(id: $id, input: $input) { success message }
+}

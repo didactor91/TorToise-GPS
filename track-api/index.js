@@ -1,33 +1,93 @@
 require('dotenv').config()
-
+const http = require('http')
 const express = require('express')
-const package = require('./package.json')
-const routes = require('./routes')
 const cors = require('cors')
+const fs = require('fs')
+const path = require('path')
+const pkg = require('./package.json')
 const { mongoose } = require('track-data')
+const errorMiddleware = require('./src/shared/error.middleware')
 
-const { env: { PORT, MONGO_URL_USER_DATA_TEST: URL }, argv: [, , port = PORT || 8080], } = process;
+const { ApolloServer } = require('@apollo/server')
+const { expressMiddleware } = require('@apollo/server/express4')
+const { WebSocketServer } = require('ws')
+const { useServer } = require('graphql-ws/lib/use/ws')
+const { makeExecutableSchema } = require('@graphql-tools/schema')
 
-(async () => {
-    try {
-        await mongoose.connect(URL, { 
-            useNewUrlParser: true,
-            useFindAndModify: false,
-            useCreateIndex: true
+const identityRoutes = require('./src/identity/identity.routes')
+const fleetRoutes    = require('./src/fleet/fleet.routes')
+const trackingRoutes = require('./src/tracking/tracking.routes')
+const poiRoutes      = require('./src/poi/poi.routes')
+
+const resolvers   = require('./src/graphql/resolvers')
+const { buildContext } = require('./src/graphql/context')
+
+const { env: { PORT = 8080, MONGO_URL } } = process
+
+const typeDefs = fs.readFileSync(path.join(__dirname, 'src/graphql/schema.graphql'), 'utf8')
+const schema = makeExecutableSchema({ typeDefs, resolvers })
+
+;(async () => {
+    await mongoose.connect(MONGO_URL)
+
+    const app = express()
+    app.use(cors())
+    app.use(express.json())
+
+    // REST routes — unchanged
+    app.get('/api/health', (req, res) => res.json({ status: 'ok', version: pkg.version }))
+    app.use('/api', identityRoutes)
+    app.use('/api', fleetRoutes)
+    app.use('/api', trackingRoutes)
+    app.use('/api', poiRoutes)
+
+    app.use((req, res, next) => {
+        if (req.path === '/graphql') return next()
+        res.status(404).json({ error: 'Not found.' })
+    })
+    app.use(errorMiddleware)
+
+    // HTTP server (required for WebSocket upgrades)
+    const httpServer = http.createServer(app)
+
+    // WebSocket server for GraphQL subscriptions
+    const wsServer = new WebSocketServer({ server: httpServer, path: '/graphql' })
+    const serverCleanup = useServer(
+        {
+            schema,
+            context: (ctx) => buildContext({ connectionParams: ctx.connectionParams })
+        },
+        wsServer
+    )
+
+    // Apollo Server 4
+    const apolloServer = new ApolloServer({
+        schema,
+        plugins: [
+            {
+                async serverWillStart() {
+                    return {
+                        async drainServer() {
+                            await serverCleanup.dispose()
+                        }
+                    }
+                }
+            }
+        ]
+    })
+
+    await apolloServer.start()
+
+    app.use(
+        '/graphql',
+        cors(),
+        express.json(),
+        expressMiddleware(apolloServer, {
+            context: async ({ req }) => buildContext({ req })
         })
-        console.log('Connection to mongo database')
+    )
 
-        const app = express()
-
-        app.use(cors())
-        app.use('/api', routes)
-
-        app.use(function (req, res, next) {
-            res.status(404).json({ error: 'Not found.' })
-        })
-
-        app.listen(port, () => console.log(`${package.name} ${package.version} up on port ${port}`))
-    } catch (error) {
-        console.log(error.name, error.message)
-    }
+    httpServer.listen(PORT, () =>
+        console.log(`${pkg.name} ${pkg.version} up on port ${PORT} — GraphQL at /graphql`)
+    )
 })()

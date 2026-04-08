@@ -1,27 +1,224 @@
 ![TorToiseGPS](track-doc/img/logo.png)
+
 # **T**or**T**oise **GPS**
+
+### 🚚 Real-time fleet tracking — 🛰 GPS over TCP
+
+**TorToise GPS** is a full-stack web application for real-time truck fleet tracking. GPS hardware transmits NMEA-like frames over TCP; the system ingests them, persists the positions, and pushes live updates to the map via **GraphQL Subscriptions (WebSocket)**.
+
 ---
-### 🚚 - Truck Tracking - 🛰
+
+## Tech Stack
+
+| Module | Tech |
+|--------|------|
+| **`track-app`** | React 18, TypeScript, Vite, Apollo Client 3, GraphQL, Leaflet + OpenStreetMap |
+| **`track-api`** | Express 5, Apollo Server 4, GraphQL (HTTP + WebSocket), Argon2, JWT HS256, MongoDB |
+| **`track-tcp`** | Node.js TCP server — parses GPS frames, forwards to API |
+| **`track-data`** | Shared Mongoose models (`User`, `Tracker`, `Track`, `POI`) |
+| **`track-utils`** | Shared Node.js utilities (validation, custom errors, HTTP call) |
+| **`tracker-simulator`** | Realistic GPS simulator — 4 trucks driving real European motorway routes |
+| **Database** | MongoDB 7 |
+
+> Maps use **OpenStreetMap** + **CartoDB Dark Matter** (dark mode). No API key required.
+
 ---
 
+## Architecture Overview
 
-**TorToise GPS** is a web application that shows the location of a GPS device in real time. In this case, focused on truck tracking.
+```
+Browser (React + Apollo Client)
+  │
+  ├── HTTP  POST /graphql        ← queries & mutations
+  └── WebSocket  ws://…/graphql  ← live truck positions (Subscription)
+         │
+  Apollo Server 4 (Express 5)   :8085
+  ├── /graphql   (HTTP + WS)     ← main API consumed by frontend
+  └── /api/tracks/TCP/add        ← unauthenticated REST endpoint for GPS hardware
+         │
+  track-tcp  :5000               ← raw TCP → parses frame → POST /api/tracks/TCP/add
+         │
+  MongoDB 7  :27017
+```
 
-## [Documentation](track-doc/README.md)
-## [Live Demo](http://tortoise-gps.surge.sh)
+---
 
-*Live Demo runs on Heroku Server, please be patient at first login attempt*
+## Quick Start — One Command
 
-## Live Demo Info ##
+```bash
+./start_local.sh
+```
 
-The simulated GPS tracks (random coordinates around the world) have the SN (can be erased and re-added with the SN itself): **9900110011, 9900220022, 9900330033, 9900440044**.
-**Log in with Mail: livedemo@mail.com // Pass: 123123123 (To see POIs and GPS signals)**
- 
- 
-For the **non simulated tracker** (LP: 3GLIVE-DEMO and **SN: 9170845958**), currently located in Lleida, if you want **to see a route in time, it was active on 07/15/2019 at 10:50 until that time same day at 11:15. If you select a time zone that includes part or all of that time interval, it will be displayed on the map**.
- 
-**In this last case and like the user livedemo@mail.com, please, I would appreciate that this one will not be erased**.
- 
-The map refresh rate is 45 seconds
- 
-Thanks.
+This single script:
+1. Starts a local MongoDB instance
+2. Starts the backend API on port **8085**
+3. Starts the TCP server on port **5000**
+4. Creates the demo user and assigns the 4 simulator trackers (idempotent — safe to re-run)
+5. Starts the GPS simulator (4 trucks moving in real time over WebSocket)
+6. Starts the Vite dev server on port **3000**
+
+**Prerequisites**: Node.js v18+ and MongoDB installed locally.
+
+### Access points
+
+| Service | URL |
+|---------|-----|
+| **Frontend** | http://localhost:3000 |
+| **GraphQL endpoint** | http://localhost:8085/graphql |
+| **API health** | http://localhost:8085/api/health |
+| **TCP server** | `localhost:5000` (raw TCP) |
+
+### Demo account
+
+Created automatically on first run:
+
+| | |
+|-|-|
+| **Email** | `livedemo@example.com` |
+| **Password** | `LiveDemo` |
+
+### Simulated trucks
+
+| Serial | Route | Road |
+|--------|-------|------|
+| `9900110011` | Madrid → Barcelona | A-2 |
+| `9900110012` | Paris → Lyon | A-6 |
+| `9900110013` | Barcelona → Valencia | AP-7 |
+| `9900110014` | Madrid → Sevilla | A-4 |
+
+---
+
+## Docker
+
+```bash
+docker compose up -d
+```
+
+| Service | URL / Port |
+|---------|-----------|
+| Frontend | http://localhost |
+| GraphQL + API | http://localhost:8080/graphql |
+| TCP Server | `localhost:5000` |
+| Mongo Express | http://localhost:8081 |
+
+After the stack is up, run the setup script once to create the demo user and assign trackers:
+
+```bash
+cd tracker-simulator
+API_URL=http://localhost:8080/api node setup.js
+```
+
+Then start the GPS simulator:
+
+```bash
+TCP_PORT=5000 TCP_HOST=127.0.0.1 node index.js
+```
+
+---
+
+## Manual Setup
+
+To start each service individually:
+
+```bash
+# 1. Install all workspace dependencies (run once from repo root)
+npm install
+
+# 2. Backend API — terminal 1
+cd track-api
+PORT=8085 MONGO_URL=mongodb://localhost:27017/tortoise-gps JWT_SECRET=your_secret node index.js
+
+# 3. TCP server — terminal 2
+cd track-tcp
+TCP_PORT=5000 API_URL=http://localhost:8085/api node server.js
+
+# 4. Bootstrap demo user + trackers (run once)
+cd tracker-simulator
+API_URL=http://localhost:8085/api node setup.js
+
+# 5. GPS simulator — terminal 3
+cd tracker-simulator
+TCP_PORT=5000 TCP_HOST=127.0.0.1 node index.js
+
+# 6. Frontend dev server — terminal 4
+cd track-app
+cp .env.dist .env
+npm run dev
+```
+
+The frontend proxies `/api` and `/graphql` automatically to `http://localhost:8085` via the Vite dev server.
+
+---
+
+## Testing
+
+All backend modules use **Vitest** with in-memory MongoDB (`mongodb-memory-server`) for isolated integration tests.
+
+```bash
+# Run tests per workspace
+npm run test:api        # 153 tests — API services + GraphQL resolvers
+npm run test:tcp        # 15 tests  — TCP parser + server
+npm run test:utils      # 5 tests   — validation + errors
+npm run test:data       # 10 tests  — Mongoose schemas
+npm run test:sim        # 12 tests  — GPS frame generator
+```
+
+### Frontend type-check
+
+```bash
+cd track-app
+npm run typecheck       # tsc --noEmit — must return 0 errors
+```
+
+### Regenerate GraphQL types
+
+Run this any time the GraphQL schema changes (requires API running on port 8085):
+
+```bash
+npm run codegen         # generates track-app/src/generated/graphql.ts
+```
+
+---
+
+## Project Structure
+
+```
+TorToise-GPS/
+├── track-app/                  # React 18 + TypeScript frontend
+│   └── src/
+│       ├── components/         # .tsx components (no logic)
+│       ├── hooks/              # Custom hooks (Apollo queries/mutations)
+│       ├── apollo/             # Apollo Client setup (links, auth, session)
+│       ├── graphql/            # .gql operation documents (codegen source)
+│       └── generated/          # Auto-generated typed hooks (graphql.ts)
+├── track-api/                  # Express 5 + Apollo Server 4
+│   └── src/
+│       ├── identity/           # User auth domain (routes/service/repository)
+│       ├── fleet/              # Tracker management domain
+│       ├── tracking/           # GPS track ingestion + retrieval domain
+│       ├── poi/                # Points of interest domain
+│       ├── graphql/            # GraphQL schema, resolvers, pubsub, context
+│       └── shared/             # Auth middleware, error middleware
+├── track-tcp/                  # TCP ingestion server
+├── track-data/                 # Shared Mongoose models
+├── track-utils/                # Shared Node.js utilities
+├── tracker-simulator/          # GPS simulator + demo setup
+│   ├── index.js                # Simulator entry point
+│   ├── randomGPS.js            # Route-interpolation frame generator
+│   └── setup.js                # Idempotent demo user + tracker bootstrap
+├── codegen.yml                 # GraphQL code generation config
+├── docker-compose.yml          # Full stack container orchestration
+├── start_local.sh              # One-command local startup script
+└── package.json                # npm workspaces root
+```
+
+---
+
+## Key Design Decisions
+
+- **GraphQL over REST** for the frontend — Apollo Client with typed hooks generated by `@graphql-codegen`. The TCP ingestion endpoint stays REST (hardware devices cannot carry JWT tokens).
+- **WebSocket subscriptions** for live GPS positions — no polling. The map updates the moment a new GPS frame arrives.
+- **Modular Monolith** — `track-api` is split into four domain modules (`identity`, `fleet`, `tracking`, `poi`) each with `routes / service / repository`. No microservices overhead.
+- **Track collection isolated** — GPS tracks are stored in a standalone MongoDB collection (not embedded in the User document), preventing the 16 MB document limit from being reached.
+- **TypeScript on the frontend** — strict mode, `tsconfig.json`, `@types/leaflet`, and codegen-generated types give end-to-end type safety from the GraphQL schema to the React components.
+- **OpenStreetMap** — zero-cost, no API key, no unexpected bills.

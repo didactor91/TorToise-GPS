@@ -1,0 +1,19 @@
+{
+  "name": "tracker-simulator",
+  "version": "1.0.0",
+  "description": "GPS tracker simulator that sends NMEA-like frames over TCP",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "vitest run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.1.1"
+  }
+}

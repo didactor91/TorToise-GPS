@@ -28,9 +28,11 @@ const validate = {
     },
 
     url(url) {
-        const re = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/
+        // Accept absolute URLs (http/https/ftp) OR relative paths starting with /
+        const isAbsolute = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/.test(String(url))
+        const isRelative = /^\//.test(String(url))
 
-        if (!re.test(String(url))) throw new FormatError(`${url} is not a url`)
+        if (!isAbsolute && !isRelative) throw new FormatError(`${url} is not a url`)
     }
 }
 

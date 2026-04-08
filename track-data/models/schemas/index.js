@@ -1,4 +1,5 @@
 const { Schema } = require('mongoose')
+const mongoose = require('mongoose')
 const { isEmail } = require('validator')
 
 
@@ -9,19 +10,19 @@ const point = new Schema({
     color: { type: String, required: true }
 })
 
-const track = new Schema({
+const TrackSchema = new Schema({
     serialNumber: { type: String, required: true },
-    latitude: { type: Number, required: true },
-    longitude: { type: Number, required: true },
-    speed: { type: String, required: true },
-    status: { type: String},
-    date: { type: Date, default: Date.now }
+    latitude:     { type: Number, required: true },
+    longitude:    { type: Number, required: true },
+    speed:        { type: Number, required: true },
+    status:       { type: String, default: 'ON' },
+    date:         { type: Date, default: Date.now }
 })
+TrackSchema.index({ serialNumber: 1, date: -1 })
 
 const tracker = new Schema({
-    serialNumber: { type: String, required: true },
-    licensePlate: { type: String },
-    tracks: [track]
+    serialNumber: { type: String, required: true, index: true },
+    licensePlate: { type: String }
 })
 
 const user = new Schema({
@@ -39,4 +40,4 @@ const user = new Schema({
 })
 
 
-module.exports = { user, point, tracker, track }
+module.exports = { user, point, tracker, track: TrackSchema }

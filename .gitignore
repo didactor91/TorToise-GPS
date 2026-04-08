@@ -1,0 +1,54 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Environment variables (NEVER commit real secrets) ─────────────────────────
+# .env.dist and .env.example ARE committed — they are safe templates with no real values
+.env
+.env.local
+.env.*.local
+
+# ── Build outputs ─────────────────────────────────────────────────────────────
+dist/
+build/
+out/
+
+# ── Test & coverage artefacts ─────────────────────────────────────────────────
+coverage/
+.nyc_output/
+*.lcov
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Runtime / local data ──────────────────────────────────────────────────────
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# ── TypeScript ────────────────────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ── Vite cache ────────────────────────────────────────────────────────────────
+track-app/node_modules/.vite/

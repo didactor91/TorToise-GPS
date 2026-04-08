@@ -1,0 +1,9 @@
+query GetPOIs {
+  pois { id title color latitude longitude }
+}
+mutation AddPOI($input: AddPOIInput!) {
+  addPOI(input: $input) { success message }
+}
+mutation DeletePOI($id: ID!) {
+  deletePOI(id: $id) { success message }
+}

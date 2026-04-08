@@ -1,0 +1,118 @@
+scalar DateTime
+
+type User {
+  id: ID!
+  name: String!
+  surname: String!
+  email: String!
+}
+
+type Tracker {
+  id: ID!
+  serialNumber: String!
+  licensePlate: String
+}
+
+type Track {
+  id: ID!
+  serialNumber: String!
+  latitude: Float!
+  longitude: Float!
+  speed: Float!
+  status: String!
+  date: DateTime!
+}
+
+type LiveTrack {
+  serialNumber: String!
+  latitude: Float!
+  longitude: Float!
+  speed: Float!
+  status: String!
+  date: DateTime!
+  licensePlate: String
+}
+
+type POI {
+  id: ID!
+  title: String!
+  color: String!
+  latitude: Float!
+  longitude: Float!
+}
+
+type AuthPayload {
+  token: String!
+}
+
+type MutationResult {
+  success: Boolean!
+  message: String!
+}
+
+input RegisterUserInput {
+  name: String!
+  surname: String!
+  email: String!
+  password: String!
+}
+
+input UpdateUserInput {
+  name: String
+  surname: String
+  email: String
+}
+
+input AddTrackerInput {
+  serialNumber: String!
+  licensePlate: String
+}
+
+input UpdateTrackerInput {
+  serialNumber: String
+  licensePlate: String
+}
+
+input AddPOIInput {
+  title: String!
+  color: String!
+  latitude: Float!
+  longitude: Float!
+}
+
+input UpdatePOIInput {
+  title: String
+  color: String
+  latitude: Float
+  longitude: Float
+}
+
+type Query {
+  me: User!
+  trackers: [Tracker!]!
+  tracker(id: ID!): Tracker!
+  trackerBySN(serialNumber: String!): Tracker!
+  trackerByLP(licensePlate: String!): Tracker!
+  lastTracks: [LiveTrack!]!
+  lastTrack(trackerId: ID!): Track
+  trackRange(trackerId: ID!, start: DateTime!, end: DateTime!): [Track!]!
+  pois: [POI!]!
+  poi(id: ID!): POI!
+}
+
+type Mutation {
+  registerUser(input: RegisterUserInput!): MutationResult!
+  loginUser(email: String!, password: String!): AuthPayload!
+  updateUser(input: UpdateUserInput!): MutationResult!
+  deleteUser: MutationResult!
+  addTracker(input: AddTrackerInput!): MutationResult!
+  updateTracker(id: ID!, input: UpdateTrackerInput!): MutationResult!
+  deleteTracker(id: ID!): MutationResult!
+  addPOI(input: AddPOIInput!): MutationResult!
+  updatePOI(id: ID!, input: UpdatePOIInput!): MutationResult!
+  deletePOI(id: ID!): MutationResult!
+}
+
+type Subscription {
+  liveTracksUpdated: [LiveTrack!]!
+}

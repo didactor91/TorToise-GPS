@@ -1,56 +1,38 @@
+.tracking-detail
+  display: flex
+  min-height: calc(100dvh - var(--navbar-height))
+  background-color: var(--color-bg-fallback)
 
-.column-detail
-    background-image: url('../../common/img/bckgnd.jpg')
-    background-color: #FFDD57
-    border-right: 1px solid #FFDD57
-    height: 96vh
+.tracking-detail__sidebar
+  background: var(--color-bg-card)
+  padding: var(--space-6)
+  overflow-y: auto
+  box-shadow: var(--shadow-md)
+  display: flex
+  flex-direction: column
+  gap: var(--space-4)
 
-.column-detail2
-    padding: 0
-    background-color: #FFDD57
-    height: 96vh
+.tracking-detail__title
+  font-size: var(--text-xl)
+  font-weight: 700
+  color: var(--color-text-dark)
+  letter-spacing: -0.01em
+  margin-bottom: var(--space-2)
 
-.detail-field
-    display: flex
-    flex-flow: column
-    height: 100%
-    width: 100%
-    align-items: center
-    justify-content: center
-
-.detail-help
-    font-size: 3vh
-
-.button-detail
-    font-size: 2vh
-    width: 20vh
-    justify-content: center
-    align-content: center
-
-.detail-sep
-    margin: 10px
-
-.form-detail
-    margin-left: 5px
-    display: flex
-    flex-flow: column
-    flex-wrap: wrap
-    align-items: center
-    justify-content: center
-
-.input-detail
-    max-width: 25vh
-
-.title-detail
-  font-size: 5vh
-  text-align: center
-  color: #FFFFFF
-
-.serial-detail
-  font-size: 2vh
-  text-align: center
-  color: #FFFFFF
+.tracking-detail__map
+  flex: 1
+  height: calc(100dvh - var(--navbar-height))
+  position: sticky
+  top: 0
 
 .map-map
-    height: 100%
-    view: 100%
+  height: 100%
+  width: 100%
+
+@media (max-width: 768px)
+  .tracking-detail
+    flex-direction: column
+
+  .tracking-detail__map
+    height: 50dvh
+    position: relative

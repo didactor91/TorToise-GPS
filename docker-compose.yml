@@ -1,0 +1,72 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: tortoise-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: tortoise-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      - mongo
+
+  track-api:
+    build:
+      context: .
+      dockerfile: track-api/Dockerfile
+    container_name: tortoise-track-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      MONGO_URL: mongodb://mongo:27017/tortoise-gps
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+    depends_on:
+      - mongo
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  track-tcp:
+    build:
+      context: .
+      dockerfile: track-tcp/Dockerfile
+    container_name: tortoise-track-tcp
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      TCP_PORT: 5000
+      API_URL: http://track-api:8080/api
+    depends_on:
+      track-api:
+        condition: service_healthy
+
+  track-app:
+    build:
+      context: .
+      dockerfile: track-app/Dockerfile
+    container_name: tortoise-track-app
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      track-api:
+        condition: service_healthy
+
+volumes:
+  mongo-data:

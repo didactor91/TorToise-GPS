@@ -1,0 +1,17 @@
+mutation LoginUser($email: String!, $password: String!) {
+  loginUser(email: $email, password: $password) {
+    token
+  }
+}
+mutation RegisterUser($input: RegisterUserInput!) {
+  registerUser(input: $input) { success message }
+}
+query Me {
+  me { id name surname email }
+}
+mutation UpdateUser($input: UpdateUserInput!) {
+  updateUser(input: $input) { success message }
+}
+mutation DeleteUser {
+  deleteUser { success message }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "tortoise-gps",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "track-api",
+    "track-app",
+    "track-data",
+    "track-tcp",
+    "track-utils",
+    "tracker-simulator"
+  ],
+  "scripts": {
+    "start:api": "npm start -w track-api",
+    "start:app": "npm start -w track-app",
+    "start:tcp": "npm start -w track-tcp",
+    "start:sim": "npm start -w tracker-simulator",
+    "test:api": "npm test -w track-api",
+    "test:tcp": "npm test -w track-tcp",
+    "test:utils": "npm test -w track-utils",
+    "test:data": "npm test -w track-data",
+    "test:sim": "npm test -w tracker-simulator",
+    "codegen": "graphql-codegen --config codegen.yml"
+  }
+}
