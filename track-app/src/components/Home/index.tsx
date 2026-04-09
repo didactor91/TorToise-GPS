@@ -26,6 +26,7 @@ function Home({ darkmode }: HomeProps) {
   const lastFocusedSerialRef = useRef<string | null>(null)
   const followSerialRef = useRef<string | null>(null)
   const lastFollowPanAtRef = useRef<number>(0)
+  const truckPopupSignatureRef = useRef<Map<string, string>>(new Map())
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -106,6 +107,20 @@ function Home({ darkmode }: HomeProps) {
       : { label: 'STALE', color: '#f59e0b' }
   }
 
+  const bindTrackerPopupActions = (marker: L.Marker) => {
+    const popupNode = marker.getPopup()?.getElement()
+    if (!popupNode) return
+    const detailBtn = popupNode.querySelector<HTMLButtonElement>('[data-action="detail-tracker"]')
+    if (detailBtn) {
+      detailBtn.onclick = (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        getCoords()
+        goToDetail(detailBtn.dataset.serial || '')
+      }
+    }
+  }
+
   /**
    * Upsert truck markers — never destroys existing markers.
    * - New truck → create marker and add to map
@@ -122,6 +137,7 @@ function Home({ darkmode }: HomeProps) {
       const freshness = 'date' in truck ? telemetryFreshness(truck.date) : { label: 'STALE', color: '#f59e0b' }
       const sn = truck.serialNumber
       const lp = truck.licensePlate || licenseBySerial.get(sn) || sn
+      const popupSignature = `${lp}|${status || ''}|${speed.toFixed(2)}|${freshness.label}`
       const popupHtml = `
         <div class="tracker-popup">
           <div class="tracker-popup__title">${lp}</div>
@@ -140,13 +156,24 @@ function Home({ darkmode }: HomeProps) {
 
       const existing = truckMarkRef.current.get(sn)
       if (existing) {
-        const wasOpen = existing.isPopupOpen()
         // Move existing marker — no flicker
         existing.setLatLng([lat, lng])
-        existing.setIcon(makeTruckIcon(status))
-        existing.setPopupContent(popupHtml)
-        existing.options.title = `SN: ${sn} - Speed: ${speed} Km/h`
-        if (wasOpen) existing.openPopup()
+        const nextTitle = `SN: ${sn} - Speed: ${speed} Km/h`
+        if (existing.options.title !== nextTitle) existing.options.title = nextTitle
+
+        const prevSignature = truckPopupSignatureRef.current.get(sn)
+        // Only rewrite popup/icon when visible popup data changed.
+        if (prevSignature !== popupSignature) {
+          existing.setIcon(makeTruckIcon(status))
+          if (existing.isPopupOpen()) {
+            existing.setPopupContent(popupHtml)
+            // Leaflet recreates popup DOM when content changes; rebind actions immediately.
+            bindTrackerPopupActions(existing)
+          } else {
+            existing.getPopup()?.setContent(popupHtml)
+          }
+          truckPopupSignatureRef.current.set(sn, popupSignature)
+        }
         if (followSerialRef.current === sn && existing.isPopupOpen() && mapRef.current) {
           const now = Date.now()
           // Throttle follow pan for smoother UX.
@@ -172,23 +199,14 @@ function Home({ darkmode }: HomeProps) {
         marker.on('popupopen', () => {
           followSerialRef.current = sn
           lastFollowPanAtRef.current = 0
-          const popupNode = marker.getPopup()?.getElement()
-          if (!popupNode) return
-          const detailBtn = popupNode.querySelector<HTMLButtonElement>('[data-action="detail-tracker"]')
-          if (detailBtn) {
-            detailBtn.onclick = (event) => {
-              event.preventDefault()
-              event.stopPropagation()
-              getCoords()
-              goToDetail(detailBtn.dataset.serial || '')
-            }
-          }
+          bindTrackerPopupActions(marker)
         })
         marker.on('popupclose', () => {
           if (followSerialRef.current === sn) followSerialRef.current = null
         })
         marker.addTo(mapRef.current!)
         truckMarkRef.current.set(sn, marker)
+        truckPopupSignatureRef.current.set(sn, popupSignature)
       }
     })
   }

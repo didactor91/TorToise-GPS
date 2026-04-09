@@ -55,6 +55,15 @@ function Trackings() {
             title="Ver en el mapa"
             aria-label="Ver en el mapa"
           >
+            <span aria-hidden="true">🌍</span>
+          </button>
+          <button
+            className="button is-small is-info is-rounded"
+            style={{ fontSize: 16, lineHeight: 1, minWidth: 36, color: '#ffffff' }}
+            onClick={() => navigate(`/detail/${row.serialNumber}`)}
+            title="Ver detalle"
+            aria-label="Ver detalle"
+          >
             <span aria-hidden="true">👁</span>
           </button>
           <button
