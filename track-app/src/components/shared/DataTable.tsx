@@ -42,6 +42,13 @@ function DataTable<T extends object>({
     if (!isServerPagination && currentPage > localTotalPages) setCurrentPage(localTotalPages)
   }, [isServerPagination, currentPage, localTotalPages])
 
+  const localPagedRows = useMemo(() => {
+    const start = (currentPage - 1) * resolvedPageSize
+    const end = start + resolvedPageSize
+    return rows.slice(start, end)
+  }, [rows, currentPage, resolvedPageSize])
+  const displayedRows = isServerPagination ? rows : localPagedRows
+
   if (!rows || rows.length === 0) {
     return (
       <div style={{
@@ -54,13 +61,6 @@ function DataTable<T extends object>({
       </div>
     )
   }
-
-  const localPagedRows = useMemo(() => {
-    const start = (currentPage - 1) * resolvedPageSize
-    const end = start + resolvedPageSize
-    return rows.slice(start, end)
-  }, [rows, currentPage, resolvedPageSize])
-  const displayedRows = isServerPagination ? rows : localPagedRows
 
   const startIndex = totalRows > 0 ? ((effectivePage - 1) * resolvedPageSize + 1) : 0
   const endIndex = Math.min(effectivePage * resolvedPageSize, totalRows)
