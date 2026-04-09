@@ -32,13 +32,13 @@ function TrackingsNew() {
         </div>
 
         <div className="field">
-          <label className="label">License Plate <span className="has-text-grey is-size-7">(optional)</span></label>
+          <label className="label">Alias <span className="has-text-grey is-size-7">(optional)</span></label>
           <div className="control">
             <input
               className="input is-rounded is-warning"
               type="text"
               name="licensePlate"
-              placeholder="1234-ABC-001"
+              placeholder="Truck Madrid 01"
             />
           </div>
         </div>
