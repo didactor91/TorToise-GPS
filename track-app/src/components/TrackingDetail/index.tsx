@@ -18,7 +18,8 @@ function TrackingDetail({ darkmode, serialNumber }: TrackingDetailProps) {
 
   const mapRef = useRef<L.Map | null>(null)
   const polylineRef = useRef<L.Polyline | null>(null)
-  const markerRef = useRef<L.Marker | null>(null)
+  const startMarkerRef = useRef<L.Marker | null>(null)
+  const endMarkerRef = useRef<L.Marker | null>(null)
   const tileLightRef = useRef<L.TileLayer | null>(null)
   const tileDarkRef = useRef<L.TileLayer | null>(null)
 
@@ -138,22 +139,37 @@ function TrackingDetail({ darkmode, serialNumber }: TrackingDetailProps) {
       polylineRef.current.setLatLngs(coords)
     }
 
-    // Remove previous truck marker if any
-    if (markerRef.current) {
-      markerRef.current.remove()
-      markerRef.current = null
+    // Remove previous start/end markers if any
+    if (startMarkerRef.current) {
+      startMarkerRef.current.remove()
+      startMarkerRef.current = null
+    }
+    if (endMarkerRef.current) {
+      endMarkerRef.current.remove()
+      endMarkerRef.current = null
     }
 
-    // Place a truck marker at the latest position in the route
+    // Place route start/end markers for the selected date range
     if (coords.length > 0 && mapRef.current) {
+      const firstCoord = coords[0]
       const lastCoord = coords[coords.length - 1]
-      const truckIcon = L.divIcon({
+
+      const startIcon = L.divIcon({
         className: '',
-        html: `<div style="background:#22c55e;width:30px;height:30px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;">🚚</div>`,
+        html: `<div style="background:#2563eb;width:30px;height:30px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;">🚦</div>`,
         iconSize: [30, 30],
         iconAnchor: [15, 30]
       })
-      markerRef.current = L.marker(lastCoord, { icon: truckIcon }).addTo(mapRef.current)
+
+      const endIcon = L.divIcon({
+        className: '',
+        html: `<div style="background:#16a34a;width:30px;height:30px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;">🏁</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 30]
+      })
+
+      startMarkerRef.current = L.marker(firstCoord, { icon: startIcon }).addTo(mapRef.current)
+      endMarkerRef.current = L.marker(lastCoord, { icon: endIcon }).addTo(mapRef.current)
 
       // Fit map to the polyline bounds
       if (polylineRef.current) {
