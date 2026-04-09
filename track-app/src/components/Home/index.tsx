@@ -111,7 +111,7 @@ function Home({ darkmode }: HomeProps) {
         existing.setIcon(makeTruckIcon(status))
         existing.setPopupContent(popupHtml)
         existing.options.title = `SN: ${sn} - Speed: ${speed} Km/h`
-        if (followSerialRef.current === sn && mapRef.current) {
+        if (followSerialRef.current === sn && existing.isPopupOpen() && mapRef.current) {
           mapRef.current.panTo(existing.getLatLng(), { animate: true })
         }
       } else {
@@ -121,9 +121,11 @@ function Home({ darkmode }: HomeProps) {
           title: `SN: ${sn} - Speed: ${speed} Km/h`
         })
         marker.bindPopup(popupHtml)
-        marker.on('click', () => {
+        marker.on('popupopen', () => {
           followSerialRef.current = sn
-          if (mapRef.current) mapRef.current.panTo(marker.getLatLng(), { animate: true })
+        })
+        marker.on('popupclose', () => {
+          if (followSerialRef.current === sn) followSerialRef.current = null
         })
         marker.addTo(mapRef.current!)
         truckMarkRef.current.set(sn, marker)
@@ -150,7 +152,6 @@ function Home({ darkmode }: HomeProps) {
     mapRef.current.setView(marker.getLatLng(), Math.max(mapRef.current.getZoom(), 13), { animate: true })
     marker.openPopup()
     lastFocusedSerialRef.current = focusSerial
-    followSerialRef.current = focusSerial
   }
 
   const initMap = (initialPois: HomePoi[]) => {
