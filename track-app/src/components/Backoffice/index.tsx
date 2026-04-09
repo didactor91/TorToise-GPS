@@ -46,7 +46,8 @@ function toggleInArray(list: string[], value: string): string[] {
 }
 
 function Backoffice() {
-  const { companies, users, loading, createCompany, createUser, updateCompany, updateUser } = useBackoffice()
+  const [usersPage, setUsersPage] = useState(1)
+  const { companies, users, usersTotalCount, loading, createCompany, createUser, updateCompany, updateUser } = useBackoffice(usersPage, 20)
   const [companyForm, setCompanyForm] = useState({
     name: '',
     slug: '',
@@ -427,7 +428,18 @@ function Backoffice() {
 
       <section>
         <h3 className="title is-5">Users</h3>
-        <DataTable columns={USER_COLUMNS} rows={users} emptyMessage="No users yet." />
+        <DataTable
+          columns={USER_COLUMNS}
+          rows={users}
+          emptyMessage="No users yet."
+          pageSize={20}
+          serverPagination={{
+            enabled: true,
+            currentPage: usersPage,
+            totalCount: usersTotalCount,
+            onPageChange: setUsersPage
+          }}
+        />
       </section>
     </PageShell>
   )

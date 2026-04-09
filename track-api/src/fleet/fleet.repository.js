@@ -14,8 +14,14 @@ module.exports = {
         return Tracker.findOne({ licensePlate })
     },
 
-    async findTrackersByCompany(companyId) {
-        return Tracker.find({ companyId }).lean()
+    async findTrackersByCompany(companyId, { offset = 0, limit } = {}) {
+        const query = Tracker.find({ companyId }).sort({ createdAt: -1 }).skip(offset)
+        if (typeof limit === 'number') query.limit(limit)
+        return query.lean()
+    },
+
+    async countTrackersByCompany(companyId) {
+        return Tracker.countDocuments({ companyId })
     },
 
     async findTrackerByIdAndCompany(trackerID, companyId) {

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageShell from '../shared/PageShell'
 import DataTable, { Column } from '../shared/DataTable'
@@ -11,7 +11,8 @@ type TrackerRow = Tracker & {
 
 function Trackings() {
   const navigate = useNavigate()
-  const { trackers, loading, deleteTracker, statusBySerial, dateBySerial } = useTrackers()
+  const [page, setPage] = useState(1)
+  const { trackers, totalCount, loading, deleteTracker, statusBySerial, dateBySerial } = useTrackers(page, 20)
 
   const handleDelete = (tracker: Tracker) => {
     deleteTracker(tracker.id)
@@ -75,6 +76,13 @@ function Trackings() {
             rows={rows}
             onDelete={handleDelete}
             emptyMessage="No trackers yet. Add your first one!"
+            pageSize={20}
+            serverPagination={{
+              enabled: true,
+              currentPage: page,
+              totalCount,
+              onPageChange: setPage
+            }}
           />
       }
     </PageShell>

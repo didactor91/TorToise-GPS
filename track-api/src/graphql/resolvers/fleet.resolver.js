@@ -8,19 +8,25 @@ const fleetResolver = {
   Query: {
     /**
      * @param {unknown} _
-     * @param {unknown} __
+     * @param {{ offset?: number, limit?: number }} args
      * @param {{ userId: string|null }} ctx
      */
-    async trackers(_, __, ctx) {
+    async trackers(_, { offset, limit }, ctx) {
       const userId = requireAuth(ctx)
       try {
         await requireAccess(userId, { feature: 'fleet', permission: 'fleet.read' })
-        const trackers = await service.retrieveAllTrackers(userId)
-        return (trackers || []).map(t => ({
-          id: t._id.toString(),
-          serialNumber: t.serialNumber,
-          licensePlate: t.licensePlate || null
-        }))
+        const [rows, totalCount] = await Promise.all([
+          service.retrieveAllTrackers(userId, { offset, limit }),
+          service.countTrackers(userId)
+        ])
+        return {
+          items: rows.map(t => ({
+            id: t._id.toString(),
+            serialNumber: t.serialNumber,
+            licensePlate: t.licensePlate || null
+          })),
+          totalCount: Number(totalCount || 0)
+        }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageShell from '../shared/PageShell'
 import DataTable, { Column } from '../shared/DataTable'
@@ -27,7 +27,8 @@ const POI_COLUMNS: Column<Poi>[] = [
 
 function Places() {
   const navigate = useNavigate()
-  const { pois, loading, deletePOI } = usePOIs()
+  const [page, setPage] = useState(1)
+  const { pois, totalCount, loading, deletePOI } = usePOIs(page, 20)
 
   const handleDelete = (poi: Poi) => {
     deletePOI(poi.id)
@@ -46,6 +47,13 @@ function Places() {
             rows={pois}
             onDelete={handleDelete}
             emptyMessage="No POIs yet. Create your first one!"
+            pageSize={20}
+            serverPagination={{
+              enabled: true,
+              currentPage: page,
+              totalCount,
+              onPageChange: setPage
+            }}
           />
       }
     </PageShell>
