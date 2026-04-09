@@ -75,6 +75,17 @@ function Home({ darkmode }: HomeProps) {
     })
   }
 
+  const telemetryFreshness = (dateValue?: string | Date) => {
+    if (!dateValue) return { label: 'STALE', color: '#f59e0b' }
+    const ts = new Date(dateValue).getTime()
+    if (!Number.isFinite(ts)) return { label: 'STALE', color: '#f59e0b' }
+    const ageMs = Date.now() - ts
+    // Consider telemetry live if updated in the last 60 seconds.
+    return ageMs <= 60_000
+      ? { label: 'LIVE', color: '#22c55e' }
+      : { label: 'STALE', color: '#f59e0b' }
+  }
+
   /**
    * Upsert truck markers — never destroys existing markers.
    * - New truck → create marker and add to map
@@ -88,9 +99,10 @@ function Home({ darkmode }: HomeProps) {
       const lng = 'longitude' in truck ? (truck.longitude ?? 0) : 0
       const speed = 'speed' in truck ? (truck.speed ?? 0) : 0
       const status = 'status' in truck ? truck.status : undefined
+      const freshness = 'date' in truck ? telemetryFreshness(truck.date) : { label: 'STALE', color: '#f59e0b' }
       const sn = truck.serialNumber
       const lp = truck.licensePlate || licenseBySerial.get(sn) || sn
-      const popupHtml = `<h2>LP: ${lp}</h2><p>SN: ${sn}</p><hr/><button id="detailTracker" value="${sn}">DETAIL</button><hr/><button id="deleteTracker" value="${sn}">DELETE</button>`
+      const popupHtml = `<h2>LP: ${lp}</h2><p>SN: ${sn}</p><p>Speed: ${speed.toFixed(2)} km/h</p><p>Telemetry: <strong style="color:${freshness.color}">${freshness.label}</strong></p><hr/><button id="detailTracker" value="${sn}">DETAIL</button><hr/><button id="deleteTracker" value="${sn}">DELETE</button>`
 
       const existing = truckMarkRef.current.get(sn)
       if (existing) {
