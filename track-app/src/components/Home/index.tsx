@@ -106,11 +106,13 @@ function Home({ darkmode }: HomeProps) {
 
       const existing = truckMarkRef.current.get(sn)
       if (existing) {
+        const wasOpen = existing.isPopupOpen()
         // Move existing marker — no flicker
         existing.setLatLng([lat, lng])
         existing.setIcon(makeTruckIcon(status))
         existing.setPopupContent(popupHtml)
         existing.options.title = `SN: ${sn} - Speed: ${speed} Km/h`
+        if (wasOpen) existing.openPopup()
         if (followSerialRef.current === sn && existing.isPopupOpen() && mapRef.current) {
           mapRef.current.panTo(existing.getLatLng(), { animate: true })
         }
@@ -120,7 +122,14 @@ function Home({ darkmode }: HomeProps) {
           icon: makeTruckIcon(status),
           title: `SN: ${sn} - Speed: ${speed} Km/h`
         })
-        marker.bindPopup(popupHtml)
+        marker.bindPopup(popupHtml, {
+          autoClose: false,
+          closeOnClick: false,
+          closeButton: true
+        })
+        marker.on('click', () => {
+          marker.openPopup()
+        })
         marker.on('popupopen', () => {
           followSerialRef.current = sn
         })
