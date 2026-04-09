@@ -49,14 +49,18 @@ function Trackings() {
           <button
             className="button is-small is-warning is-outlined is-rounded"
             onClick={() => navigate('/home', { state: { focusSerial: row.serialNumber } })}
+            title="Ver en el mapa"
+            aria-label="Ver en el mapa"
           >
-            Ver en el mapa
+            <span aria-hidden="true">👁</span>
           </button>
           <button
             className="button is-small is-danger is-outlined is-rounded"
             onClick={() => deleteTracker(row.id)}
+            title="Eliminar tracker"
+            aria-label="Eliminar tracker"
           >
-            Delete
+            <span aria-hidden="true">🗑</span>
           </button>
         </div>
       )
