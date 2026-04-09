@@ -29,12 +29,19 @@ export type BackofficeUser = {
     permissionKeys: string[]
 }
 
-export function useBackoffice(usersPage = 1, pageSize = 20) {
+export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = true) {
     const offset = Math.max(0, (usersPage - 1) * pageSize)
-    const companiesQuery = useBackofficeCompaniesQuery({ fetchPolicy: 'cache-and-network' })
+    const companiesQuery = useBackofficeCompaniesQuery({
+        fetchPolicy: 'cache-and-network',
+        errorPolicy: 'all',
+        onError: (err) => toast.error(err.message)
+    })
     const usersQuery = useBackofficeUsersQuery({
         fetchPolicy: 'cache-and-network',
-        variables: { offset, limit: pageSize }
+        errorPolicy: 'all',
+        skip: !enableUsersQuery,
+        variables: { offset, limit: pageSize },
+        onError: (err) => toast.error(err.message)
     })
 
     const [createCompanyMutation] = useBackofficeCreateCompanyMutation({
@@ -119,7 +126,7 @@ export function useBackoffice(usersPage = 1, pageSize = 20) {
     return {
         companies,
         users,
-        usersTotalCount: usersQuery.data?.backofficeUsers?.totalCount ?? 0,
+        usersTotalCount: enableUsersQuery ? (usersQuery.data?.backofficeUsers?.totalCount ?? 0) : 0,
         loading: companiesQuery.loading || usersQuery.loading,
         createCompany,
         updateCompany,
