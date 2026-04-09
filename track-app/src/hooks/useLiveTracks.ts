@@ -5,6 +5,7 @@ import {
   useDeletePoiMutation,
   useGetTrackersQuery,
   useDeleteTrackerMutation,
+  useLastTracksQuery,
   useLiveTracksUpdatedSubscription,
   GetPoIsQuery,
   GetTrackersQuery,
@@ -41,6 +42,12 @@ export function useLiveTracks() {
     onError: (err) => toast.error(err.message)
   })
 
+  // Last known tracks snapshot (fallback for centering and initial render)
+  const { data: lastTracksData } = useLastTracksQuery({
+    fetchPolicy: 'cache-and-network',
+    onError: (err) => toast.error(err.message)
+  })
+
   // Live subscription — accumulate last known position per serialNumber
   // Each WS frame carries only 1 truck. We merge into a persistent map so
   // all trucks are always present on the map, never disappearing.
@@ -64,6 +71,7 @@ export function useLiveTracks() {
 
   const pois: HomePoi[] = poisData?.pois?.items ?? []
   const trackers: HomeTracker[] = trackersData?.trackers?.items ?? []
+  const lastTracks: LiveTrack[] = lastTracksData?.lastTracks ?? []
 
   const deletePOI = (id: string) => deletePoiMutation({ variables: { id } })
   const deleteTracker = (id: string) => {
@@ -72,5 +80,5 @@ export function useLiveTracks() {
   }
   const goToDetail = (serialNumber: string) => navigate(`/detail/${serialNumber}`)
 
-  return { pois, trackers, livePositions, deletePOI, deleteTracker, goToDetail, refetchPois, refetchTrackers }
+  return { pois, trackers, lastTracks, livePositions, deletePOI, deleteTracker, goToDetail, refetchPois, refetchTrackers }
 }

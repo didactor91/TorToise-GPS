@@ -10,7 +10,7 @@ interface HomeProps {
 }
 
 function Home({ darkmode }: HomeProps) {
-  const { pois, trackers, livePositions, deletePOI, deleteTracker, goToDetail } = useLiveTracks()
+  const { pois, trackers, lastTracks, livePositions, deletePOI, deleteTracker, goToDetail } = useLiveTracks()
   const location = useLocation()
 
   const mapRef = useRef<L.Map | null>(null)
@@ -112,7 +112,15 @@ function Home({ darkmode }: HomeProps) {
     if (!focusSerial || !mapRef.current) return
     if (lastFocusedSerialRef.current === focusSerial) return
 
-    const marker = truckMarkRef.current.get(focusSerial)
+    let marker = truckMarkRef.current.get(focusSerial)
+    if (!marker) {
+      // Fallback: if marker is not mounted yet, try with last known track snapshot.
+      const lastKnown = lastTracks.find(track => track.serialNumber === focusSerial)
+      if (lastKnown) {
+        upsertTruckMarkers([lastKnown])
+        marker = truckMarkRef.current.get(focusSerial)
+      }
+    }
     if (!marker) return
 
     mapRef.current.setView(marker.getLatLng(), Math.max(mapRef.current.getZoom(), 13), { animate: true })
@@ -180,6 +188,13 @@ function Home({ darkmode }: HomeProps) {
     focusTrackerIfRequested()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [livePositions])
+
+  useEffect(() => {
+    if (!mapRef.current || !lastTracks.length) return
+    upsertTruckMarkers(lastTracks)
+    focusTrackerIfRequested()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastTracks])
 
   // Initial truck markers from tracker list (before any WS frame arrives)
   useEffect(() => {
