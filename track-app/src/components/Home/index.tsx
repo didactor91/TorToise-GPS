@@ -25,6 +25,7 @@ function Home({ darkmode }: HomeProps) {
   const tileDarkRef = useRef<L.TileLayer | null>(null)
   const lastFocusedSerialRef = useRef<string | null>(null)
   const followSerialRef = useRef<string | null>(null)
+  const lastFollowPanAtRef = useRef<number>(0)
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -114,7 +115,12 @@ function Home({ darkmode }: HomeProps) {
         existing.options.title = `SN: ${sn} - Speed: ${speed} Km/h`
         if (wasOpen) existing.openPopup()
         if (followSerialRef.current === sn && existing.isPopupOpen() && mapRef.current) {
-          mapRef.current.panTo(existing.getLatLng(), { animate: true })
+          const now = Date.now()
+          // Throttle follow pan for smoother UX.
+          if (now - lastFollowPanAtRef.current >= 1200) {
+            mapRef.current.panTo(existing.getLatLng(), { animate: true })
+            lastFollowPanAtRef.current = now
+          }
         }
       } else {
         // First time seeing this truck — create marker
@@ -132,6 +138,7 @@ function Home({ darkmode }: HomeProps) {
         })
         marker.on('popupopen', () => {
           followSerialRef.current = sn
+          lastFollowPanAtRef.current = 0
         })
         marker.on('popupclose', () => {
           if (followSerialRef.current === sn) followSerialRef.current = null
