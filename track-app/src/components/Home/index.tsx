@@ -10,7 +10,7 @@ interface HomeProps {
 }
 
 function Home({ darkmode }: HomeProps) {
-  const { pois, trackers, lastTracks, livePositions, deletePOI, deleteTracker, goToDetail } = useLiveTracks()
+  const { pois, trackers, lastTracks, livePositions, deletePOI, goToDetail } = useLiveTracks()
   const location = useLocation()
   const licenseBySerial = useMemo(
     () => new Map(trackers.map(tracker => [tracker.serialNumber, tracker.licensePlate || tracker.serialNumber])),
@@ -59,7 +59,14 @@ function Home({ darkmode }: HomeProps) {
         iconAnchor: [12, 12]
       })
       const marker = L.marker([poi.latitude, poi.longitude], { icon: poiIcon })
-      const popupHtml = `<h2>${poi.title}</h2><p>lat: ${poi.latitude}</p><p>lng: ${poi.longitude}</p><hr/><button id="deletePOI" value="${poi.id}">DELETE</button>`
+      const popupHtml = `
+        <div class="tracker-popup">
+          <div class="tracker-popup__title">${poi.title}</div>
+          <div class="tracker-popup__meta">lat: ${poi.latitude}</div>
+          <div class="tracker-popup__meta">lng: ${poi.longitude}</div>
+          <button id="deletePOI" value="${poi.id}" class="tracker-popup__button tracker-popup__button--danger">Delete</button>
+        </div>
+      `
       marker.bindPopup(popupHtml)
       marker.addTo(mapRef.current!)
       poiMarkRef.current.push(marker)
@@ -103,7 +110,21 @@ function Home({ darkmode }: HomeProps) {
       const freshness = 'date' in truck ? telemetryFreshness(truck.date) : { label: 'STALE', color: '#f59e0b' }
       const sn = truck.serialNumber
       const lp = truck.licensePlate || licenseBySerial.get(sn) || sn
-      const popupHtml = `<h2>LP: ${lp}</h2><p>SN: ${sn}</p><p>Speed: ${speed.toFixed(2)} km/h</p><p>Telemetry: <strong style="color:${freshness.color}">${freshness.label}</strong></p><hr/><button id="detailTracker" value="${sn}">DETAIL</button><hr/><button id="deleteTracker" value="${sn}">DELETE</button>`
+      const popupHtml = `
+        <div class="tracker-popup">
+          <div class="tracker-popup__title">${lp}</div>
+          <div class="tracker-popup__meta">SN: ${sn}</div>
+          <div class="tracker-popup__row">
+            <span>Speed</span>
+            <strong>${speed.toFixed(2)} km/h</strong>
+          </div>
+          <div class="tracker-popup__row">
+            <span>Telemetry</span>
+            <strong style="color:${freshness.color}">${freshness.label}</strong>
+          </div>
+          <button id="detailTracker" value="${sn}" class="tracker-popup__button">View Detail</button>
+        </div>
+      `
 
       const existing = truckMarkRef.current.get(sn)
       if (existing) {
@@ -270,7 +291,6 @@ function Home({ darkmode }: HomeProps) {
       const target = e.target as HTMLButtonElement
       if (!target?.id) return
       if (target.id === 'deletePOI') deletePOI(target.value)
-      if (target.id === 'deleteTracker') deleteTracker(target.value)
       if (target.id === 'detailTracker') {
         getCoords()
         goToDetail(target.value)
