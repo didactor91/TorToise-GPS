@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -12,6 +12,10 @@ interface HomeProps {
 function Home({ darkmode }: HomeProps) {
   const { pois, trackers, lastTracks, livePositions, deletePOI, deleteTracker, goToDetail } = useLiveTracks()
   const location = useLocation()
+  const licenseBySerial = useMemo(
+    () => new Map(trackers.map(tracker => [tracker.serialNumber, tracker.licensePlate || tracker.serialNumber])),
+    [trackers]
+  )
 
   const mapRef = useRef<L.Map | null>(null)
   const poiMarkRef = useRef<L.Marker[]>([])
@@ -85,7 +89,7 @@ function Home({ darkmode }: HomeProps) {
       const speed = 'speed' in truck ? (truck.speed ?? 0) : 0
       const status = 'status' in truck ? truck.status : undefined
       const sn = truck.serialNumber
-      const lp = truck.licensePlate ?? sn
+      const lp = truck.licensePlate || licenseBySerial.get(sn) || sn
       const popupHtml = `<h2>LP: ${lp}</h2><p>SN: ${sn}</p><hr/><button id="detailTracker" value="${sn}">DETAIL</button><hr/><button id="deleteTracker" value="${sn}">DELETE</button>`
 
       const existing = truckMarkRef.current.get(sn)
@@ -211,16 +215,6 @@ function Home({ darkmode }: HomeProps) {
     focusTrackerIfRequested()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastTracks])
-
-  // Initial truck markers from tracker list (before any WS frame arrives)
-  useEffect(() => {
-    if (!mapRef.current || !trackers.length) return
-    // Only paint trackers that don't have a live position yet
-    const unknown = trackers.filter(t => !truckMarkRef.current.has(t.serialNumber))
-    if (unknown.length) upsertTruckMarkers(unknown)
-    focusTrackerIfRequested()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackers])
 
   useEffect(() => {
     focusTrackerIfRequested()
