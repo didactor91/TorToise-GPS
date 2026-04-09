@@ -43,7 +43,7 @@ function Trackings() {
     { key: 'serialNumber', label: 'Serial' },
     {
       key: 'actions',
-      label: 'Accions',
+      label: 'Actions',
       render: (row) => (
         <div style={{ display: 'flex', gap: 8 }}>
           <button
