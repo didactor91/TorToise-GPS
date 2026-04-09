@@ -64,12 +64,6 @@ const schema = makeExecutableSchema({ typeDefs, resolvers })
     app.use('/api', trackingRoutes)
     app.use('/api', poiRoutes)
 
-    app.use((req, res, next) => {
-        if (req.path === '/graphql') return next()
-        res.status(404).json({ error: 'Not found.' })
-    })
-    app.use(errorMiddleware)
-
     // HTTP server (required for WebSocket upgrades)
     const httpServer = http.createServer(app)
 
@@ -109,6 +103,11 @@ const schema = makeExecutableSchema({ typeDefs, resolvers })
             context: async ({ req }) => buildContext({ req })
         })
     )
+
+    app.use((req, res) => {
+        res.status(404).json({ error: 'Not found.' })
+    })
+    app.use(errorMiddleware)
 
     httpServer.listen(PORT, () =>
         console.log(`${pkg.name} ${pkg.version} up on port ${PORT} — GraphQL at /graphql`)
