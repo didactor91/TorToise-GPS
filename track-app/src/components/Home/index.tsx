@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -12,6 +12,10 @@ interface HomeProps {
 function Home({ darkmode }: HomeProps) {
   const { pois, trackers, lastTracks, livePositions, deletePOI, deleteTracker, goToDetail } = useLiveTracks()
   const location = useLocation()
+  const licenseBySerial = useMemo(
+    () => new Map(trackers.map(tracker => [tracker.serialNumber, tracker.licensePlate || tracker.serialNumber])),
+    [trackers]
+  )
 
   const mapRef = useRef<L.Map | null>(null)
   const poiMarkRef = useRef<L.Marker[]>([])
@@ -20,6 +24,7 @@ function Home({ darkmode }: HomeProps) {
   const tileLightRef = useRef<L.TileLayer | null>(null)
   const tileDarkRef = useRef<L.TileLayer | null>(null)
   const lastFocusedSerialRef = useRef<string | null>(null)
+  const followSerialRef = useRef<string | null>(null)
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -70,6 +75,17 @@ function Home({ darkmode }: HomeProps) {
     })
   }
 
+  const telemetryFreshness = (dateValue?: string | Date) => {
+    if (!dateValue) return { label: 'STALE', color: '#f59e0b' }
+    const ts = new Date(dateValue).getTime()
+    if (!Number.isFinite(ts)) return { label: 'STALE', color: '#f59e0b' }
+    const ageMs = Date.now() - ts
+    // Consider telemetry live if updated in the last 60 seconds.
+    return ageMs <= 60_000
+      ? { label: 'LIVE', color: '#22c55e' }
+      : { label: 'STALE', color: '#f59e0b' }
+  }
+
   /**
    * Upsert truck markers — never destroys existing markers.
    * - New truck → create marker and add to map
@@ -83,9 +99,10 @@ function Home({ darkmode }: HomeProps) {
       const lng = 'longitude' in truck ? (truck.longitude ?? 0) : 0
       const speed = 'speed' in truck ? (truck.speed ?? 0) : 0
       const status = 'status' in truck ? truck.status : undefined
+      const freshness = 'date' in truck ? telemetryFreshness(truck.date) : { label: 'STALE', color: '#f59e0b' }
       const sn = truck.serialNumber
-      const lp = truck.licensePlate ?? sn
-      const popupHtml = `<h2>LP: ${lp}</h2><p>SN: ${sn}</p><hr/><button id="detailTracker" value="${sn}">DETAIL</button><hr/><button id="deleteTracker" value="${sn}">DELETE</button>`
+      const lp = truck.licensePlate || licenseBySerial.get(sn) || sn
+      const popupHtml = `<h2>LP: ${lp}</h2><p>SN: ${sn}</p><p>Speed: ${speed.toFixed(2)} km/h</p><p>Telemetry: <strong style="color:${freshness.color}">${freshness.label}</strong></p><hr/><button id="detailTracker" value="${sn}">DETAIL</button><hr/><button id="deleteTracker" value="${sn}">DELETE</button>`
 
       const existing = truckMarkRef.current.get(sn)
       if (existing) {
@@ -94,6 +111,9 @@ function Home({ darkmode }: HomeProps) {
         existing.setIcon(makeTruckIcon(status))
         existing.setPopupContent(popupHtml)
         existing.options.title = `SN: ${sn} - Speed: ${speed} Km/h`
+        if (followSerialRef.current === sn && mapRef.current) {
+          mapRef.current.panTo(existing.getLatLng(), { animate: true })
+        }
       } else {
         // First time seeing this truck — create marker
         const marker = L.marker([lat, lng], {
@@ -101,6 +121,10 @@ function Home({ darkmode }: HomeProps) {
           title: `SN: ${sn} - Speed: ${speed} Km/h`
         })
         marker.bindPopup(popupHtml)
+        marker.on('click', () => {
+          followSerialRef.current = sn
+          if (mapRef.current) mapRef.current.panTo(marker.getLatLng(), { animate: true })
+        })
         marker.addTo(mapRef.current!)
         truckMarkRef.current.set(sn, marker)
       }
@@ -126,22 +150,30 @@ function Home({ darkmode }: HomeProps) {
     mapRef.current.setView(marker.getLatLng(), Math.max(mapRef.current.getZoom(), 13), { animate: true })
     marker.openPopup()
     lastFocusedSerialRef.current = focusSerial
+    followSerialRef.current = focusSerial
   }
 
   const initMap = (initialPois: HomePoi[]) => {
     if (mapRef.current) return
 
-    let lati = 40.41665
-    let lngi = -3.703816
+    let lati = 20
+    let lngi = 0
+    let defaultZoom = 3
 
     if (initialPois && initialPois.length >= 1) {
       lati = initialPois[0].latitude
       lngi = initialPois[0].longitude
+      defaultZoom = 8
     }
 
-    const lat = Number(sessionStorage.getItem('lat')) || lati
-    const lng = Number(sessionStorage.getItem('lng')) || lngi
-    const zoom = Number(sessionStorage.getItem('zoom')) || 8
+    const savedLat = sessionStorage.getItem('lat')
+    const savedLng = sessionStorage.getItem('lng')
+    const savedZoom = sessionStorage.getItem('zoom')
+    const hasSavedView = Boolean(savedLat && savedLng && savedZoom)
+
+    const lat = hasSavedView ? Number(savedLat) : lati
+    const lng = hasSavedView ? Number(savedLng) : lngi
+    const zoom = hasSavedView ? Number(savedZoom) : defaultZoom
 
     mapRef.current = L.map('map', {
       center: [lat, lng],
@@ -195,16 +227,6 @@ function Home({ darkmode }: HomeProps) {
     focusTrackerIfRequested()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastTracks])
-
-  // Initial truck markers from tracker list (before any WS frame arrives)
-  useEffect(() => {
-    if (!mapRef.current || !trackers.length) return
-    // Only paint trackers that don't have a live position yet
-    const unknown = trackers.filter(t => !truckMarkRef.current.has(t.serialNumber))
-    if (unknown.length) upsertTruckMarkers(unknown)
-    focusTrackerIfRequested()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackers])
 
   useEffect(() => {
     focusTrackerIfRequested()

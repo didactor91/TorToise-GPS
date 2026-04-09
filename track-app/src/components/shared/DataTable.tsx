@@ -118,7 +118,7 @@ function DataTable<T extends object>({
           }}
         >
           <small style={{ color: 'var(--color-text-muted)' }}>
-            Showing {startIndex}-{endIndex} of {rows.length}
+            Showing {startIndex}-{endIndex} of {totalRows}
           </small>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <button

@@ -45,9 +45,19 @@ function toggleInArray(list: string[], value: string): string[] {
     : [...list, value]
 }
 
-function Backoffice() {
+interface BackofficeProps {
+  canReadUsers?: boolean
+  canCreateUsers?: boolean
+  canUpdateUsers?: boolean
+}
+
+function Backoffice({
+  canReadUsers = true,
+  canCreateUsers = true,
+  canUpdateUsers = true
+}: BackofficeProps) {
   const [usersPage, setUsersPage] = useState(1)
-  const { companies, users, usersTotalCount, loading, createCompany, createUser, updateCompany, updateUser } = useBackoffice(usersPage, 20)
+  const { companies, users, usersTotalCount, loading, createCompany, createUser, updateCompany, updateUser } = useBackoffice(usersPage, 20, canReadUsers)
   const [companyForm, setCompanyForm] = useState({
     name: '',
     slug: '',
@@ -226,6 +236,7 @@ function Backoffice() {
         <DataTable columns={COMPANY_COLUMNS} rows={companies} emptyMessage="No companies yet." />
       </section>
 
+      {canCreateUsers && (
       <section style={{ marginBottom: 24 }}>
         <h3 className="title is-5">Create User</h3>
         <form onSubmit={onCreateUser}>
@@ -295,6 +306,7 @@ function Backoffice() {
           <button className="button is-warning is-rounded" type="submit">Create User</button>
         </form>
       </section>
+      )}
 
       <section style={{ marginBottom: 24 }}>
         <h3 className="title is-5">Edit Company</h3>
@@ -347,6 +359,7 @@ function Backoffice() {
         )}
       </section>
 
+      {canReadUsers && canUpdateUsers && (
       <section style={{ marginBottom: 24 }}>
         <h3 className="title is-5">Edit User</h3>
         <div className="field">
@@ -425,7 +438,9 @@ function Backoffice() {
           </form>
         )}
       </section>
+      )}
 
+      {canReadUsers && (
       <section>
         <h3 className="title is-5">Users</h3>
         <DataTable
@@ -441,6 +456,7 @@ function Backoffice() {
           }}
         />
       </section>
+      )}
     </PageShell>
   )
 }
