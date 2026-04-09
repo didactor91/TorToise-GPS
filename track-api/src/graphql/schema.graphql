@@ -29,6 +29,21 @@ type BackofficeUser {
   permissionKeys: [String!]!
 }
 
+type PagedTrackers {
+  items: [Tracker!]!
+  totalCount: Int!
+}
+
+type PagedPOIs {
+  items: [POI!]!
+  totalCount: Int!
+}
+
+type PagedBackofficeUsers {
+  items: [BackofficeUser!]!
+  totalCount: Int!
+}
+
 type Tracker {
   id: ID!
   serialNumber: String!
@@ -144,17 +159,21 @@ input UpdatePOIInput {
 
 type Query {
   me: User!
-  trackers: [Tracker!]!
+  trackers(offset: Int = 0, limit: Int = 20): PagedTrackers!
   tracker(id: ID!): Tracker!
   trackerBySN(serialNumber: String!): Tracker!
   trackerByLP(licensePlate: String!): Tracker!
   lastTracks: [LiveTrack!]!
   lastTrack(trackerId: ID!): Track
   trackRange(trackerId: ID!, start: DateTime!, end: DateTime!): [Track!]!
-  pois: [POI!]!
+  pois(offset: Int = 0, limit: Int = 20): PagedPOIs!
   poi(id: ID!): POI!
   backofficeCompanies: [Company!]!
-  backofficeUsers(companyId: ID): [BackofficeUser!]!
+  backofficeUsers(
+    companyId: ID
+    offset: Int = 0
+    limit: Int = 20
+  ): PagedBackofficeUsers!
 }
 
 type Mutation {

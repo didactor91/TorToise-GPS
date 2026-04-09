@@ -6,8 +6,14 @@ module.exports = {
         return User.findById(id)
     },
 
-    async findAllByCompany(companyId) {
-        return POI.find({ companyId }).lean()
+    async findAllByCompany(companyId, { offset = 0, limit } = {}) {
+        const query = POI.find({ companyId }).sort({ createdAt: -1 }).skip(offset)
+        if (typeof limit === 'number') query.limit(limit)
+        return query.lean()
+    },
+
+    async countByCompany(companyId) {
+        return POI.countDocuments({ companyId })
     },
 
     async createPOI(data) {

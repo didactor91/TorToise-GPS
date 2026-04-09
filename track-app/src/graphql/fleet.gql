@@ -1,5 +1,8 @@
-query GetTrackers {
-  trackers { id serialNumber licensePlate }
+query GetTrackers($offset: Int = 0, $limit: Int = 20) {
+  trackers(offset: $offset, limit: $limit) {
+    totalCount
+    items { id serialNumber licensePlate }
+  }
 }
 query TrackerBySN($serialNumber: String!) {
   trackerBySN(serialNumber: $serialNumber) { id serialNumber licensePlate }

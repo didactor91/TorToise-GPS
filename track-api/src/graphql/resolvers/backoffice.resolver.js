@@ -54,14 +54,23 @@ const backofficeResolver = {
 
     /**
      * @param {unknown} _
-     * @param {{ companyId?: string|null }} args
+     * @param {{ companyId?: string|null, offset?: number, limit?: number }} args
      * @param {{ userId: string|null }} ctx
      */
-    async backofficeUsers(_, { companyId }, ctx) {
+    async backofficeUsers(_, { companyId, offset, limit }, ctx) {
       const userId = requireAuth(ctx)
       try {
-        const users = await service.listUsers(userId, /** @type {any} */ (companyId))
-        return (users || []).map(mapUser)
+        const result = await service.listUsers(
+          userId,
+          /** @type {any} */ (companyId),
+          { offset, limit }
+        )
+        const totalCount = await service.countUsers(userId, /** @type {any} */ (companyId))
+        const rows = /** @type {any[]} */ (Array.isArray(result) ? result : [])
+        return {
+          items: rows.map(mapUser),
+          totalCount: Number(totalCount || 0)
+        }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }

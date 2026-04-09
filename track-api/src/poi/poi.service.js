@@ -4,6 +4,12 @@ const repo = require('./poi.repository')
 const { ensureUserCompany } = require('../shared/company-context')
 
 const poiService = {
+    normalizePagination(offset = 0, limit = 20) {
+        const _offset = Math.max(0, Number(offset || 0))
+        const _limit = Math.max(1, Math.min(200, Number(limit || 20)))
+        return { offset: _offset, limit: _limit }
+    },
+
     addPOI(id, poiData) {
         if (!poiData) throw new InputError('incorrect poi info')
 
@@ -32,7 +38,7 @@ const poiService = {
         })()
     },
 
-    retrieveAllPOI(id) {
+    retrieveAllPOI(id, pagination) {
         validate.arguments([
             { name: 'id', value: id, type: String, notEmpty: true }
         ])
@@ -42,7 +48,19 @@ const poiService = {
             if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
             const companyId = await ensureUserCompany(user)
             await repo.syncLegacyPois(companyId, user.pois || [])
-            return repo.findAllByCompany(companyId)
+            if (!pagination) return repo.findAllByCompany(companyId)
+            const _pagination = this.normalizePagination(pagination.offset, pagination.limit)
+            return repo.findAllByCompany(companyId, _pagination)
+        })()
+    },
+
+    countPOI(id) {
+        validate.arguments([{ name: 'id', value: id, type: String, notEmpty: true }])
+        return (async () => {
+            const user = await repo.findUserById(id)
+            if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
+            const companyId = await ensureUserCompany(user)
+            return repo.countByCompany(companyId)
         })()
     },
 

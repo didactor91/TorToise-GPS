@@ -29,9 +29,13 @@ export type BackofficeUser = {
     permissionKeys: string[]
 }
 
-export function useBackoffice() {
+export function useBackoffice(usersPage = 1, pageSize = 20) {
+    const offset = Math.max(0, (usersPage - 1) * pageSize)
     const companiesQuery = useBackofficeCompaniesQuery({ fetchPolicy: 'cache-and-network' })
-    const usersQuery = useBackofficeUsersQuery({ fetchPolicy: 'cache-and-network' })
+    const usersQuery = useBackofficeUsersQuery({
+        fetchPolicy: 'cache-and-network',
+        variables: { offset, limit: pageSize }
+    })
 
     const [createCompanyMutation] = useBackofficeCreateCompanyMutation({
         onError: (err) => toast.error(err.message),
@@ -65,7 +69,7 @@ export function useBackoffice() {
     )
 
     const users = useMemo<BackofficeUser[]>(
-        () => (usersQuery.data?.backofficeUsers ?? []).map(u => ({
+        () => (usersQuery.data?.backofficeUsers?.items ?? []).map(u => ({
             id: u.id,
             name: u.name,
             surname: u.surname,
@@ -115,6 +119,7 @@ export function useBackoffice() {
     return {
         companies,
         users,
+        usersTotalCount: usersQuery.data?.backofficeUsers?.totalCount ?? 0,
         loading: companiesQuery.loading || usersQuery.loading,
         createCompany,
         updateCompany,

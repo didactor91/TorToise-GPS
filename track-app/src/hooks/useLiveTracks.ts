@@ -12,8 +12,8 @@ import {
 } from '../generated/graphql'
 import { toast } from 'react-toastify'
 
-export type HomePoi = NonNullable<GetPoIsQuery['pois']>[number]
-export type HomeTracker = NonNullable<GetTrackersQuery['trackers']>[number]
+export type HomePoi = NonNullable<NonNullable<GetPoIsQuery['pois']>['items']>[number]
+export type HomeTracker = NonNullable<NonNullable<GetTrackersQuery['trackers']>['items']>[number]
 export type LiveTrack = NonNullable<LiveTracksUpdatedSubscription['liveTracksUpdated']>[number]
 
 export function useLiveTracks() {
@@ -22,6 +22,7 @@ export function useLiveTracks() {
   // POIs
   const { data: poisData, refetch: refetchPois } = useGetPoIsQuery({
     fetchPolicy: 'cache-and-network',
+    variables: { offset: 0, limit: 200 },
     onError: (err) => toast.error(err.message)
   })
   const [deletePoiMutation] = useDeletePoiMutation({
@@ -32,6 +33,7 @@ export function useLiveTracks() {
   // Trackers
   const { data: trackersData, refetch: refetchTrackers } = useGetTrackersQuery({
     fetchPolicy: 'cache-and-network',
+    variables: { offset: 0, limit: 200 },
     onError: (err) => toast.error(err.message)
   })
   const [deleteTrackerMutation] = useDeleteTrackerMutation({
@@ -60,8 +62,8 @@ export function useLiveTracks() {
     setLivePositions([...positionsMapRef.current.values()])
   }, [liveData])
 
-  const pois: HomePoi[] = poisData?.pois ?? []
-  const trackers: HomeTracker[] = trackersData?.trackers ?? []
+  const pois: HomePoi[] = poisData?.pois?.items ?? []
+  const trackers: HomeTracker[] = trackersData?.trackers?.items ?? []
 
   const deletePOI = (id: string) => deletePoiMutation({ variables: { id } })
   const deleteTracker = (id: string) => {

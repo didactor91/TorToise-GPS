@@ -31,9 +31,16 @@ module.exports = {
         return Company.findByIdAndUpdate(id, { $set: patch }, { new: true })
     },
 
-    async listUsers(companyId) {
+    async listUsers(companyId, { offset = 0, limit } = {}) {
         const query = companyId ? { companyId } : {}
-        return User.find(query).sort({ createdAt: -1 }).lean()
+        const result = User.find(query).sort({ createdAt: -1 }).skip(offset)
+        if (typeof limit === 'number') result.limit(limit)
+        return result.lean()
+    },
+
+    async countUsers(companyId) {
+        const query = companyId ? { companyId } : {}
+        return User.countDocuments(query)
     },
 
     async createUser(data) {

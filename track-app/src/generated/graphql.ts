@@ -207,25 +207,45 @@ export type Poi = {
   title: Scalars['String']['output'];
 };
 
+export type PagedBackofficeUsers = {
+  __typename?: 'PagedBackofficeUsers';
+  items: Array<BackofficeUser>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PagedPoIs = {
+  __typename?: 'PagedPOIs';
+  items: Array<Poi>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PagedTrackers = {
+  __typename?: 'PagedTrackers';
+  items: Array<Tracker>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   backofficeCompanies: Array<Company>;
-  backofficeUsers: Array<BackofficeUser>;
+  backofficeUsers: PagedBackofficeUsers;
   lastTrack?: Maybe<Track>;
   lastTracks: Array<LiveTrack>;
   me: User;
   poi: Poi;
-  pois: Array<Poi>;
+  pois: PagedPoIs;
   trackRange: Array<Track>;
   tracker: Tracker;
   trackerByLP: Tracker;
   trackerBySN: Tracker;
-  trackers: Array<Tracker>;
+  trackers: PagedTrackers;
 };
 
 
 export type QueryBackofficeUsersArgs = {
   companyId?: InputMaybe<Scalars['ID']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -236,6 +256,12 @@ export type QueryLastTrackArgs = {
 
 export type QueryPoiArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryPoisArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -258,6 +284,12 @@ export type QueryTrackerByLpArgs = {
 
 export type QueryTrackerBySnArgs = {
   serialNumber: Scalars['String']['input'];
+};
+
+
+export type QueryTrackersArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type RegisterUserInput = {
@@ -327,10 +359,12 @@ export type BackofficeCompaniesQuery = { __typename?: 'Query', backofficeCompani
 
 export type BackofficeUsersQueryVariables = Exact<{
   companyId?: InputMaybe<Scalars['ID']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type BackofficeUsersQuery = { __typename?: 'Query', backofficeUsers: Array<{ __typename?: 'BackofficeUser', id: string, name: string, surname: string, email: string, role: string, companyId?: string | null, permissionKeys: Array<string> }> };
+export type BackofficeUsersQuery = { __typename?: 'Query', backofficeUsers: { __typename?: 'PagedBackofficeUsers', totalCount: number, items: Array<{ __typename?: 'BackofficeUser', id: string, name: string, surname: string, email: string, role: string, companyId?: string | null, permissionKeys: Array<string> }> } };
 
 export type BackofficeCreateCompanyMutationVariables = Exact<{
   input: BackofficeCreateCompanyInput;
@@ -362,10 +396,13 @@ export type BackofficeUpdateUserMutationVariables = Exact<{
 
 export type BackofficeUpdateUserMutation = { __typename?: 'Mutation', backofficeUpdateUser: { __typename?: 'MutationResult', success: boolean, message: string } };
 
-export type GetTrackersQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetTrackersQueryVariables = Exact<{
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
 
 
-export type GetTrackersQuery = { __typename?: 'Query', trackers: Array<{ __typename?: 'Tracker', id: string, serialNumber: string, licensePlate?: string | null }> };
+export type GetTrackersQuery = { __typename?: 'Query', trackers: { __typename?: 'PagedTrackers', totalCount: number, items: Array<{ __typename?: 'Tracker', id: string, serialNumber: string, licensePlate?: string | null }> } };
 
 export type TrackerBySnQueryVariables = Exact<{
   serialNumber: Scalars['String']['input'];
@@ -428,10 +465,13 @@ export type DeleteUserMutationVariables = Exact<{ [key: string]: never; }>;
 
 export type DeleteUserMutation = { __typename?: 'Mutation', deleteUser: { __typename?: 'MutationResult', success: boolean, message: string } };
 
-export type GetPoIsQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetPoIsQueryVariables = Exact<{
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
 
 
-export type GetPoIsQuery = { __typename?: 'Query', pois: Array<{ __typename?: 'POI', id: string, title: string, color: string, latitude: number, longitude: number }> };
+export type GetPoIsQuery = { __typename?: 'Query', pois: { __typename?: 'PagedPOIs', totalCount: number, items: Array<{ __typename?: 'POI', id: string, title: string, color: string, latitude: number, longitude: number }> } };
 
 export type AddPoiMutationVariables = Exact<{
   input: AddPoiInput;
@@ -514,15 +554,18 @@ export type BackofficeCompaniesLazyQueryHookResult = ReturnType<typeof useBackof
 export type BackofficeCompaniesSuspenseQueryHookResult = ReturnType<typeof useBackofficeCompaniesSuspenseQuery>;
 export type BackofficeCompaniesQueryResult = Apollo.QueryResult<BackofficeCompaniesQuery, BackofficeCompaniesQueryVariables>;
 export const BackofficeUsersDocument = gql`
-    query BackofficeUsers($companyId: ID) {
-  backofficeUsers(companyId: $companyId) {
-    id
-    name
-    surname
-    email
-    role
-    companyId
-    permissionKeys
+    query BackofficeUsers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
+  backofficeUsers(companyId: $companyId, offset: $offset, limit: $limit) {
+    totalCount
+    items {
+      id
+      name
+      surname
+      email
+      role
+      companyId
+      permissionKeys
+    }
   }
 }
     `;
@@ -540,6 +583,8 @@ export const BackofficeUsersDocument = gql`
  * const { data, loading, error } = useBackofficeUsersQuery({
  *   variables: {
  *      companyId: // value for 'companyId'
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
  *   },
  * });
  */
@@ -701,11 +746,14 @@ export type BackofficeUpdateUserMutationHookResult = ReturnType<typeof useBackof
 export type BackofficeUpdateUserMutationResult = Apollo.MutationResult<BackofficeUpdateUserMutation>;
 export type BackofficeUpdateUserMutationOptions = Apollo.BaseMutationOptions<BackofficeUpdateUserMutation, BackofficeUpdateUserMutationVariables>;
 export const GetTrackersDocument = gql`
-    query GetTrackers {
-  trackers {
-    id
-    serialNumber
-    licensePlate
+    query GetTrackers($offset: Int = 0, $limit: Int = 20) {
+  trackers(offset: $offset, limit: $limit) {
+    totalCount
+    items {
+      id
+      serialNumber
+      licensePlate
+    }
   }
 }
     `;
@@ -722,6 +770,8 @@ export const GetTrackersDocument = gql`
  * @example
  * const { data, loading, error } = useGetTrackersQuery({
  *   variables: {
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
  *   },
  * });
  */
@@ -1077,13 +1127,16 @@ export type DeleteUserMutationHookResult = ReturnType<typeof useDeleteUserMutati
 export type DeleteUserMutationResult = Apollo.MutationResult<DeleteUserMutation>;
 export type DeleteUserMutationOptions = Apollo.BaseMutationOptions<DeleteUserMutation, DeleteUserMutationVariables>;
 export const GetPoIsDocument = gql`
-    query GetPOIs {
-  pois {
-    id
-    title
-    color
-    latitude
-    longitude
+    query GetPOIs($offset: Int = 0, $limit: Int = 20) {
+  pois(offset: $offset, limit: $limit) {
+    totalCount
+    items {
+      id
+      title
+      color
+      latitude
+      longitude
+    }
   }
 }
     `;
@@ -1100,6 +1153,8 @@ export const GetPoIsDocument = gql`
  * @example
  * const { data, loading, error } = useGetPoIsQuery({
  *   variables: {
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
  *   },
  * });
  */

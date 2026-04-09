@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageShell from '../shared/PageShell'
 import DataTable, { Column } from '../shared/DataTable'
@@ -17,7 +17,8 @@ const USER_COLUMNS: Column<CompanyUser>[] = [
 
 function Users({ canCreate }: UsersProps) {
   const navigate = useNavigate()
-  const { users, loading } = useUsers()
+  const [page, setPage] = useState(1)
+  const { users, totalCount, loading } = useUsers(page, 20)
 
   return (
     <PageShell
@@ -31,6 +32,13 @@ function Users({ canCreate }: UsersProps) {
             columns={USER_COLUMNS}
             rows={users}
             emptyMessage="No users found in this company."
+            pageSize={20}
+            serverPagination={{
+              enabled: true,
+              currentPage: page,
+              totalCount,
+              onPageChange: setPage
+            }}
           />
       }
     </PageShell>

@@ -4,6 +4,12 @@ const repo = require('./fleet.repository')
 const { ensureUserCompany } = require('../shared/company-context')
 
 const fleetService = {
+    normalizePagination(offset = 0, limit = 20) {
+        const _offset = Math.max(0, Number(offset || 0))
+        const _limit = Math.max(1, Math.min(200, Number(limit || 20)))
+        return { offset: _offset, limit: _limit }
+    },
+
     addTracker(id, trackerData) {
         if (!trackerData) throw new InputError('incorrect tracker info')
 
@@ -34,7 +40,7 @@ const fleetService = {
         })()
     },
 
-    retrieveAllTrackers(id) {
+    retrieveAllTrackers(id, pagination) {
         validate.arguments([
             { name: 'id', value: id, type: String, notEmpty: true }
         ])
@@ -44,7 +50,19 @@ const fleetService = {
             if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
             const companyId = await ensureUserCompany(user)
             await repo.syncLegacyTrackers(companyId, user.trackers || [])
-            return repo.findTrackersByCompany(companyId)
+            if (!pagination) return repo.findTrackersByCompany(companyId)
+            const _pagination = this.normalizePagination(pagination.offset, pagination.limit)
+            return repo.findTrackersByCompany(companyId, _pagination)
+        })()
+    },
+
+    countTrackers(id) {
+        validate.arguments([{ name: 'id', value: id, type: String, notEmpty: true }])
+        return (async () => {
+            const user = await repo.findUserById(id)
+            if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
+            const companyId = await ensureUserCompany(user)
+            return repo.countTrackersByCompany(companyId)
         })()
     },
 

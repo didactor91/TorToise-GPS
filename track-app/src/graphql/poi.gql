@@ -1,5 +1,8 @@
-query GetPOIs {
-  pois { id title color latitude longitude }
+query GetPOIs($offset: Int = 0, $limit: Int = 20) {
+  pois(offset: $offset, limit: $limit) {
+    totalCount
+    items { id title color latitude longitude }
+  }
 }
 mutation AddPOI($input: AddPOIInput!) {
   addPOI(input: $input) { success message }

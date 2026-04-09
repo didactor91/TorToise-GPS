@@ -11,6 +11,12 @@ function assertValidRole(role) {
 }
 
 const backofficeService = {
+    normalizePagination(offset = 0, limit = 20) {
+        const _offset = Math.max(0, Number(offset || 0))
+        const _limit = Math.max(1, Math.min(200, Number(limit || 20)))
+        return { offset: _offset, limit: _limit }
+    },
+
     async assertStaff(requesterId) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
     },
@@ -70,14 +76,26 @@ const backofficeService = {
         return repo.updateCompanyById(companyId, patch)
     },
 
-    async listUsers(requesterId, companyId = null) {
+    async listUsers(requesterId, companyId = null, pagination) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.read' })
         if (companyId) {
             validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
             const company = await repo.findCompanyById(companyId)
             if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
         }
-        return repo.listUsers(companyId)
+        if (!pagination) return repo.listUsers(companyId)
+        const _pagination = this.normalizePagination(pagination.offset, pagination.limit)
+        return repo.listUsers(companyId, _pagination)
+    },
+
+    async countUsers(requesterId, companyId = null) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.read' })
+        if (companyId) {
+            validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
+            const company = await repo.findCompanyById(companyId)
+            if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
+        }
+        return repo.countUsers(companyId)
     },
 
     async createUser(requesterId, { name, surname, email, password, role, companyId, permissionKeys } = {}) {

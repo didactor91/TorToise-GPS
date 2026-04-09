@@ -8,21 +8,27 @@ const poiResolver = {
   Query: {
     /**
      * @param {unknown} _
-     * @param {unknown} __
+     * @param {{ offset?: number, limit?: number }} args
      * @param {{ userId: string|null }} ctx
      */
-    async pois(_, __, ctx) {
+    async pois(_, { offset, limit }, ctx) {
       const userId = requireAuth(ctx)
       try {
         await requireAccess(userId, { feature: 'poi', permission: 'poi.read' })
-        const pois = await service.retrieveAllPOI(userId)
-        return (pois || []).map(p => ({
-          id: p._id.toString(),
-          title: p.title,
-          color: p.color,
-          latitude: p.latitude,
-          longitude: p.longitude
-        }))
+        const [rows, totalCount] = await Promise.all([
+          service.retrieveAllPOI(userId, { offset, limit }),
+          service.countPOI(userId)
+        ])
+        return {
+          items: rows.map(p => ({
+            id: p._id.toString(),
+            title: p.title,
+            color: p.color,
+            latitude: p.latitude,
+            longitude: p.longitude
+          })),
+          totalCount: Number(totalCount || 0)
+        }
       } catch (err) {
         throw toGraphQLError(err)
       }

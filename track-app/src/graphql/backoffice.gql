@@ -8,15 +8,18 @@ query BackofficeCompanies {
   }
 }
 
-query BackofficeUsers($companyId: ID) {
-  backofficeUsers(companyId: $companyId) {
-    id
-    name
-    surname
-    email
-    role
-    companyId
-    permissionKeys
+query BackofficeUsers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
+  backofficeUsers(companyId: $companyId, offset: $offset, limit: $limit) {
+    totalCount
+    items {
+      id
+      name
+      surname
+      email
+      role
+      companyId
+      permissionKeys
+    }
   }
 }
 
