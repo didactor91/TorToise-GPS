@@ -23,9 +23,8 @@ export function useTrackers(page = 1, pageSize = 20) {
   const totalCount = data?.trackers?.totalCount ?? 0
   const lastTracks = lastTracksData?.lastTracks ?? []
   const statusBySerial = new Map(lastTracks.map(track => [track.serialNumber, track.status]))
-  const dateBySerial = new Map(lastTracks.map(track => [track.serialNumber, track.date]))
 
   const deleteTracker = (id: string) => deleteTrackerMutation({ variables: { id } })
 
-  return { trackers, totalCount, loading: loading || lastTracksLoading, deleteTracker, refetch, statusBySerial, dateBySerial }
+  return { trackers, totalCount, loading: loading || lastTracksLoading, deleteTracker, refetch, statusBySerial }
 }
