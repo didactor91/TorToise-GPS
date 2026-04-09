@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './index.sass'
@@ -10,6 +11,7 @@ interface HomeProps {
 
 function Home({ darkmode }: HomeProps) {
   const { pois, trackers, livePositions, deletePOI, deleteTracker, goToDetail } = useLiveTracks()
+  const location = useLocation()
 
   const mapRef = useRef<L.Map | null>(null)
   const poiMarkRef = useRef<L.Marker[]>([])
@@ -17,6 +19,7 @@ function Home({ darkmode }: HomeProps) {
   const truckMarkRef = useRef<Map<string, L.Marker>>(new Map())
   const tileLightRef = useRef<L.TileLayer | null>(null)
   const tileDarkRef = useRef<L.TileLayer | null>(null)
+  const lastFocusedSerialRef = useRef<string | null>(null)
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -104,6 +107,19 @@ function Home({ darkmode }: HomeProps) {
     })
   }
 
+  const focusTrackerIfRequested = () => {
+    const focusSerial = (location.state as { focusSerial?: string } | null)?.focusSerial
+    if (!focusSerial || !mapRef.current) return
+    if (lastFocusedSerialRef.current === focusSerial) return
+
+    const marker = truckMarkRef.current.get(focusSerial)
+    if (!marker) return
+
+    mapRef.current.setView(marker.getLatLng(), Math.max(mapRef.current.getZoom(), 13), { animate: true })
+    marker.openPopup()
+    lastFocusedSerialRef.current = focusSerial
+  }
+
   const initMap = (initialPois: HomePoi[]) => {
     if (mapRef.current) return
 
@@ -161,6 +177,7 @@ function Home({ darkmode }: HomeProps) {
   useEffect(() => {
     if (!mapRef.current || !livePositions.length) return
     upsertTruckMarkers(livePositions)
+    focusTrackerIfRequested()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [livePositions])
 
@@ -170,8 +187,14 @@ function Home({ darkmode }: HomeProps) {
     // Only paint trackers that don't have a live position yet
     const unknown = trackers.filter(t => !truckMarkRef.current.has(t.serialNumber))
     if (unknown.length) upsertTruckMarkers(unknown)
+    focusTrackerIfRequested()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackers])
+
+  useEffect(() => {
+    focusTrackerIfRequested()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state])
 
   // React to darkmode changes: swap tile layers without reinitializing the map
   useEffect(() => {
