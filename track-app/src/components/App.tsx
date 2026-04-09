@@ -56,6 +56,10 @@ function App() {
     meData?.me?.featureKeys?.includes('backoffice') &&
     meData?.me?.permissionKeys?.includes('users.create')
   )
+  const canUpdateUsers = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('users.update')
+  )
   const canAccessBackoffice = Boolean(
     meData?.me?.featureKeys?.includes('backoffice') &&
     (meData?.me?.permissionKeys?.includes('companies.read') || meData?.me?.permissionKeys?.includes('users.read'))
@@ -126,7 +130,16 @@ function App() {
 
         <Route path="/trackers"     element={guard(<Trackings />)} />
         <Route path="/trackers/new" element={guard(<TrackingsNew />)} />
-        <Route path="/backoffice" element={staffGuard(<Backoffice />)} />
+        <Route
+          path="/backoffice"
+          element={staffGuard(
+            <Backoffice
+              canReadUsers={canReadUsers}
+              canCreateUsers={canCreateUsers}
+              canUpdateUsers={canUpdateUsers}
+            />
+          )}
+        />
 
         <Route path="/detail/:serialNumber" element={guard(<TrackingDetailRoute darkmode={darkmode} />)} />
 
