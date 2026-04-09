@@ -20,6 +20,7 @@ function Home({ darkmode }: HomeProps) {
   const tileLightRef = useRef<L.TileLayer | null>(null)
   const tileDarkRef = useRef<L.TileLayer | null>(null)
   const lastFocusedSerialRef = useRef<string | null>(null)
+  const followSerialRef = useRef<string | null>(null)
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -94,6 +95,9 @@ function Home({ darkmode }: HomeProps) {
         existing.setIcon(makeTruckIcon(status))
         existing.setPopupContent(popupHtml)
         existing.options.title = `SN: ${sn} - Speed: ${speed} Km/h`
+        if (followSerialRef.current === sn && mapRef.current) {
+          mapRef.current.panTo(existing.getLatLng(), { animate: true })
+        }
       } else {
         // First time seeing this truck — create marker
         const marker = L.marker([lat, lng], {
@@ -101,6 +105,10 @@ function Home({ darkmode }: HomeProps) {
           title: `SN: ${sn} - Speed: ${speed} Km/h`
         })
         marker.bindPopup(popupHtml)
+        marker.on('click', () => {
+          followSerialRef.current = sn
+          if (mapRef.current) mapRef.current.panTo(marker.getLatLng(), { animate: true })
+        })
         marker.addTo(mapRef.current!)
         truckMarkRef.current.set(sn, marker)
       }
@@ -126,22 +134,30 @@ function Home({ darkmode }: HomeProps) {
     mapRef.current.setView(marker.getLatLng(), Math.max(mapRef.current.getZoom(), 13), { animate: true })
     marker.openPopup()
     lastFocusedSerialRef.current = focusSerial
+    followSerialRef.current = focusSerial
   }
 
   const initMap = (initialPois: HomePoi[]) => {
     if (mapRef.current) return
 
-    let lati = 40.41665
-    let lngi = -3.703816
+    let lati = 20
+    let lngi = 0
+    let defaultZoom = 3
 
     if (initialPois && initialPois.length >= 1) {
       lati = initialPois[0].latitude
       lngi = initialPois[0].longitude
+      defaultZoom = 8
     }
 
-    const lat = Number(sessionStorage.getItem('lat')) || lati
-    const lng = Number(sessionStorage.getItem('lng')) || lngi
-    const zoom = Number(sessionStorage.getItem('zoom')) || 8
+    const savedLat = sessionStorage.getItem('lat')
+    const savedLng = sessionStorage.getItem('lng')
+    const savedZoom = sessionStorage.getItem('zoom')
+    const hasSavedView = Boolean(savedLat && savedLng && savedZoom)
+
+    const lat = hasSavedView ? Number(savedLat) : lati
+    const lng = hasSavedView ? Number(savedLng) : lngi
+    const zoom = hasSavedView ? Number(savedZoom) : defaultZoom
 
     mapRef.current = L.map('map', {
       center: [lat, lng],
