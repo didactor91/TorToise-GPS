@@ -64,10 +64,22 @@ function Home({ darkmode }: HomeProps) {
           <div class="tracker-popup__title">${poi.title}</div>
           <div class="tracker-popup__meta">lat: ${poi.latitude}</div>
           <div class="tracker-popup__meta">lng: ${poi.longitude}</div>
-          <button id="deletePOI" value="${poi.id}" class="tracker-popup__button tracker-popup__button--danger">Delete</button>
+          <button data-action="delete-poi" data-id="${poi.id}" class="tracker-popup__button tracker-popup__button--danger">Delete</button>
         </div>
       `
       marker.bindPopup(popupHtml)
+      marker.on('popupopen', () => {
+        const popupNode = marker.getPopup()?.getElement()
+        if (!popupNode) return
+        const deleteBtn = popupNode.querySelector<HTMLButtonElement>('[data-action="delete-poi"]')
+        if (deleteBtn) {
+          deleteBtn.onclick = (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            deletePOI(deleteBtn.dataset.id || '')
+          }
+        }
+      })
       marker.addTo(mapRef.current!)
       poiMarkRef.current.push(marker)
     })
@@ -122,7 +134,7 @@ function Home({ darkmode }: HomeProps) {
             <span>Telemetry</span>
             <strong style="color:${freshness.color}">${freshness.label}</strong>
           </div>
-          <button id="detailTracker" value="${sn}" class="tracker-popup__button">View Detail</button>
+          <button data-action="detail-tracker" data-serial="${sn}" class="tracker-popup__button">View Detail</button>
         </div>
       `
 
@@ -160,6 +172,17 @@ function Home({ darkmode }: HomeProps) {
         marker.on('popupopen', () => {
           followSerialRef.current = sn
           lastFollowPanAtRef.current = 0
+          const popupNode = marker.getPopup()?.getElement()
+          if (!popupNode) return
+          const detailBtn = popupNode.querySelector<HTMLButtonElement>('[data-action="detail-tracker"]')
+          if (detailBtn) {
+            detailBtn.onclick = (event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              getCoords()
+              goToDetail(detailBtn.dataset.serial || '')
+            }
+          }
         })
         marker.on('popupclose', () => {
           if (followSerialRef.current === sn) followSerialRef.current = null
@@ -284,22 +307,6 @@ function Home({ darkmode }: HomeProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [darkmode])
-
-  // Set up click delegation for map popup buttons
-  useEffect(() => {
-    const handleMapClick = (e: MouseEvent) => {
-      const target = e.target as HTMLButtonElement
-      if (!target?.id) return
-      if (target.id === 'deletePOI') deletePOI(target.value)
-      if (target.id === 'detailTracker') {
-        getCoords()
-        goToDetail(target.value)
-      }
-    }
-    window.addEventListener('click', handleMapClick)
-    return () => window.removeEventListener('click', handleMapClick)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackers])
 
   // Cleanup map on unmount
   useEffect(() => {
