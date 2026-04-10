@@ -21,6 +21,9 @@
     "test:data": "npm test -w track-data",
     "test:sim": "npm test -w tracker-simulator",
     "codegen": "graphql-codegen --config codegen.yml",
-    "seed:e2e": "npm run seed:e2e -w track-api"
+    "seed:e2e": "npm run seed:e2e -w track-api",
+    "migrate:api": "npm run migrate -w track-api",
+    "migrate:api:dry": "npm run migrate:dry -w track-api",
+    "migrate:api:new": "npm run migrate:new -w track-api"
   }
 }
