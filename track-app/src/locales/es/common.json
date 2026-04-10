@@ -142,7 +142,13 @@
   "detail": {
     "from": "Desde",
     "to": "Hasta",
-    "trackerNotLoaded": "Tracker aún no cargado"
+    "trackerNotLoaded": "Tracker aún no cargado",
+    "noTracksInRange": "No hay tracks para ese rango de fechas.",
+    "startPoint": "Punto de partida",
+    "endPoint": "Punto de llegada",
+    "routePoint": "Punto de ruta",
+    "showFilters": "Mostrar filtros",
+    "hideFilters": "Ocultar filtros"
   },
   "backoffice": {
     "title": "Backoffice",

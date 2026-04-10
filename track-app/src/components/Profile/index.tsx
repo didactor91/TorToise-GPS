@@ -5,7 +5,12 @@ import { UpdateUserInput } from '../../generated/graphql'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
 
-function Profile() {
+interface ProfileProps {
+  darkmode: boolean
+  onDarkMode: () => void
+}
+
+function Profile({ darkmode, onDarkMode }: ProfileProps) {
   const { t } = useTranslation()
   const { user, updateUser, deleteUser } = useProfile()
   const labelClass = 'mb-2 block text-sm font-semibold'
@@ -103,6 +108,29 @@ function Profile() {
               </div>
             </div>
           </form>
+        </section>
+
+        <section className="border-b pb-8" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+          <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">
+            {t('nav.toggleTheme')}
+          </h3>
+          <div className="flex max-w-sm flex-col gap-3">
+            <label className={labelClass} htmlFor="theme-select">
+              {t('nav.toggleTheme')}
+            </label>
+            <select
+              id="theme-select"
+              className={inputClass}
+              value={darkmode ? 'dark' : 'light'}
+              onChange={(e) => {
+                const nextIsDark = e.target.value === 'dark'
+                if (nextIsDark !== darkmode) onDarkMode()
+              }}
+            >
+              <option value="light">{t('nav.themeLight')}</option>
+              <option value="dark">{t('nav.themeDark')}</option>
+            </select>
+          </div>
         </section>
 
         <section className="border-b pb-8" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>

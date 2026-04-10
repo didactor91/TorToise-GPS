@@ -129,8 +129,6 @@ function App() {
           onBackoffice={handleBackoffice}
           showBackoffice={canAccessBackoffice}
           onLogout={handleLogout}
-          onDarkMode={handleDarkMode}
-          darkmode={darkmode}
         />
       )}
       <ToastContainer />
@@ -142,7 +140,7 @@ function App() {
 
         {/* ── protected ── */}
         <Route path="/home"    element={guard(<Home darkmode={darkmode} />)} />
-        <Route path="/profile" element={guard(<Profile />)} />
+        <Route path="/profile" element={guard(<Profile darkmode={darkmode} onDarkMode={handleDarkMode} />)} />
         <Route path="/users" element={usersGuard(<Users canCreate={canCreateUsers} />)} />
         <Route path="/users/new" element={usersCreateGuard(<UsersNew />)} />
 

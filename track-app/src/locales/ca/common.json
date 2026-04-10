@@ -142,7 +142,13 @@
   "detail": {
     "from": "Des de",
     "to": "Fins a",
-    "trackerNotLoaded": "Tracker encara no carregat"
+    "trackerNotLoaded": "Tracker encara no carregat",
+    "noTracksInRange": "No hi ha tracks per a aquest rang de dates.",
+    "startPoint": "Punt de sortida",
+    "endPoint": "Punt d'arribada",
+    "routePoint": "Punt de ruta",
+    "showFilters": "Mostrar filtres",
+    "hideFilters": "Ocultar filtres"
   },
   "backoffice": {
     "title": "Backoffice",

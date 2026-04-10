@@ -1,0 +1,64 @@
+.tracker-popup
+  min-width: 220px
+  display: flex
+  flex-direction: column
+  gap: 10px
+  color: var(--text-primary)
+
+.tracker-popup__title
+  font-size: 14px
+  font-weight: 700
+  line-height: 1.2
+  color: var(--text-primary)
+
+.tracker-popup__meta
+  font-size: 12px
+  color: var(--text-secondary)
+
+.tracker-popup__row
+  display: flex
+  justify-content: space-between
+  align-items: center
+  gap: 8px
+  font-size: 12px
+  color: var(--text-secondary)
+
+.tracker-popup__row strong
+  color: var(--text-primary)
+
+.tracker-popup__button
+  margin-top: 4px
+  width: 100%
+  border: 1px solid color-mix(in srgb, var(--brand-warning) 82%, var(--border-default))
+  border-radius: 8px
+  background: color-mix(in srgb, var(--bg-surface) 76%, transparent)
+  color: var(--text-primary)
+  font-size: 12px
+  font-weight: 600
+  padding: 6px 8px
+  cursor: pointer
+
+.tracker-popup__button:hover
+  background: color-mix(in srgb, var(--bg-surface-alt) 86%, transparent)
+
+.tracker-popup__button--danger
+  border-color: color-mix(in srgb, var(--danger) 72%, var(--border-default))
+  background: color-mix(in srgb, var(--danger) 14%, transparent)
+  color: var(--text-primary)
+
+.leaflet-popup-content
+  margin: 10px 12px
+  color: var(--text-primary)
+
+.leaflet-popup-content-wrapper
+  background: color-mix(in srgb, var(--bg-glass) 88%, transparent)
+  color: var(--text-primary)
+  border: 1px solid color-mix(in srgb, var(--glass-border) 78%, transparent)
+  border-radius: 12px
+  box-shadow: var(--shadow-glass)
+  backdrop-filter: blur(12px)
+  -webkit-backdrop-filter: blur(12px)
+
+.leaflet-popup-tip
+  background: color-mix(in srgb, var(--bg-glass) 88%, transparent)
+  border: 1px solid color-mix(in srgb, var(--glass-border) 78%, transparent)
