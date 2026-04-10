@@ -42,7 +42,13 @@ function TrackingDetailRoute({ darkmode }: TrackingDetailRouteProps) {
 }
 
 function App() {
-  const [darkmode,   setDarkmode]   = useState<boolean>(false)
+  const [darkmode,   setDarkmode]   = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    const saved = localStorage.getItem('ui-theme')
+    if (saved === 'dark') return true
+    if (saved === 'light') return false
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
+  })
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => !!sessionStorage.getItem('userToken'))
 
   const navigate = useNavigate()
@@ -74,6 +80,12 @@ function App() {
       navigate('/login')
     })
   }, [navigate])
+
+  useEffect(() => {
+    const theme = darkmode ? 'dark' : 'light'
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('ui-theme', theme)
+  }, [darkmode])
 
   // ── navigation ───────────────────────────────────────────────────────────
   const handleHome      = () => navigate('/home')

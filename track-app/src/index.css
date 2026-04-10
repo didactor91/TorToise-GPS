@@ -7,42 +7,59 @@
 @import '@fontsource/inter/600.css';
 @import '@fontsource/inter/700.css';
 
-/* ── Design tokens ────────────────────────────────────────────────────────── */
-:root {
-  /* Brand */
-  --color-brand:          #FFDD57;
-  --color-brand-dark:     #f5c518;
-  --color-accent:         #3b82f6;
+/* ── Design tokens (Accessible palettes) ─────────────────────────────────── */
+:root,
+:root[data-theme='light'] {
+  --bg-app: #f7f9fc;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #eef2f7;
+  --bg-glass: rgba(255, 255, 255, 0.72);
+  --bg-glass-strong: rgba(255, 255, 255, 0.86);
+  --border-default: #d6dee8;
 
-  /* Backgrounds */
-  --color-bg-fallback:    #1e1e2e;
-  --color-bg-overlay:     rgba(0, 0, 0, 0.45);
-  --color-bg-card:        rgba(255, 255, 255, 0.97);
-  --color-bg-subtle:      #f9fafb;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #475569;
+  --text-on-brand: #ffffff;
 
-  /* Text */
-  --color-text-dark:      #111827;
-  --color-text-body:      #374151;
-  --color-text-muted:     #6b7280;
-  --color-text-on-dark:   #ffffff;
+  --brand-primary: #2563eb;
+  --brand-primary-hover: #1d4ed8;
+  --brand-secondary: #0ea5e9;
+  --brand-warning: #facc15;
 
-  /* Status */
-  --color-status-on:      #22c55e;
-  --color-status-off:     #ef4444;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+  --info: #0369a1;
 
-  /* Borders & surfaces */
-  --color-surface:        #ffffff;
-  --color-border:         #e5e7eb;
+  --focus-ring: #2563eb;
+  --overlay: rgba(15, 23, 42, 0.45);
 
-  /* Shadows */
-  --shadow-sm:    0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:    0 4px 16px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
-  --shadow-card:  0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
-  --shadow-glass: 0 14px 40px rgba(15, 23, 42, 0.22), 0 4px 18px rgba(15, 23, 42, 0.12);
-  --glass-bg: rgba(255, 255, 255, 0.18);
-  --glass-bg-strong: rgba(255, 255, 255, 0.28);
-  --glass-border: rgba(255, 255, 255, 0.42);
-  --glass-input: rgba(255, 255, 255, 0.58);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.09), 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 8px 30px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(15, 23, 42, 0.08);
+  --shadow-glass: 0 14px 40px rgba(15, 23, 42, 0.2), 0 4px 18px rgba(15, 23, 42, 0.12);
+
+  /* Legacy aliases to avoid breaking existing components */
+  --color-brand: var(--brand-warning);
+  --color-brand-dark: #eab308;
+  --color-accent: var(--focus-ring);
+  --color-bg-fallback: var(--bg-app);
+  --color-bg-overlay: var(--overlay);
+  --color-bg-card: var(--bg-surface);
+  --color-bg-subtle: var(--bg-surface-alt);
+  --color-text-dark: var(--text-primary);
+  --color-text-body: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-on-dark: var(--text-on-brand);
+  --color-status-on: var(--success);
+  --color-status-off: var(--danger);
+  --color-surface: var(--bg-surface);
+  --color-border: var(--border-default);
+  --glass-bg: var(--bg-glass);
+  --glass-bg-strong: var(--bg-glass-strong);
+  --glass-border: rgba(148, 163, 184, 0.45);
+  --glass-input: rgba(255, 255, 255, 0.9);
 
   /* Layout */
   --navbar-height: 3.25rem;
@@ -78,6 +95,78 @@
   --text-4xl:   2.25rem;
 }
 
+:root[data-theme='dark'] {
+    --bg-app: #0b1220;
+    --bg-surface: #111a2b;
+    --bg-surface-alt: #162338;
+    --bg-glass: rgba(17, 26, 43, 0.72);
+    --bg-glass-strong: rgba(17, 26, 43, 0.86);
+    --border-default: #2a3a55;
+
+    --text-primary: #e5edf8;
+    --text-secondary: #c7d4e8;
+    --text-muted: #9fb0c9;
+    --text-on-brand: #ffffff;
+
+    --brand-primary: #60a5fa;
+    --brand-primary-hover: #3b82f6;
+    --brand-secondary: #22d3ee;
+    --brand-warning: #facc15;
+
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: #38bdf8;
+
+    --focus-ring: #93c5fd;
+    --overlay: rgba(2, 6, 23, 0.68);
+
+    --shadow-sm: 0 1px 3px rgba(2, 6, 23, 0.5), 0 1px 2px rgba(2, 6, 23, 0.4);
+    --shadow-md: 0 4px 16px rgba(2, 6, 23, 0.52), 0 2px 6px rgba(2, 6, 23, 0.36);
+    --shadow-card: 0 8px 30px rgba(2, 6, 23, 0.6), 0 2px 8px rgba(2, 6, 23, 0.4);
+    --shadow-glass: 0 14px 40px rgba(2, 6, 23, 0.62), 0 4px 18px rgba(2, 6, 23, 0.38);
+
+    --glass-border: rgba(148, 163, 184, 0.35);
+    --glass-input: rgba(15, 23, 42, 0.7);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    --bg-app: #0b1220;
+    --bg-surface: #111a2b;
+    --bg-surface-alt: #162338;
+    --bg-glass: rgba(17, 26, 43, 0.72);
+    --bg-glass-strong: rgba(17, 26, 43, 0.86);
+    --border-default: #2a3a55;
+
+    --text-primary: #e5edf8;
+    --text-secondary: #c7d4e8;
+    --text-muted: #9fb0c9;
+    --text-on-brand: #ffffff;
+
+    --brand-primary: #60a5fa;
+    --brand-primary-hover: #3b82f6;
+    --brand-secondary: #22d3ee;
+    --brand-warning: #facc15;
+
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: #38bdf8;
+
+    --focus-ring: #93c5fd;
+    --overlay: rgba(2, 6, 23, 0.68);
+
+    --shadow-sm: 0 1px 3px rgba(2, 6, 23, 0.5), 0 1px 2px rgba(2, 6, 23, 0.4);
+    --shadow-md: 0 4px 16px rgba(2, 6, 23, 0.52), 0 2px 6px rgba(2, 6, 23, 0.36);
+    --shadow-card: 0 8px 30px rgba(2, 6, 23, 0.6), 0 2px 8px rgba(2, 6, 23, 0.4);
+    --shadow-glass: 0 14px 40px rgba(2, 6, 23, 0.62), 0 4px 18px rgba(2, 6, 23, 0.38);
+
+    --glass-border: rgba(148, 163, 184, 0.35);
+    --glass-input: rgba(15, 23, 42, 0.7);
+  }
+}
+
 /* ── Global reset & base ──────────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -98,7 +187,7 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-image: radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.16), transparent 42%), radial-gradient(circle at 90% 0%, rgba(59, 130, 246, 0.2), transparent 35%), linear-gradient(180deg, #1b2335 0%, #161b2b 45%, #141a2a 100%);
+  background-image: radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--bg-surface) 28%, transparent), transparent 42%), radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--brand-primary) 26%, transparent), transparent 35%), linear-gradient(180deg, color-mix(in srgb, var(--bg-app) 92%, #000 8%) 0%, var(--bg-app) 50%, color-mix(in srgb, var(--bg-app) 84%, #000 16%) 100%);
 }
 
 /* Ensure Bulma picks up Inter */
@@ -140,7 +229,7 @@ body {
 }
 
 .page-shell__content .label {
-  color: rgba(17, 24, 39, 0.88);
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -148,36 +237,38 @@ body {
 .page-shell__content .textarea,
 .page-shell__content .select select {
   background: var(--glass-input);
-  border-color: rgba(148, 163, 184, 0.35);
+  color: var(--text-primary);
+  border-color: var(--border-default);
   box-shadow: none;
 }
 
 .page-shell__content .input:focus,
 .page-shell__content .textarea:focus,
 .page-shell__content .select select:focus {
-  border-color: rgba(59, 130, 246, 0.55);
-  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.18);
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--focus-ring) 28%, transparent);
 }
 
 .auth-shell__card .input,
 .auth-shell__card .textarea,
 .auth-shell__card .select select {
   background: var(--glass-input);
-  border-color: rgba(148, 163, 184, 0.35);
+  color: var(--text-primary);
+  border-color: var(--border-default);
   box-shadow: none;
 }
 
 .auth-shell__card .input:focus,
 .auth-shell__card .textarea:focus,
 .auth-shell__card .select select:focus {
-  border-color: rgba(59, 130, 246, 0.55);
-  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.18);
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--focus-ring) 28%, transparent);
 }
 
 .auth-shell__card .button.is-ghost {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  color: #1f2937;
+  background: color-mix(in srgb, var(--bg-glass) 70%, transparent);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
 }
 
 .auth-shell__card .button.is-ghost:hover {
@@ -185,13 +276,14 @@ body {
 }
 
 .page-shell__content .tabs.is-toggle li a {
-  background: rgba(255, 255, 255, 0.42);
-  border-color: rgba(148, 163, 184, 0.35);
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-glass) 62%, transparent);
+  border-color: var(--border-default);
 }
 
 .page-shell__content .tabs.is-toggle li.is-active a {
   background: var(--glass-bg-strong);
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .page-shell__content .title {
@@ -215,16 +307,18 @@ body {
 }
 
 .data-table-shell .table thead th {
-  background: rgba(255, 255, 255, 0.5);
-  border-color: rgba(148, 163, 184, 0.3);
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-surface) 78%, transparent);
+  border-color: var(--border-default);
 }
 
 .data-table-shell .table tbody tr {
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-surface) 38%, transparent);
 }
 
 .data-table-shell .table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.22) !important;
+  background: color-mix(in srgb, var(--bg-surface) 62%, transparent) !important;
 }
 
 .modal .modal-background {
@@ -245,15 +339,16 @@ body {
 .modal .modal-card-head,
 .modal .modal-card-foot,
 .modal .modal-card-body {
+  color: var(--text-primary);
   background: transparent;
-  border-color: rgba(148, 163, 184, 0.32);
+  border-color: var(--border-default);
 }
 
 .button.is-warning,
 .button.is-info,
 .button.is-danger,
 .button.is-dark {
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
   transition: transform 160ms ease, box-shadow 180ms ease, filter 180ms ease;
 }
@@ -268,5 +363,5 @@ body {
 }
 
 .help {
-  color: rgba(55, 65, 81, 0.85);
+  color: var(--text-muted);
 }

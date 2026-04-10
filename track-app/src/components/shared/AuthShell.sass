@@ -16,7 +16,7 @@
   content: ''
   position: absolute
   inset: 0
-  background: radial-gradient(circle at 16% 12%, rgba(255,255,255,0.18), transparent 38%), radial-gradient(circle at 82% 0%, rgba(59,130,246,0.24), transparent 34%), linear-gradient(180deg, rgba(15,23,42,0.45) 0%, rgba(15,23,42,0.62) 100%)
+  background: radial-gradient(circle at 16% 12%, color-mix(in srgb, var(--bg-surface) 22%, transparent), transparent 38%), radial-gradient(circle at 82% 0%, color-mix(in srgb, var(--brand-primary) 24%, transparent), transparent 34%), linear-gradient(180deg, color-mix(in srgb, var(--overlay) 68%, transparent) 0%, color-mix(in srgb, var(--overlay) 92%, transparent) 100%)
   z-index: 0
 
 .auth-shell__hero
@@ -29,8 +29,9 @@
 .auth-shell__card
   position: relative
   z-index: 1
-  background: rgba(255, 255, 255, 0.2)
-  border: 1px solid rgba(255, 255, 255, 0.42)
+  color: var(--text-secondary)
+  background: var(--bg-glass)
+  border: 1px solid var(--glass-border)
   border-radius: var(--radius-lg)
   box-shadow: var(--shadow-glass)
   padding: var(--space-8)
@@ -56,4 +57,4 @@
     margin-bottom: var(--space-2)
     font-weight: 600
     font-size: var(--text-sm)
-    color: rgba(17, 24, 39, 0.9)
+    color: var(--text-primary)

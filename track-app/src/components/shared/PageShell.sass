@@ -8,8 +8,18 @@
   display: flex
   flex-direction: column
   gap: var(--space-4)
+  position: relative
+
+.page-shell::before
+  content: ''
+  position: absolute
+  inset: 0
+  background: linear-gradient(180deg, color-mix(in srgb, var(--overlay) 65%, transparent) 0%, color-mix(in srgb, var(--overlay) 85%, transparent) 100%)
+  pointer-events: none
 
 .page-shell__header
+  position: relative
+  z-index: 1
   display: flex
   align-items: center
   justify-content: space-between
@@ -31,8 +41,11 @@
   letter-spacing: -0.02em
 
 .page-shell__content
-  background: rgba(255, 255, 255, 0.14)
-  border: 1px solid rgba(255, 255, 255, 0.35)
+  position: relative
+  z-index: 1
+  color: var(--text-secondary)
+  background: var(--bg-glass)
+  border: 1px solid var(--glass-border)
   border-radius: var(--radius-lg)
   box-shadow: var(--shadow-glass)
   backdrop-filter: blur(10px)
