@@ -24,6 +24,7 @@ export type BackofficeUser = {
     name: string
     surname: string
     email: string
+    language: string
     role: string
     companyId: string | null
     permissionKeys: string[]
@@ -81,6 +82,7 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
             name: u.name,
             surname: u.surname,
             email: u.email,
+            language: u.language || 'en',
             role: u.role,
             companyId: u.companyId ?? null,
             permissionKeys: u.permissionKeys ?? []
@@ -103,6 +105,7 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
         surname: string
         email: string
         password: string
+        language?: string
         role: string
         companyId: string
         permissionKeys?: string[]
@@ -115,6 +118,7 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
         name?: string
         surname?: string
         email?: string
+        language?: string
         role?: string
         companyId?: string
         permissionKeys?: string[]

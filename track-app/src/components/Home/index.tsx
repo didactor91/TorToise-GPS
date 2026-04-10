@@ -4,12 +4,14 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './index.sass'
 import { useLiveTracks, HomePoi, HomeTracker, LiveTrack } from '../../hooks/useLiveTracks'
+import { useTranslation } from 'react-i18next'
 
 interface HomeProps {
   darkmode: boolean
 }
 
 function Home({ darkmode }: HomeProps) {
+  const { t } = useTranslation()
   const { pois, trackers, lastTracks, livePositions, deletePOI, goToDetail } = useLiveTracks()
   const location = useLocation()
   const licenseBySerial = useMemo(
@@ -63,9 +65,9 @@ function Home({ darkmode }: HomeProps) {
       const popupHtml = `
         <div class="tracker-popup">
           <div class="tracker-popup__title">${poi.title}</div>
-          <div class="tracker-popup__meta">lat: ${poi.latitude}</div>
-          <div class="tracker-popup__meta">lng: ${poi.longitude}</div>
-          <button data-action="delete-poi" data-id="${poi.id}" class="tracker-popup__button tracker-popup__button--danger">Delete</button>
+          <div class="tracker-popup__meta">${t('ui.latitude')}: ${poi.latitude}</div>
+          <div class="tracker-popup__meta">${t('ui.longitude')}: ${poi.longitude}</div>
+          <button data-action="delete-poi" data-id="${poi.id}" class="tracker-popup__button tracker-popup__button--danger">${t('home.deletePoi')}</button>
         </div>
       `
       marker.bindPopup(popupHtml)
@@ -97,14 +99,14 @@ function Home({ darkmode }: HomeProps) {
   }
 
   const telemetryFreshness = (dateValue?: string | Date) => {
-    if (!dateValue) return { label: 'STALE', color: '#f59e0b' }
+    if (!dateValue) return { label: t('home.stale'), color: '#f59e0b' }
     const ts = new Date(dateValue).getTime()
-    if (!Number.isFinite(ts)) return { label: 'STALE', color: '#f59e0b' }
+    if (!Number.isFinite(ts)) return { label: t('home.stale'), color: '#f59e0b' }
     const ageMs = Date.now() - ts
     // Consider telemetry live if updated in the last 60 seconds.
     return ageMs <= 60_000
-      ? { label: 'LIVE', color: '#22c55e' }
-      : { label: 'STALE', color: '#f59e0b' }
+      ? { label: t('home.live'), color: '#22c55e' }
+      : { label: t('home.stale'), color: '#f59e0b' }
   }
 
   const bindTrackerPopupActions = (marker: L.Marker) => {
@@ -141,16 +143,16 @@ function Home({ darkmode }: HomeProps) {
       const popupHtml = `
         <div class="tracker-popup">
           <div class="tracker-popup__title">${lp}</div>
-          <div class="tracker-popup__meta">SN: ${sn}</div>
+          <div class="tracker-popup__meta">${t('home.sn')}: ${sn}</div>
           <div class="tracker-popup__row">
-            <span>Speed</span>
+            <span>${t('home.speed')}</span>
             <strong>${speed.toFixed(2)} km/h</strong>
           </div>
           <div class="tracker-popup__row">
-            <span>Telemetry</span>
+            <span>${t('home.telemetry')}</span>
             <strong style="color:${freshness.color}">${freshness.label}</strong>
           </div>
-          <button data-action="detail-tracker" data-serial="${sn}" class="tracker-popup__button">View Detail</button>
+          <button data-action="detail-tracker" data-serial="${sn}" class="tracker-popup__button">${t('home.viewDetail')}</button>
         </div>
       `
 
@@ -158,7 +160,7 @@ function Home({ darkmode }: HomeProps) {
       if (existing) {
         // Move existing marker — no flicker
         existing.setLatLng([lat, lng])
-        const nextTitle = `SN: ${sn} - Speed: ${speed} Km/h`
+        const nextTitle = `${t('home.sn')}: ${sn} - ${t('home.speed')}: ${speed} Km/h`
         if (existing.options.title !== nextTitle) existing.options.title = nextTitle
 
         const prevSignature = truckPopupSignatureRef.current.get(sn)
@@ -186,7 +188,7 @@ function Home({ darkmode }: HomeProps) {
         // First time seeing this truck — create marker
         const marker = L.marker([lat, lng], {
           icon: makeTruckIcon(status),
-          title: `SN: ${sn} - Speed: ${speed} Km/h`
+          title: `${t('home.sn')}: ${sn} - ${t('home.speed')}: ${speed} Km/h`
         })
         marker.bindPopup(popupHtml, {
           autoClose: false,

@@ -20,6 +20,7 @@
     "test:utils": "npm test -w track-utils",
     "test:data": "npm test -w track-data",
     "test:sim": "npm test -w tracker-simulator",
-    "codegen": "graphql-codegen --config codegen.yml"
+    "codegen": "graphql-codegen --config codegen.yml",
+    "seed:e2e": "npm run seed:e2e -w track-api"
   }
 }

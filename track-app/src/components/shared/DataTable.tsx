@@ -1,5 +1,6 @@
 import React from 'react'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export interface Column<T> {
   key: keyof T | string
@@ -13,6 +14,7 @@ interface DataTableProps<T extends object> {
   onDelete?: (row: T) => void
   emptyMessage?: string
   pageSize?: number
+  variant?: 'default' | 'flat'
   serverPagination?: {
     enabled: boolean
     currentPage: number
@@ -25,10 +27,13 @@ function DataTable<T extends object>({
   columns,
   rows,
   onDelete,
-  emptyMessage = 'No items yet.',
+  emptyMessage,
   pageSize = 20,
+  variant = 'default',
   serverPagination
 }: DataTableProps<T>) {
+  const { t } = useTranslation()
+  const resolvedEmptyMessage = emptyMessage ?? t('table.noItems')
   const resolvedPageSize = Math.max(1, Math.min(20, pageSize))
   const isServerPagination = Boolean(serverPagination?.enabled)
   const [currentPage, setCurrentPage] = useState(1)
@@ -57,7 +62,7 @@ function DataTable<T extends object>({
         color: 'var(--color-text-muted)'
       }}>
         <p style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-4)' }}>📭</p>
-        <p style={{ fontSize: 'var(--text-base)', fontWeight: 500 }}>{emptyMessage}</p>
+        <p style={{ fontSize: 'var(--text-base)', fontWeight: 500 }}>{resolvedEmptyMessage}</p>
       </div>
     )
   }
@@ -69,36 +74,42 @@ function DataTable<T extends object>({
     const r = row as Record<string, unknown>
     return (r['_id'] as string) || (r['id'] as string) || i
   }
+  const headerClass = variant === 'flat'
+    ? 'border-b px-3 py-2 text-left align-middle text-[var(--text-secondary)]'
+    : 'border-b px-3 py-2 text-left align-middle'
+  const rowClass = variant === 'flat'
+    ? 'hover:bg-white/10 dark:hover:bg-slate-700/20'
+    : 'odd:bg-white/10 hover:bg-white/20 dark:odd:bg-slate-700/20 dark:hover:bg-slate-700/35'
 
   return (
     <div className="data-table-shell">
-      <div className="table-container">
-        <table className="table is-fullwidth is-striped is-hoverable">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
               {columns.map(col => (
-                <th key={String(col.key)}>{col.label}</th>
+                <th key={String(col.key)} className={headerClass} style={{ borderColor: 'var(--border-default)' }}>{col.label}</th>
               ))}
-              {onDelete && <th style={{ width: '80px' }}>Actions</th>}
+              {onDelete && <th style={{ width: '80px', borderColor: 'var(--border-default)' }} className={headerClass}>{t('ui.actions')}</th>}
             </tr>
           </thead>
           <tbody>
             {displayedRows.map((row, i) => (
-              <tr key={getRowKey(row, i)}>
+              <tr key={getRowKey(row, i)} className={rowClass}>
                 {columns.map(col => (
-                  <td key={String(col.key)}>
+                  <td key={String(col.key)} className="border-b px-3 py-2 align-middle" style={{ borderColor: 'var(--border-default)' }}>
                     {col.render
                       ? col.render(row)
                       : String((row as Record<string, unknown>)[col.key as string] ?? '')}
                   </td>
                 ))}
                 {onDelete && (
-                  <td>
+                  <td className="border-b px-3 py-2 align-middle" style={{ borderColor: 'var(--border-default)' }}>
                     <button
-                      className="button is-danger is-small is-outlined is-rounded"
+                      className="inline-flex items-center justify-center rounded-full border border-red-700 bg-transparent px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
                       onClick={() => onDelete(row)}
                     >
-                      Delete
+                      {t('ui.delete')}
                     </button>
                   </td>
                 )}
@@ -118,11 +129,11 @@ function DataTable<T extends object>({
           }}
         >
           <small style={{ color: 'var(--color-text-muted)' }}>
-            Showing {startIndex}-{endIndex} of {totalRows}
+            {t('table.showing', { start: startIndex, end: endIndex, total: totalRows })}
           </small>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }} className="flex-wrap">
             <button
-              className="button is-small is-rounded"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--border-default)] bg-[var(--glass-input)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => {
                 if (isServerPagination && serverPagination) {
                   serverPagination.onPageChange(Math.max(1, effectivePage - 1))
@@ -133,13 +144,13 @@ function DataTable<T extends object>({
               disabled={effectivePage === 1}
               type="button"
             >
-              Previous
+              {t('table.previous')}
             </button>
             <small style={{ minWidth: 70, textAlign: 'center' }}>
-              Page {effectivePage}/{totalPages}
+              {t('table.page', { current: effectivePage, total: totalPages })}
             </small>
             <button
-              className="button is-small is-rounded"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--border-default)] bg-[var(--glass-input)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => {
                 if (isServerPagination && serverPagination) {
                   serverPagination.onPageChange(Math.min(totalPages, effectivePage + 1))
@@ -150,7 +161,7 @@ function DataTable<T extends object>({
               disabled={effectivePage >= totalPages}
               type="button"
             >
-              Next
+              {t('table.next')}
             </button>
           </div>
         </div>

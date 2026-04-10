@@ -7,6 +7,7 @@ import { useTrackingDetail } from '../../hooks/useTrackingDetail'
 import { toast } from 'react-toastify'
 import { client } from '../../apollo/client'
 import { TrackRangeDocument, TrackRangeQuery } from '../../generated/graphql'
+import { useTranslation } from 'react-i18next'
 
 interface TrackingDetailProps {
   darkmode: boolean
@@ -14,6 +15,7 @@ interface TrackingDetailProps {
 }
 
 function TrackingDetail({ darkmode, serialNumber }: TrackingDetailProps) {
+  const { t } = useTranslation()
   const { tracker } = useTrackingDetail(serialNumber)
 
   const mapRef = useRef<L.Map | null>(null)
@@ -107,7 +109,7 @@ function TrackingDetail({ darkmode, serialNumber }: TrackingDetailProps) {
 
   const handleSubmitDetail = async (dateFrom: string, timeFrom: string, dateTo: string, timeTo: string) => {
     if (!tracker?.id) {
-      toast.error('Tracker not loaded yet')
+      toast.error(t('detail.trackerNotLoaded'))
       return
     }
     const dateF = dateFrom.split('-')

@@ -57,6 +57,7 @@ const user = new Schema({
         validate: isEmail
     },
     password: { type: String, required: true },
+    language: { type: String, enum: ['en', 'es', 'ca'], default: 'en' },
     companyId: { type: Schema.Types.ObjectId, ref: 'Company', index: true },
     role: { type: String, enum: ['staff', 'owner', 'admin', 'dispatcher', 'viewer'], default: 'admin' },
     permissionsPacked: { type: String, default: '' },

@@ -1,5 +1,6 @@
 import { toast } from 'react-toastify'
 import { useGetPoIsQuery, useDeletePoiMutation, GetPoIsQuery } from '../generated/graphql'
+import i18n from '../i18n'
 
 export type Poi = NonNullable<NonNullable<GetPoIsQuery['pois']>['items']>[number]
 
@@ -12,7 +13,7 @@ export function usePOIs(page = 1, pageSize = 20) {
 
   const [deletePoiMutation] = useDeletePoiMutation({
     onCompleted: () => {
-      toast.success('POI deleted')
+      toast.success(i18n.t('places.deleted'))
       refetch()
     },
     onError: (err) => toast.error(err.message)

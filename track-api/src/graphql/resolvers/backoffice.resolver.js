@@ -21,7 +21,7 @@ function mapCompany(company) {
 }
 
 /**
- * @param {{ _id: { toString: () => string }, name: string, surname: string, email: string, role: string, companyId?: { toString: () => string }|null }} user
+ * @param {{ _id: { toString: () => string }, name: string, surname: string, email: string, language?: string, role: string, companyId?: { toString: () => string }|null }} user
  */
 function mapUser(user) {
   return {
@@ -29,6 +29,7 @@ function mapUser(user) {
     name: user.name,
     surname: user.surname,
     email: user.email,
+    language: user.language || 'en',
     role: user.role,
     companyId: user.companyId ? user.companyId.toString() : null,
     permissionKeys: [...effectivePermissionKeysForUser(user)]
@@ -110,7 +111,7 @@ const backofficeResolver = {
 
     /**
      * @param {unknown} _
-     * @param {{ input: { name: string, surname: string, email: string, password: string, role: string, companyId: string } }} args
+     * @param {{ input: { name: string, surname: string, email: string, password: string, role: string, companyId: string, language?: string, permissionKeys?: string[] } }} args
      * @param {{ userId: string|null }} ctx
      */
     async backofficeCreateUser(_, { input }, ctx) {
@@ -125,7 +126,7 @@ const backofficeResolver = {
 
     /**
      * @param {unknown} _
-     * @param {{ id: string, input: { name?: string, surname?: string, email?: string, role?: string, companyId?: string } }} args
+     * @param {{ id: string, input: { name?: string, surname?: string, email?: string, language?: string, role?: string, companyId?: string, permissionKeys?: string[] } }} args
      * @param {{ userId: string|null }} ctx
      */
     async backofficeUpdateUser(_, { id, input }, ctx) {

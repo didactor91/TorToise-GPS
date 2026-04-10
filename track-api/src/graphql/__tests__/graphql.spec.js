@@ -99,18 +99,42 @@ describe('GraphQL behavioral tests', () => {
 
   // ─── loginUser mutation ───────────────────────────────────────────────────────
 
+  describe('Mutation.registerUser', () => {
+    it('persists provided language', async () => {
+      const result = await identityResolver.Mutation.registerUser(
+        null,
+        { input: { name, surname, email, password, language: 'ca' } },
+        {}
+      )
+      expect(result.success).toBe(true)
+      const user = await User.findOne({ email })
+      expect(user).toBeTruthy()
+      expect(user.language).toBe('ca')
+    })
+  })
+
   describe('Mutation.loginUser', () => {
     let user
+    let loginEmail
+    let loginPassword
 
     beforeEach(async () => {
-      const _password = await argon2.hash(password)
-      user = await User.create({ name, surname, email, password: _password })
+      const suffix = `${Date.now()}-${Math.random()}`
+      loginEmail = `login-${suffix}@mail.com`
+      loginPassword = `pass-${suffix}`
+      const _password = await argon2.hash(loginPassword)
+      user = await User.create({
+        name: `name-${suffix}`,
+        surname: `surname-${suffix}`,
+        email: loginEmail,
+        password: _password
+      })
     })
 
     it('returns a token on valid credentials', async () => {
       const result = await identityResolver.Mutation.loginUser(
         null,
-        { email, password },
+        { email: loginEmail, password: loginPassword },
         {}
       )
       expect(result).toHaveProperty('token')
@@ -123,13 +147,13 @@ describe('GraphQL behavioral tests', () => {
 
     it('throws on wrong password', async () => {
       await expect(
-        identityResolver.Mutation.loginUser(null, { email, password: 'wrong' }, {})
+        identityResolver.Mutation.loginUser(null, { email: loginEmail, password: 'wrong' }, {})
       ).rejects.toBeInstanceOf(GraphQLError)
     })
 
     it('throws on non-existent email', async () => {
       await expect(
-        identityResolver.Mutation.loginUser(null, { email: 'no@one.com', password }, {})
+        identityResolver.Mutation.loginUser(null, { email: 'no@one.com', password: loginPassword }, {})
       ).rejects.toBeInstanceOf(GraphQLError)
     })
   })
@@ -138,10 +162,20 @@ describe('GraphQL behavioral tests', () => {
 
   describe('Query.me', () => {
     let user
+    let profileName
+    let profileEmail
 
     beforeEach(async () => {
-      const _password = await argon2.hash(password)
-      user = await User.create({ name, surname, email, password: _password })
+      const suffix = `${Date.now()}-${Math.random()}`
+      profileName = `name-${suffix}`
+      profileEmail = `profile-${suffix}@mail.com`
+      const _password = await argon2.hash(`pass-${suffix}`)
+      user = await User.create({
+        name: profileName,
+        surname: `surname-${suffix}`,
+        email: profileEmail,
+        password: _password
+      })
     })
 
     it('returns the authenticated user profile when userId is valid', async () => {
@@ -150,8 +184,9 @@ describe('GraphQL behavioral tests', () => {
 
       expect(result).toBeDefined()
       expect(result.id).toBe(user.id)
-      expect(result.name).toBe(name)
-      expect(result.email).toBe(email)
+      expect(result.name).toBe(profileName)
+      expect(result.email).toBe(profileEmail)
+      expect(result.language).toBe('en')
     })
 
     it('throws UNAUTHENTICATED when no userId in context', async () => {

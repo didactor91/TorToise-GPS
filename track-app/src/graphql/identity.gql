@@ -15,6 +15,7 @@ query Me {
     name
     surname
     email
+    language
     role
     companyId
     permissionKeys

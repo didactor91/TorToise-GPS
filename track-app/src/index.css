@@ -1,5 +1,4 @@
-/* ── Bulma CSS ─────────────────────────────────────────────────────────────── */
-@import 'bulma/css/bulma.min.css';
+@import "tailwindcss";
 
 /* ── Inter font (local package, SIL Open Font License) ───────────────────── */
 @import '@fontsource/inter/400.css';
@@ -13,8 +12,8 @@
   --bg-app: #f7f9fc;
   --bg-surface: #ffffff;
   --bg-surface-alt: #eef2f7;
-  --bg-glass: rgba(255, 255, 255, 0.72);
-  --bg-glass-strong: rgba(255, 255, 255, 0.86);
+  --bg-glass: rgba(203, 213, 225, 0.42);
+  --bg-glass-strong: rgba(203, 213, 225, 0.56);
   --border-default: #d6dee8;
 
   --text-primary: #0f172a;
@@ -59,7 +58,9 @@
   --glass-bg: var(--bg-glass);
   --glass-bg-strong: var(--bg-glass-strong);
   --glass-border: rgba(148, 163, 184, 0.45);
-  --glass-input: rgba(255, 255, 255, 0.9);
+  --glass-input: rgba(241, 245, 249, 0.46);
+  --nav-glass-bg: rgba(203, 213, 225, 0.24);
+  --nav-glass-bg-strong: rgba(203, 213, 225, 0.34);
 
   /* Layout */
   --navbar-height: 3.25rem;
@@ -99,8 +100,8 @@
     --bg-app: #0b1220;
     --bg-surface: #111a2b;
     --bg-surface-alt: #162338;
-    --bg-glass: rgba(17, 26, 43, 0.72);
-    --bg-glass-strong: rgba(17, 26, 43, 0.86);
+    --bg-glass: rgba(30, 41, 59, 0.42);
+    --bg-glass-strong: rgba(30, 41, 59, 0.56);
     --border-default: #2a3a55;
 
     --text-primary: #e5edf8;
@@ -127,7 +128,9 @@
     --shadow-glass: 0 14px 40px rgba(2, 6, 23, 0.62), 0 4px 18px rgba(2, 6, 23, 0.38);
 
     --glass-border: rgba(148, 163, 184, 0.35);
-    --glass-input: rgba(15, 23, 42, 0.7);
+    --glass-input: rgba(15, 23, 42, 0.46);
+    --nav-glass-bg: rgba(30, 41, 59, 0.26);
+    --nav-glass-bg-strong: rgba(30, 41, 59, 0.36);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -135,8 +138,8 @@
     --bg-app: #0b1220;
     --bg-surface: #111a2b;
     --bg-surface-alt: #162338;
-    --bg-glass: rgba(17, 26, 43, 0.72);
-    --bg-glass-strong: rgba(17, 26, 43, 0.86);
+    --bg-glass: rgba(30, 41, 59, 0.42);
+    --bg-glass-strong: rgba(30, 41, 59, 0.56);
     --border-default: #2a3a55;
 
     --text-primary: #e5edf8;
@@ -163,7 +166,9 @@
     --shadow-glass: 0 14px 40px rgba(2, 6, 23, 0.62), 0 4px 18px rgba(2, 6, 23, 0.38);
 
     --glass-border: rgba(148, 163, 184, 0.35);
-    --glass-input: rgba(15, 23, 42, 0.7);
+    --glass-input: rgba(15, 23, 42, 0.46);
+    --nav-glass-bg: rgba(30, 41, 59, 0.26);
+    --nav-glass-bg-strong: rgba(30, 41, 59, 0.36);
   }
 }
 
@@ -190,16 +195,20 @@ body {
   background-image: radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--bg-surface) 28%, transparent), transparent 42%), radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--brand-primary) 26%, transparent), transparent 35%), linear-gradient(180deg, color-mix(in srgb, var(--bg-app) 92%, #000 8%) 0%, var(--bg-app) 50%, color-mix(in srgb, var(--bg-app) 84%, #000 16%) 100%);
 }
 
-/* Ensure Bulma picks up Inter */
-.button,
-.input,
-.select select,
-.textarea,
-.title,
-.subtitle,
-.navbar-item,
-.navbar-brand {
-  font-family: var(--font-sans) !important;
+button,
+a,
+[role='button'],
+input[type='checkbox'],
+input[type='radio'],
+summary {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
 }
 
 /* Smooth focus rings */
@@ -211,12 +220,12 @@ body {
 .glass-card,
 .glass-section,
 .glass-form {
-  background: var(--glass-bg);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--bg-surface) 28%, transparent), transparent 55%), var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
 }
 
 .glass-section {
@@ -228,140 +237,48 @@ body {
   padding: var(--space-4);
 }
 
-.page-shell__content .label {
-  color: var(--text-primary);
-  font-weight: 600;
+.glass-input-base {
+  background: var(--glass-input) !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-primary) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-.page-shell__content .input,
-.page-shell__content .textarea,
-.page-shell__content .select select {
-  background: var(--glass-input);
-  color: var(--text-primary);
-  border-color: var(--border-default);
-  box-shadow: none;
+.glass-input-base:focus {
+  border-color: var(--focus-ring) !important;
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--focus-ring) 28%, transparent) !important;
 }
 
-.page-shell__content .input:focus,
-.page-shell__content .textarea:focus,
-.page-shell__content .select select:focus {
-  border-color: var(--focus-ring);
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--focus-ring) 28%, transparent);
+.glass-chip {
+  background: var(--glass-input) !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-primary) !important;
 }
 
-.auth-shell__card .input,
-.auth-shell__card .textarea,
-.auth-shell__card .select select {
-  background: var(--glass-input);
-  color: var(--text-primary);
-  border-color: var(--border-default);
-  box-shadow: none;
+.auth-shell__card input,
+.auth-shell__card select,
+.page-shell__content input,
+.page-shell__content select,
+.page-shell__content textarea {
+  background: var(--glass-input) !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-primary) !important;
 }
 
-.auth-shell__card .input:focus,
-.auth-shell__card .textarea:focus,
-.auth-shell__card .select select:focus {
-  border-color: var(--focus-ring);
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--focus-ring) 28%, transparent);
-}
-
-.auth-shell__card .button.is-ghost {
-  background: color-mix(in srgb, var(--bg-glass) 70%, transparent);
-  border: 1px solid var(--border-default);
-  color: var(--text-primary);
-}
-
-.auth-shell__card .button.is-ghost:hover {
-  background: rgba(255, 255, 255, 0.35);
-}
-
-.page-shell__content .tabs.is-toggle li a {
-  color: var(--text-secondary);
-  background: color-mix(in srgb, var(--bg-glass) 62%, transparent);
-  border-color: var(--border-default);
-}
-
-.page-shell__content .tabs.is-toggle li.is-active a {
-  background: var(--glass-bg-strong);
-  color: var(--text-primary);
-}
-
-.page-shell__content .title {
-  letter-spacing: -0.02em;
-}
-
-.page-shell__content .title.is-5 {
-  font-size: clamp(1.05rem, 0.92rem + 0.35vw, 1.25rem);
+.auth-shell__card input:focus,
+.auth-shell__card select:focus,
+.page-shell__content input:focus,
+.page-shell__content select:focus,
+.page-shell__content textarea:focus {
+  border-color: var(--focus-ring) !important;
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--focus-ring) 28%, transparent) !important;
 }
 
 .data-table-shell {
-  background: rgba(255, 255, 255, 0.26);
+  background: var(--bg-glass);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
   backdrop-filter: blur(10px);
-}
-
-.data-table-shell .table {
-  background: transparent;
-}
-
-.data-table-shell .table thead th {
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--bg-surface) 78%, transparent);
-  border-color: var(--border-default);
-}
-
-.data-table-shell .table tbody tr {
-  color: var(--text-secondary);
-  background: color-mix(in srgb, var(--bg-surface) 38%, transparent);
-}
-
-.data-table-shell .table tbody tr:hover {
-  background: color-mix(in srgb, var(--bg-surface) 62%, transparent) !important;
-}
-
-.modal .modal-background {
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-
-.modal .modal-card,
-.modal .modal-content > .box {
-  background: rgba(255, 255, 255, 0.22);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-glass);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.modal .modal-card-head,
-.modal .modal-card-foot,
-.modal .modal-card-body {
-  color: var(--text-primary);
-  background: transparent;
-  border-color: var(--border-default);
-}
-
-.button.is-warning,
-.button.is-info,
-.button.is-danger,
-.button.is-dark {
-  border: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
-  transition: transform 160ms ease, box-shadow 180ms ease, filter 180ms ease;
-}
-
-.button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
-}
-
-.button:active {
-  transform: translateY(0);
-}
-
-.help {
-  color: var(--text-muted);
 }

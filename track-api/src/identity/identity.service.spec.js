@@ -31,7 +31,23 @@ describe('identityService', () => {
             expect(user.name).toBe(name)
             expect(user.surname).toBe(surname)
             expect(user.email).toBe(email)
+            expect(user.language).toBe('en')
             expect(await argon2.verify(user.password, password)).toBe(true)
+        })
+
+        it('should succeed on correct data with valid language', async () => {
+            await service.registerUser(name, surname, email, password, 'es')
+            const user = await User.findOne({ email })
+            expect(user.language).toBe('es')
+        })
+
+        it('should fail on invalid language', async () => {
+            try {
+                await service.registerUser(name, surname, email, password, 'fr')
+            } catch (error) {
+                expect(error).toBeInstanceOf(InputError)
+                expect(error.message).toBe('invalid language fr')
+            }
         })
 
         it('should fail on retrying to register an already existing user', async () => {
@@ -201,6 +217,12 @@ describe('identityService', () => {
             expect(updatedUser.surname).toBe(user.surname)
         })
 
+        it('should succeed on correct language update', async () => {
+            await service.updateUser(user.id, { language: 'ca' })
+            const updatedUser = await User.findById(user.id)
+            expect(updatedUser.language).toBe('ca')
+        })
+
         it('should fail on incorrect id user', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
             try {
@@ -245,6 +267,15 @@ describe('identityService', () => {
             } catch (error) {
                 expect(error).toBeInstanceOf(InputError)
                 expect(error.message).toBe('currentPassword and newPassword are both required to change password')
+            }
+        })
+
+        it('should fail on invalid language update', async () => {
+            try {
+                await service.updateUser(user.id, { language: 'de' })
+            } catch (error) {
+                expect(error).toBeInstanceOf(InputError)
+                expect(error.message).toBe('invalid language de')
             }
         })
     })

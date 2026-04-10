@@ -1,6 +1,7 @@
 .tracking-detail
   display: flex
-  min-height: calc(100dvh - var(--navbar-height))
+  min-height: 100dvh
+  padding-top: var(--navbar-height)
   background-color: var(--color-bg-fallback)
 
 .tracking-detail__sidebar
@@ -23,6 +24,13 @@
   flex: 1
   height: calc(100dvh - var(--navbar-height))
   position: sticky
+  top: var(--navbar-height)
+
+:root.nav-minimized .tracking-detail
+  padding-top: 0
+
+:root.nav-minimized .tracking-detail__map
+  height: 100dvh
   top: 0
 
 .map-map

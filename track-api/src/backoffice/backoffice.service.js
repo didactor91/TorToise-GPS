@@ -5,6 +5,7 @@ const { requireAccess } = require('../shared/authorization.service')
 const { ACCESS_VERSION, encodePermissionKeys, encodeFeatureKeys, PERMISSION_KEYS, FEATURE_KEYS } = require('../shared/access-control')
 
 const VALID_ROLES = new Set(['staff', 'owner', 'admin', 'dispatcher', 'viewer'])
+const VALID_LANGUAGES = new Set(['en', 'es', 'ca'])
 
 function assertValidRole(role) {
     if (!VALID_ROLES.has(role)) throw new InputError(`invalid role ${role}`)
@@ -131,7 +132,7 @@ const backofficeService = {
         return repo.countUsers(companyId)
     },
 
-    async createUser(requesterId, { name, surname, email, password, role, companyId, permissionKeys } = {}) {
+    async createUser(requesterId, { name, surname, email, password, role, companyId, language = 'en', permissionKeys } = {}) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.create' })
         validate.arguments([
             { name: 'name', value: name, type: String, notEmpty: true },
@@ -143,6 +144,7 @@ const backofficeService = {
         ])
         validate.email(email)
         assertValidRole(role)
+        if (!VALID_LANGUAGES.has(language)) throw new InputError(`invalid language ${language}`)
 
         const company = await repo.findCompanyById(companyId)
         if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
@@ -161,6 +163,7 @@ const backofficeService = {
             surname,
             email,
             password: hash,
+            language,
             role,
             companyId,
             permissionsVersion: ACCESS_VERSION,
@@ -168,7 +171,7 @@ const backofficeService = {
         })
     },
 
-    async updateUser(requesterId, userId, { name, surname, email, role, companyId, permissionKeys } = {}) {
+    async updateUser(requesterId, userId, { name, surname, email, language, role, companyId, permissionKeys } = {}) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.update' })
         validate.arguments([{ name: 'userId', value: userId, type: String, notEmpty: true }])
 
@@ -187,6 +190,10 @@ const backofficeService = {
         if (role) {
             assertValidRole(role)
             patch.role = role
+        }
+        if (language) {
+            if (!VALID_LANGUAGES.has(language)) throw new InputError(`invalid language ${language}`)
+            patch.language = language
         }
         if (companyId) {
             const company = await repo.findCompanyById(companyId)
