@@ -48,10 +48,11 @@ function Profile() {
   return (
     <PageShell title="My Profile">
       {/* ── Update section ── */}
+      <section className="glass-section">
       <h3 className="title is-5" style={{ color: 'var(--color-text-dark)', marginBottom: '1rem' }}>
         Update Details
       </h3>
-      <form onSubmit={handleSubmitUpdate}>
+      <form onSubmit={handleSubmitUpdate} className="glass-form">
         <div className="columns is-multiline">
           <div className="column is-half">
             <div className="field">
@@ -104,11 +105,13 @@ function Profile() {
           </div>
         </div>
       </form>
+      </section>
 
-      <h3 className="title is-5" style={{ color: 'var(--color-text-dark)', marginTop: '2rem', marginBottom: '1rem' }}>
+      <section className="glass-section">
+      <h3 className="title is-5" style={{ color: 'var(--color-text-dark)', marginBottom: '1rem' }}>
         Change Password
       </h3>
-      <form onSubmit={handleSubmitChangePassword}>
+      <form onSubmit={handleSubmitChangePassword} className="glass-form">
         <div className="columns is-multiline">
           <div className="column is-half">
             <div className="field">
@@ -145,9 +148,10 @@ function Profile() {
           </div>
         </div>
       </form>
+      </section>
 
       {/* ── Danger zone ── */}
-      <div className="box" style={{ marginTop: '2rem', border: '1px solid var(--color-status-off)', background: '#fff5f5' }}>
+      <div className="box glass-section" style={{ border: '1px solid rgba(239, 68, 68, 0.45)', background: 'rgba(255, 236, 236, 0.4)' }}>
         <h3 className="title is-5" style={{ color: 'var(--color-status-off)', marginBottom: '0.75rem' }}>
           ⚠ Danger Zone
         </h3>

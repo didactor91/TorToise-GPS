@@ -71,7 +71,7 @@ function DataTable<T extends object>({
   }
 
   return (
-    <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+    <div className="data-table-shell">
       <div className="table-container">
         <table className="table is-fullwidth is-striped is-hoverable">
           <thead>

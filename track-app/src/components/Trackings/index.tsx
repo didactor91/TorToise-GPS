@@ -106,7 +106,7 @@ function Trackings() {
 
       <div className={`modal ${pendingDelete ? 'is-active' : ''}`}>
         <div className="modal-background" onClick={() => !deleting && setPendingDelete(null)} />
-        <div className="modal-card">
+        <div className="modal-card glass-card">
           <header className="modal-card-head">
             <p className="modal-card-title">Confirm Delete</p>
             <button className="delete" aria-label="close" onClick={() => !deleting && setPendingDelete(null)} />

@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@apollo/client": "^3.11.0",
+    "@fontsource/inter": "^5.2.8",
     "bulma": "^0.9.4",
     "graphql": "^16.9.0",
     "graphql-ws": "^5.16.0",

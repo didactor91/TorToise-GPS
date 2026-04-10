@@ -4,7 +4,21 @@
   position: relative
   z-index: 1000
   font-family: var(--font-sans)
-  box-shadow: var(--shadow-sm)
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.2)
+  background: rgba(255, 221, 87, 0.88) !important
+  backdrop-filter: blur(8px)
+  -webkit-backdrop-filter: blur(8px)
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45)
+
+.nav-home .navbar-menu
+  background: transparent !important
+
+.nav-home .navbar-item
+  font-weight: 600
+
+.nav-home .navbar-item:hover
+  background: rgba(255, 255, 255, 0.35) !important
+  border-radius: 10px
 
 .navbar-brand img
   height: 2rem
