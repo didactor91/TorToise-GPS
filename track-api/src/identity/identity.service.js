@@ -4,9 +4,10 @@ const { validate } = require('track-utils')
 const { models: { User } } = require('track-data')
 const repo = require('./identity.repository')
 const { getOrCreateDefaultCompany } = require('../shared/company-context')
+const VALID_LANGUAGES = new Set(['en', 'es', 'ca'])
 
 const identityService = {
-    registerUser(name, surname, email, password) {
+    registerUser(name, surname, email, password, language = 'en') {
         validate.arguments([
             { name: 'name', value: name, type: String, notEmpty: true },
             { name: 'surname', value: surname, type: String, notEmpty: true },
@@ -15,6 +16,7 @@ const identityService = {
         ])
 
         validate.email(email)
+        if (!VALID_LANGUAGES.has(language)) throw new InputError(`invalid language ${language}`)
 
         return (async () => {
             const existing = await repo.findByEmail(email)
@@ -27,6 +29,7 @@ const identityService = {
                 surname,
                 email,
                 password: hash,
+                language,
                 companyId: company._id,
                 role: 'admin'
             })
@@ -59,14 +62,14 @@ const identityService = {
 
         return (async () => {
             const user = await User.findById(id)
-                .select('-_id name surname email companyId role')
+                .select('-_id name surname email language companyId role')
                 .lean()
             if (!user) throw new LogicError(`user with id ${id} doesn't exists`)
             return user
         })()
     },
 
-    updateUser(id, { name, surname, email, currentPassword, newPassword } = {}) {
+    updateUser(id, { name, surname, email, language, currentPassword, newPassword } = {}) {
         validate.arguments([
             { name: 'id', value: id, type: String, notEmpty: true }
         ])
@@ -85,6 +88,10 @@ const identityService = {
             if (name) patch.name = name
             if (surname) patch.surname = surname
             if (email) patch.email = email
+            if (language) {
+                if (!VALID_LANGUAGES.has(language)) throw new InputError(`invalid language ${language}`)
+                patch.language = language
+            }
 
             if ((currentPassword && !newPassword) || (!currentPassword && newPassword)) {
                 throw new InputError('currentPassword and newPassword are both required to change password')

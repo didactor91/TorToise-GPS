@@ -18,6 +18,7 @@ import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '../hooks/useAuth'
 import { useMeQuery } from '../generated/graphql'
+import { useTranslation } from 'react-i18next'
 
 interface ProtectedRouteProps {
   isLoggedIn: boolean
@@ -50,6 +51,7 @@ function App() {
     return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
   })
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => !!sessionStorage.getItem('userToken'))
+  const { i18n } = useTranslation()
 
   const navigate = useNavigate()
   const { handleLogin, handleLogout } = useAuth(setIsLoggedIn)
@@ -76,7 +78,7 @@ function App() {
     onSessionExpired(() => {
       sessionStorage.clear()
       setIsLoggedIn(false)
-      toast.info('Your session has expired. Please log in again.')
+      toast.info(i18n.t('app.sessionExpired'))
       navigate('/login')
     })
   }, [navigate])
@@ -86,6 +88,13 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('ui-theme', theme)
   }, [darkmode])
+
+  useEffect(() => {
+    const userLang = meData?.me?.language
+    if (userLang && i18n.language !== userLang) {
+      i18n.changeLanguage(userLang)
+    }
+  }, [meData?.me?.language, i18n])
 
   // ── navigation ───────────────────────────────────────────────────────────
   const handleHome      = () => navigate('/home')

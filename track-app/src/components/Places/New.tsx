@@ -1,9 +1,13 @@
 import React from 'react'
 import PageShell from '../shared/PageShell'
 import { useAddPOI } from '../../hooks/useAddPOI'
+import { useTranslation } from 'react-i18next'
 
 function PlacesNew() {
+  const { t } = useTranslation()
   const { addPOI } = useAddPOI()
+  const labelClass = 'mb-2 block text-sm font-semibold'
+  const inputClass = 'glass-input-base w-full rounded-full border px-4 py-2 text-sm outline-none transition'
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -17,72 +21,60 @@ function PlacesNew() {
   }
 
   return (
-    <PageShell title="New Point of Interest" backTo="/places">
-      <form onSubmit={handleSubmit} style={{ maxWidth: 420, margin: '0 auto' }}>
-        <div className="field">
-          <label className="label">Title</label>
-          <div className="control">
-            <input
-              className="input is-rounded is-warning"
-              type="text"
-              name="title"
-              placeholder="Barcelona depot"
-              autoFocus
-              required
-            />
-          </div>
+    <PageShell title={t('places.newPoi')} backTo="/places">
+      <form onSubmit={handleSubmit} className="mx-auto max-w-[420px] space-y-4">
+        <div>
+          <label className={labelClass}>{t('ui.title')}</label>
+          <input
+            className={inputClass}
+            type="text"
+            name="title"
+            placeholder={t('ui.title')}
+            autoFocus
+            required
+          />
         </div>
 
-        <div className="field">
-          <label className="label">Latitude</label>
-          <div className="control">
-            <input
-              className="input is-rounded is-warning"
-              type="number"
-              name="latitude"
-              placeholder="41.3879"
-              step="any"
-              required
-            />
-          </div>
+        <div>
+          <label className={labelClass}>{t('ui.latitude')}</label>
+          <input
+            className={inputClass}
+            type="number"
+            name="latitude"
+            placeholder="41.3879"
+            step="any"
+            required
+          />
         </div>
 
-        <div className="field">
-          <label className="label">Longitude</label>
-          <div className="control">
-            <input
-              className="input is-rounded is-warning"
-              type="number"
-              name="longitude"
-              placeholder="2.1699"
-              step="any"
-              required
-            />
-          </div>
+        <div>
+          <label className={labelClass}>{t('ui.longitude')}</label>
+          <input
+            className={inputClass}
+            type="number"
+            name="longitude"
+            placeholder="2.1699"
+            step="any"
+            required
+          />
         </div>
 
-        <div className="field">
-          <label className="label">Marker Color</label>
-          <div className="control">
-            <div className="select is-rounded is-warning is-fullwidth">
-              <select name="color" defaultValue="blue">
-                <option value="blue">Blue</option>
-                <option value="lightblue">Light Blue</option>
-                <option value="orange">Orange</option>
-                <option value="purple">Purple</option>
-                <option value="red">Red</option>
-                <option value="yellow">Yellow</option>
-              </select>
-            </div>
-          </div>
+        <div>
+          <label className={labelClass}>{t('places.markerColor')}</label>
+          <select name="color" defaultValue="blue" className={inputClass}>
+            <option value="blue">{t('places.colors.blue')}</option>
+            <option value="lightblue">{t('places.colors.lightblue')}</option>
+            <option value="orange">{t('places.colors.orange')}</option>
+            <option value="purple">{t('places.colors.purple')}</option>
+            <option value="red">{t('places.colors.red')}</option>
+            <option value="yellow">{t('places.colors.yellow')}</option>
+          </select>
         </div>
 
-        <div className="field mt-4">
-          <div className="control">
-            <button className="button is-warning is-rounded is-fullwidth" type="submit">
-              Create POI
-            </button>
-          </div>
+        <div className="pt-2">
+          <button className="w-full rounded-full border border-amber-500 bg-amber-400 px-4 py-2 font-semibold text-slate-800 transition hover:brightness-105" type="submit">
+            {t('places.createPoi')}
+          </button>
         </div>
       </form>
     </PageShell>

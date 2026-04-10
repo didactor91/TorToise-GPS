@@ -1,19 +1,21 @@
 import React from 'react'
 import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import DataTable, { type Column } from './DataTable'
+import { testI18n } from '../../test/i18n'
+import { renderWithI18n } from '../../test/renderWithI18n'
 
 type Row = { id: string; name: string }
 
 const columns: Column<Row>[] = [{ key: 'name', label: 'Name' }]
 
 describe('DataTable', () => {
-  it('renders empty state then data without hook-order crash', () => {
-    const { rerender } = render(
-      <DataTable<Row> columns={columns} rows={[]} emptyMessage="No rows" />
+  it('renders empty state then data without hook-order crash', async () => {
+    const { rerender } = await renderWithI18n(
+      <DataTable<Row> columns={columns} rows={[]} />
     )
 
-    expect(screen.getByText('No rows')).toBeTruthy()
+    expect(screen.getByText(testI18n.t('table.noItems'))).toBeTruthy()
 
     rerender(
       <DataTable<Row>

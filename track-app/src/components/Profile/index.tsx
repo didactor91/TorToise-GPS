@@ -3,9 +3,13 @@ import PageShell from '../shared/PageShell'
 import { useProfile } from '../../hooks/useProfile'
 import { UpdateUserInput } from '../../generated/graphql'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 
 function Profile() {
+  const { t } = useTranslation()
   const { user, updateUser, deleteUser } = useProfile()
+  const labelClass = 'mb-2 block text-sm font-semibold'
+  const inputClass = 'glass-input-base w-full rounded-full border px-4 py-2 text-sm outline-none transition'
 
   function handleSubmitUpdate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -13,10 +17,12 @@ function Profile() {
     const name = (form.elements.namedItem('name') as HTMLInputElement).value
     const surname = (form.elements.namedItem('surname') as HTMLInputElement).value
     const email = (form.elements.namedItem('email') as HTMLInputElement).value
+    const language = (form.elements.namedItem('language') as HTMLSelectElement).value
     const input: UpdateUserInput = {}
     if (name) input.name = name
     if (surname) input.surname = surname
     if (email) input.email = email
+    if (language) input.language = language
     updateUser(input)
   }
 
@@ -33,11 +39,11 @@ function Profile() {
     const confirmPassword = (form.elements.namedItem('confirmPassword') as HTMLInputElement).value
 
     if (newPassword !== confirmPassword) {
-      toast.error('New password and confirmation do not match.')
+      toast.error(t('profile.passwordsDontMatch'))
       return
     }
     if (!currentPassword || !newPassword) {
-      toast.error('Current password and new password are required.')
+      toast.error(t('profile.passwordRequired'))
       return
     }
 
@@ -46,145 +52,113 @@ function Profile() {
   }
 
   return (
-    <PageShell title="My Profile">
-      {/* ── Update section ── */}
-      <section className="glass-section">
-      <h3 className="title is-5" style={{ color: 'var(--color-text-dark)', marginBottom: '1rem' }}>
-        Update Details
-      </h3>
-      <form onSubmit={handleSubmitUpdate} className="glass-form">
-        <div className="columns is-multiline">
-          <div className="column is-half">
-            <div className="field">
-              <label className="label">Name</label>
-              <div className="control">
+    <PageShell title={t('profile.title')}>
+      <div className="space-y-8">
+        <section className="border-b pb-8" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+          <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">
+            {t('profile.updateDetails')}
+          </h3>
+          <form onSubmit={handleSubmitUpdate}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className={labelClass}>{t('auth.name')}</label>
                 <input
-                  className="input is-rounded"
+                  className={inputClass}
                   type="text"
                   name="name"
-                  placeholder={user ? user.name : 'Name'}
+                  placeholder={user ? user.name : t('auth.name')}
                   autoFocus
                 />
               </div>
-            </div>
-          </div>
-          <div className="column is-half">
-            <div className="field">
-              <label className="label">Surname</label>
-              <div className="control">
+              <div>
+                <label className={labelClass}>{t('auth.surname')}</label>
                 <input
-                  className="input is-rounded"
+                  className={inputClass}
                   type="text"
                   name="surname"
-                  placeholder={user ? user.surname : 'Surname'}
+                  placeholder={user ? user.surname : t('auth.surname')}
                 />
               </div>
-            </div>
-          </div>
-          <div className="column is-half">
-            <div className="field">
-              <label className="label">Email</label>
-              <div className="control">
+              <div>
+                <label className={labelClass}>{t('auth.email')}</label>
                 <input
-                  className="input is-rounded"
+                  className={inputClass}
                   type="email"
                   name="email"
-                  placeholder={user ? user.email : 'Email'}
+                  placeholder={user ? user.email : t('auth.email')}
                 />
               </div>
-            </div>
-          </div>
-          <div className="column is-half" style={{ display: 'flex', alignItems: 'flex-end' }}>
-            <div className="field" style={{ width: '100%' }}>
-              <div className="control">
-                <button className="button is-warning is-rounded is-fullwidth" type="submit">
-                  <strong>Update</strong>
+              <div>
+                <label className={labelClass}>{t('profile.language')}</label>
+                <select className={inputClass} name="language" defaultValue={user?.language || 'en'}>
+                  <option value="en">{t('ui.languageEnglish')}</option>
+                  <option value="es">{t('ui.languageSpanish')}</option>
+                  <option value="ca">{t('ui.languageCatalan')}</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button className="w-full rounded-full border border-amber-500 bg-amber-400 px-4 py-2 font-semibold text-slate-800 transition hover:brightness-105" type="submit">
+                  {t('profile.update')}
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      </form>
-      </section>
+          </form>
+        </section>
 
-      <section className="glass-section">
-      <h3 className="title is-5" style={{ color: 'var(--color-text-dark)', marginBottom: '1rem' }}>
-        Change Password
-      </h3>
-      <form onSubmit={handleSubmitChangePassword} className="glass-form">
-        <div className="columns is-multiline">
-          <div className="column is-half">
-            <div className="field">
-              <label className="label">Current password</label>
-              <div className="control">
-                <input className="input is-rounded" type="password" name="currentPassword" required />
+        <section className="border-b pb-8" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+          <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">
+            {t('profile.changePassword')}
+          </h3>
+          <form onSubmit={handleSubmitChangePassword}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className={labelClass}>{t('profile.currentPassword')}</label>
+                <input className={inputClass} type="password" name="currentPassword" required />
               </div>
-            </div>
-          </div>
-          <div className="column is-half">
-            <div className="field">
-              <label className="label">New password</label>
-              <div className="control">
-                <input className="input is-rounded" type="password" name="newPassword" minLength={6} required />
+              <div>
+                <label className={labelClass}>{t('profile.newPassword')}</label>
+                <input className={inputClass} type="password" name="newPassword" minLength={6} required />
               </div>
-            </div>
-          </div>
-          <div className="column is-half">
-            <div className="field">
-              <label className="label">Confirm new password</label>
-              <div className="control">
-                <input className="input is-rounded" type="password" name="confirmPassword" minLength={6} required />
+              <div>
+                <label className={labelClass}>{t('profile.confirmNewPassword')}</label>
+                <input className={inputClass} type="password" name="confirmPassword" minLength={6} required />
               </div>
-            </div>
-          </div>
-          <div className="column is-half" style={{ display: 'flex', alignItems: 'flex-end' }}>
-            <div className="field" style={{ width: '100%' }}>
-              <div className="control">
-                <button className="button is-warning is-rounded is-fullwidth" type="submit">
-                  <strong>Update Password</strong>
+              <div className="flex items-end">
+                <button className="w-full rounded-full border border-amber-500 bg-amber-400 px-4 py-2 font-semibold text-slate-800 transition hover:brightness-105" type="submit">
+                  {t('profile.updatePassword')}
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      </form>
-      </section>
+          </form>
+        </section>
 
-      {/* ── Danger zone ── */}
-      <div className="box glass-section" style={{ border: '1px solid rgba(239, 68, 68, 0.45)', background: 'rgba(255, 236, 236, 0.4)' }}>
-        <h3 className="title is-5" style={{ color: 'var(--color-status-off)', marginBottom: '0.75rem' }}>
-          ⚠ Danger Zone
-        </h3>
-        <p className="help" style={{ marginBottom: '1rem', color: 'var(--color-text-muted)' }}>
-          This process is irreversible and will permanently delete all of your data.
-        </p>
-        <form onSubmit={handleSubmitDelete}>
-          <div className="columns is-vcentered">
-            <div className="column">
-              <div className="field">
-                <div className="control">
-                  <input
-                    className="input is-rounded is-danger"
-                    type="text"
-                    name="accept"
-                    placeholder='Type "ACCEPT" to confirm'
-                    pattern="ACCEPT"
-                    required
-                  />
-                </div>
+        <section className="rounded-xl border p-4" style={{ borderColor: 'rgba(239, 68, 68, 0.45)', background: 'color-mix(in srgb, rgba(239,68,68,0.12) 70%, transparent)' }}>
+          <h3 className="mb-3 text-xl font-bold" style={{ color: 'var(--color-status-off)' }}>
+            {t('profile.dangerZone')}
+          </h3>
+          <p className="mb-4 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+            {t('profile.dangerText')}
+          </p>
+          <form onSubmit={handleSubmitDelete}>
+            <div className="flex flex-col items-end gap-3 md:flex-row">
+              <div className="w-full">
+                <input
+                  className={inputClass}
+                  type="text"
+                  name="accept"
+                  placeholder={t('profile.acceptPlaceholder')}
+                  pattern="ACCEPT"
+                  required
+                />
+              </div>
+              <div className="w-full md:w-auto">
+                <button className="w-full rounded-full border border-red-700 bg-transparent px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 md:w-auto" type="submit">
+                  {t('profile.deleteAccount')}
+                </button>
               </div>
             </div>
-            <div className="column is-narrow">
-              <div className="field">
-                <div className="control">
-                  <button className="button is-danger is-rounded is-outlined" type="submit">
-                    Delete Account
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
+          </form>
+        </section>
       </div>
     </PageShell>
   )

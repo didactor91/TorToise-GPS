@@ -3,34 +3,7 @@ import PageShell from '../shared/PageShell'
 import DataTable, { Column } from '../shared/DataTable'
 import { useBackoffice, BackofficeCompany, BackofficeUser } from '../../hooks/useBackoffice'
 import { FEATURE_KEYS, PERMISSION_KEYS, permissionTemplateForRole } from './access-catalog'
-
-const COMPANY_COLUMNS: Column<BackofficeCompany>[] = [
-  { key: 'name', label: 'Name' },
-  { key: 'slug', label: 'Slug' },
-  {
-    key: 'active',
-    label: 'Active',
-    render: (row) => (row.active ? 'Yes' : 'No')
-  },
-  {
-    key: 'featureKeys',
-    label: 'Features',
-    render: (row) => row.featureKeys.join(', ')
-  }
-]
-
-const USER_COLUMNS: Column<BackofficeUser>[] = [
-  { key: 'name', label: 'Name' },
-  { key: 'surname', label: 'Surname' },
-  { key: 'email', label: 'Email' },
-  { key: 'role', label: 'Role' },
-  { key: 'companyId', label: 'Company ID' },
-  {
-    key: 'permissionKeys',
-    label: 'Permissions',
-    render: (row) => row.permissionKeys.join(', ')
-  }
-]
+import { useTranslation } from 'react-i18next'
 
 function toggleInArray(list: string[], value: string): string[] {
   return list.includes(value)
@@ -51,6 +24,12 @@ function Backoffice({
   canCreateUsers = true,
   canUpdateUsers = true
 }: BackofficeProps) {
+  const { t } = useTranslation()
+  const labelClass = 'mb-2 block text-sm font-semibold'
+  const inputClass = 'glass-input-base w-full rounded-xl border px-3 py-2 text-sm outline-none transition'
+  const primaryButtonClass = 'inline-flex items-center justify-center rounded-full border border-amber-500 bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:brightness-105'
+  const checkboxClass = 'mr-4 inline-flex items-center gap-2 text-sm text-[var(--text-primary)]'
+
   const [usersPage, setUsersPage] = useState(1)
   const { companies, users, usersTotalCount, loading, createCompany, createUser, updateCompany, updateUser } = useBackoffice(usersPage, 20, canReadUsers)
   const canSeeUsersTab = canReadUsers || canCreateUsers || canUpdateUsers
@@ -65,12 +44,40 @@ function Backoffice({
     surname: '',
     email: '',
     password: '',
+    language: 'en',
     role: 'admin',
     companyId: '',
     permissionKeys: permissionTemplateForRole('admin')
   })
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
   const [selectedUserId, setSelectedUserId] = useState<string>('')
+  const COMPANY_COLUMNS: Column<BackofficeCompany>[] = [
+    { key: 'name', label: t('auth.name') },
+    { key: 'slug', label: t('backoffice.slug') },
+    {
+      key: 'active',
+      label: t('backoffice.active'),
+      render: (row) => (row.active ? t('backoffice.yes') : t('backoffice.no'))
+    },
+    {
+      key: 'featureKeys',
+      label: t('backoffice.features'),
+      render: (row) => row.featureKeys.join(', ')
+    }
+  ]
+  const USER_COLUMNS: Column<BackofficeUser>[] = [
+    { key: 'name', label: t('auth.name') },
+    { key: 'surname', label: t('auth.surname') },
+    { key: 'email', label: t('auth.email') },
+    { key: 'language', label: t('backoffice.language') },
+    { key: 'role', label: t('backoffice.role') },
+    { key: 'companyId', label: t('backoffice.companyId') },
+    {
+      key: 'permissionKeys',
+      label: t('backoffice.permissions'),
+      render: (row) => row.permissionKeys.join(', ')
+    }
+  ]
 
   const companyOptions = useMemo(
     () => companies.map((company) => ({ id: company.id, label: `${company.name} (${company.slug})` })),
@@ -98,6 +105,7 @@ function Backoffice({
       surname: userForm.surname,
       email: userForm.email,
       password: userForm.password,
+      language: userForm.language,
       role: userForm.role,
       companyId: userForm.companyId,
       permissionKeys: userForm.permissionKeys
@@ -107,6 +115,7 @@ function Backoffice({
       surname: '',
       email: '',
       password: '',
+      language: 'en',
       role: 'admin',
       companyId: '',
       permissionKeys: permissionTemplateForRole('admin')
@@ -134,6 +143,7 @@ function Backoffice({
     name: '',
     surname: '',
     email: '',
+    language: 'en',
     role: 'viewer',
     companyId: '',
     permissionKeys: [] as string[]
@@ -159,6 +169,7 @@ function Backoffice({
       name: user.name,
       surname: user.surname,
       email: user.email,
+      language: user.language || 'en',
       role: user.role,
       companyId: user.companyId || '',
       permissionKeys: [...user.permissionKeys]
@@ -178,6 +189,7 @@ function Backoffice({
       name: userEdit.name,
       surname: userEdit.surname,
       email: userEdit.email,
+      language: userEdit.language,
       role: userEdit.role,
       companyId: userEdit.companyId || undefined,
       permissionKeys: userEdit.permissionKeys
@@ -185,280 +197,294 @@ function Backoffice({
   }
 
   return (
-    <PageShell title="Backoffice">
-      {loading && <p className="has-text-centered has-text-grey">Loading...</p>}
+    <PageShell title={t('backoffice.title')}>
+      {loading && <p className="text-center text-[var(--text-muted)]">{t('backoffice.loading')}</p>}
 
-      <div className="tabs is-toggle is-toggle-rounded" style={{ marginBottom: 24 }}>
-        <ul>
-          <li className={activeTab === 'companies' ? 'is-active' : ''}>
-            <a onClick={() => setActiveTab('companies')}>Companies</a>
-          </li>
-          {canSeeUsersTab && (
-            <li className={activeTab === 'users' ? 'is-active' : ''}>
-              <a onClick={() => setActiveTab('users')}>Users</a>
-            </li>
-          )}
-        </ul>
+      <div className="mb-6 flex gap-2">
+        <button
+          className={`rounded-full border px-3 py-1.5 text-sm font-medium ${activeTab === 'companies' ? 'bg-[var(--bg-glass-strong)] text-[var(--text-primary)]' : 'bg-[var(--bg-glass)] text-[var(--text-secondary)]'}`}
+          onClick={() => setActiveTab('companies')}
+          type="button"
+        >
+          {t('backoffice.companiesTab')}
+        </button>
+        {canSeeUsersTab && (
+          <button
+            className={`rounded-full border px-3 py-1.5 text-sm font-medium ${activeTab === 'users' ? 'bg-[var(--bg-glass-strong)] text-[var(--text-primary)]' : 'bg-[var(--bg-glass)] text-[var(--text-secondary)]'}`}
+            onClick={() => setActiveTab('users')}
+            type="button"
+          >
+            {t('backoffice.usersTab')}
+          </button>
+        )}
       </div>
+      <div className="space-y-8">
 
       {activeTab === 'companies' && (
       <>
-      <section className="glass-section">
-        <h3 className="title is-5">Create Company</h3>
-        <form onSubmit={onCreateCompany} className="glass-form">
-          <div className="field">
-            <label className="label">Name</label>
-            <div className="control">
-              <input className="input" value={companyForm.name} onChange={(e) => setCompanyForm(prev => ({ ...prev, name: e.target.value }))} required />
-            </div>
+      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createCompany')}</h3>
+        <form onSubmit={onCreateCompany}>
+          <div className="mb-4">
+            <label className={labelClass}>{t('auth.name')}</label>
+            <input className={inputClass} value={companyForm.name} onChange={(e) => setCompanyForm(prev => ({ ...prev, name: e.target.value }))} required />
           </div>
-          <div className="field">
-            <label className="checkbox">
+          <div className="mb-4">
+            <label className="inline-flex items-center gap-2 text-sm text-[var(--text-primary)]">
               <input type="checkbox" checked={companyForm.active} onChange={(e) => setCompanyForm(prev => ({ ...prev, active: e.target.checked }))} />
-              {' '}
-              Active
+              {t('backoffice.active')}
             </label>
           </div>
-          <div className="field">
-            <label className="label">Features</label>
-            <div className="control">
+          <div className="mb-4">
+            <label className={labelClass}>{t('backoffice.features')}</label>
+            <div>
               {FEATURE_KEYS.map((feature) => (
-                <label key={feature} className="checkbox mr-4" style={{ display: 'inline-block' }}>
+                <label key={feature} className={checkboxClass}>
                   <input
                     type="checkbox"
                     checked={companyForm.featureKeys.includes(feature)}
                     onChange={() => setCompanyForm(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))}
                   />
-                  {' '}
                   {feature}
                 </label>
               ))}
             </div>
           </div>
-          <button className="button is-warning is-rounded" type="submit">Create Company</button>
+          <button className={primaryButtonClass} type="submit">{t('backoffice.createCompany')}</button>
         </form>
       </section>
 
-      <section className="glass-section">
-        <h3 className="title is-5">Companies</h3>
-        <DataTable columns={COMPANY_COLUMNS} rows={companies} emptyMessage="No companies yet." />
+      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.companies')}</h3>
+        <DataTable columns={COMPANY_COLUMNS} rows={companies} emptyMessage={t('backoffice.noCompanies')} variant="flat" />
       </section>
       </>
       )}
 
       {activeTab === 'users' && canCreateUsers && (
-      <section className="glass-section">
-        <h3 className="title is-5">Create User</h3>
-        <form onSubmit={onCreateUser} className="glass-form">
-          <div className="columns is-multiline">
-            <div className="column is-6">
-              <label className="label">Name</label>
-              <input className="input" value={userForm.name} onChange={(e) => setUserForm(prev => ({ ...prev, name: e.target.value }))} required />
+      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createUser')}</h3>
+        <form onSubmit={onCreateUser}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClass}>{t('auth.name')}</label>
+              <input className={inputClass} value={userForm.name} onChange={(e) => setUserForm(prev => ({ ...prev, name: e.target.value }))} required />
             </div>
-            <div className="column is-6">
-              <label className="label">Surname</label>
-              <input className="input" value={userForm.surname} onChange={(e) => setUserForm(prev => ({ ...prev, surname: e.target.value }))} required />
+            <div>
+              <label className={labelClass}>{t('auth.surname')}</label>
+              <input className={inputClass} value={userForm.surname} onChange={(e) => setUserForm(prev => ({ ...prev, surname: e.target.value }))} required />
             </div>
-            <div className="column is-6">
-              <label className="label">Email</label>
-              <input className="input" type="email" value={userForm.email} onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))} required />
+            <div>
+              <label className={labelClass}>{t('auth.email')}</label>
+              <input className={inputClass} type="email" value={userForm.email} onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))} required />
             </div>
-            <div className="column is-6">
-              <label className="label">Password</label>
-              <input className="input" type="password" value={userForm.password} onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))} required />
+            <div>
+              <label className={labelClass}>{t('auth.password')}</label>
+              <input className={inputClass} type="password" value={userForm.password} onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))} required />
             </div>
-            <div className="column is-6">
-              <label className="label">Role</label>
-              <div className="select is-fullwidth">
-                <select
-                  value={userForm.role}
-                  onChange={(e) => {
-                    const role = e.target.value
-                    setUserForm(prev => ({ ...prev, role, permissionKeys: permissionTemplateForRole(role) }))
-                  }}
-                >
-                  <option value="staff">staff</option>
-                  <option value="owner">owner</option>
-                  <option value="admin">admin</option>
-                  <option value="dispatcher">dispatcher</option>
-                  <option value="viewer">viewer</option>
-                </select>
-              </div>
+            <div>
+              <label className={labelClass}>{t('backoffice.language')}</label>
+              <select
+                className={inputClass}
+                value={userForm.language}
+                onChange={(e) => setUserForm(prev => ({ ...prev, language: e.target.value }))}
+              >
+                <option value="en">{t('ui.languageEnglish')}</option>
+                <option value="es">{t('ui.languageSpanish')}</option>
+                <option value="ca">{t('ui.languageCatalan')}</option>
+              </select>
             </div>
-            <div className="column is-6">
-              <label className="label">Company</label>
-              <div className="select is-fullwidth">
-                <select value={userForm.companyId} onChange={(e) => setUserForm(prev => ({ ...prev, companyId: e.target.value }))} required>
-                  <option value="">Select a company</option>
-                  {companyOptions.map((company) => (
-                    <option key={company.id} value={company.id}>{company.label}</option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <label className={labelClass}>{t('backoffice.role')}</label>
+              <select
+                className={inputClass}
+                value={userForm.role}
+                onChange={(e) => {
+                  const role = e.target.value
+                  setUserForm(prev => ({ ...prev, role, permissionKeys: permissionTemplateForRole(role) }))
+                }}
+              >
+                <option value="staff">{t('roles.staff')}</option>
+                <option value="owner">{t('roles.owner')}</option>
+                <option value="admin">{t('roles.admin')}</option>
+                <option value="dispatcher">{t('roles.dispatcher')}</option>
+                <option value="viewer">{t('roles.viewer')}</option>
+              </select>
             </div>
-            <div className="column is-12">
-              <label className="label">Permissions</label>
+            <div>
+              <label className={labelClass}>{t('backoffice.company')}</label>
+              <select className={inputClass} value={userForm.companyId} onChange={(e) => setUserForm(prev => ({ ...prev, companyId: e.target.value }))} required>
+                <option value="">{t('backoffice.selectCompany')}</option>
+                {companyOptions.map((company) => (
+                  <option key={company.id} value={company.id}>{company.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelClass}>{t('backoffice.permissions')}</label>
               <div>
                 {PERMISSION_KEYS.map((permission) => (
-                  <label key={permission} className="checkbox mr-4" style={{ display: 'inline-block' }}>
+                  <label key={permission} className={checkboxClass}>
                     <input
                       type="checkbox"
                       checked={userForm.permissionKeys.includes(permission)}
                       onChange={() => setUserForm(prev => ({ ...prev, permissionKeys: toggleInArray(prev.permissionKeys, permission) }))}
                     />
-                    {' '}
                     {permission}
                   </label>
                 ))}
               </div>
             </div>
           </div>
-          <button className="button is-warning is-rounded" type="submit">Create User</button>
+          <button className={primaryButtonClass} type="submit">{t('backoffice.createUser')}</button>
         </form>
       </section>
       )}
 
       {activeTab === 'companies' && (
-      <section className="glass-section">
-        <h3 className="title is-5">Edit Company</h3>
-        <div className="field">
-          <label className="label">Company</label>
-          <div className="select is-fullwidth">
-            <select value={selectedCompanyId} onChange={(e) => onPickCompany(e.target.value)}>
-              <option value="">Select company</option>
-              {companyOptions.map((company) => (
-                <option key={company.id} value={company.id}>{company.label}</option>
-              ))}
-            </select>
-          </div>
+      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editCompany')}</h3>
+        <div className="mb-4">
+          <label className={labelClass}>{t('backoffice.company')}</label>
+          <select className={inputClass} value={selectedCompanyId} onChange={(e) => onPickCompany(e.target.value)}>
+            <option value="">{t('backoffice.selectCompanyShort')}</option>
+            {companyOptions.map((company) => (
+              <option key={company.id} value={company.id}>{company.label}</option>
+            ))}
+          </select>
         </div>
         {selectedCompany && (
-          <form onSubmit={onUpdateCompany} className="glass-form">
-            <div className="field">
-              <label className="label">Name</label>
-              <input className="input" value={companyEdit.name} onChange={(e) => setCompanyEdit(prev => ({ ...prev, name: e.target.value }))} required />
+          <form onSubmit={onUpdateCompany}>
+            <div className="mb-4">
+              <label className={labelClass}>{t('auth.name')}</label>
+              <input className={inputClass} value={companyEdit.name} onChange={(e) => setCompanyEdit(prev => ({ ...prev, name: e.target.value }))} required />
             </div>
-            <div className="field">
-              <label className="label">Slug</label>
-              <input className="input" value={companyEdit.slug} readOnly />
+            <div className="mb-4">
+              <label className={labelClass}>{t('backoffice.slug')}</label>
+              <input className={inputClass} value={companyEdit.slug} readOnly />
             </div>
-            <div className="field">
-              <label className="checkbox">
+            <div className="mb-4">
+              <label className="inline-flex items-center gap-2 text-sm text-[var(--text-primary)]">
                 <input type="checkbox" checked={companyEdit.active} onChange={(e) => setCompanyEdit(prev => ({ ...prev, active: e.target.checked }))} />
-                {' '}
-                Active
+                {t('backoffice.active')}
               </label>
             </div>
-            <div className="field">
-              <label className="label">Features</label>
+            <div className="mb-4">
+              <label className={labelClass}>{t('backoffice.features')}</label>
               <div>
                 {FEATURE_KEYS.map((feature) => (
-                  <label key={feature} className="checkbox mr-4" style={{ display: 'inline-block' }}>
+                  <label key={feature} className={checkboxClass}>
                     <input
                       type="checkbox"
                       checked={companyEdit.featureKeys.includes(feature)}
                       onChange={() => setCompanyEdit(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))}
                     />
-                    {' '}
                     {feature}
                   </label>
                 ))}
               </div>
             </div>
-            <button className="button is-warning is-rounded" type="submit">Update Company</button>
+            <button className={primaryButtonClass} type="submit">{t('backoffice.updateCompany')}</button>
           </form>
         )}
       </section>
       )}
 
       {activeTab === 'users' && canReadUsers && canUpdateUsers && (
-      <section className="glass-section">
-        <h3 className="title is-5">Edit User</h3>
-        <div className="field">
-          <label className="label">User</label>
-          <div className="select is-fullwidth">
-            <select value={selectedUserId} onChange={(e) => onPickUser(e.target.value)}>
-              <option value="">Select user</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>{user.email}</option>
-              ))}
-            </select>
-          </div>
+      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editUser')}</h3>
+        <div className="mb-4">
+          <label className={labelClass}>{t('backoffice.usersTab')}</label>
+          <select className={inputClass} value={selectedUserId} onChange={(e) => onPickUser(e.target.value)}>
+            <option value="">{t('backoffice.selectUser')}</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>{user.email}</option>
+            ))}
+          </select>
         </div>
         {selectedUser && (
-          <form onSubmit={onUpdateUser} className="glass-form">
-            <div className="columns is-multiline">
-              <div className="column is-6">
-                <label className="label">Name</label>
-                <input className="input" value={userEdit.name} onChange={(e) => setUserEdit(prev => ({ ...prev, name: e.target.value }))} required />
+          <form onSubmit={onUpdateUser}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className={labelClass}>{t('auth.name')}</label>
+                <input className={inputClass} value={userEdit.name} onChange={(e) => setUserEdit(prev => ({ ...prev, name: e.target.value }))} required />
               </div>
-              <div className="column is-6">
-                <label className="label">Surname</label>
-                <input className="input" value={userEdit.surname} onChange={(e) => setUserEdit(prev => ({ ...prev, surname: e.target.value }))} required />
+              <div>
+                <label className={labelClass}>{t('auth.surname')}</label>
+                <input className={inputClass} value={userEdit.surname} onChange={(e) => setUserEdit(prev => ({ ...prev, surname: e.target.value }))} required />
               </div>
-              <div className="column is-6">
-                <label className="label">Email</label>
-                <input className="input" type="email" value={userEdit.email} onChange={(e) => setUserEdit(prev => ({ ...prev, email: e.target.value }))} required />
+              <div>
+                <label className={labelClass}>{t('auth.email')}</label>
+                <input className={inputClass} type="email" value={userEdit.email} onChange={(e) => setUserEdit(prev => ({ ...prev, email: e.target.value }))} required />
               </div>
-              <div className="column is-6">
-                <label className="label">Role</label>
-                <div className="select is-fullwidth">
-                  <select
-                    value={userEdit.role}
-                    onChange={(e) => {
-                      const role = e.target.value
-                      setUserEdit(prev => ({ ...prev, role, permissionKeys: permissionTemplateForRole(role) }))
-                    }}
-                  >
-                    <option value="staff">staff</option>
-                    <option value="owner">owner</option>
-                    <option value="admin">admin</option>
-                    <option value="dispatcher">dispatcher</option>
-                    <option value="viewer">viewer</option>
-                  </select>
-                </div>
+              <div>
+                <label className={labelClass}>{t('backoffice.language')}</label>
+                <select
+                  className={inputClass}
+                  value={userEdit.language}
+                  onChange={(e) => setUserEdit(prev => ({ ...prev, language: e.target.value }))}
+                >
+                  <option value="en">{t('ui.languageEnglish')}</option>
+                  <option value="es">{t('ui.languageSpanish')}</option>
+                  <option value="ca">{t('ui.languageCatalan')}</option>
+                </select>
               </div>
-              <div className="column is-6">
-                <label className="label">Company</label>
-                <div className="select is-fullwidth">
-                  <select value={userEdit.companyId} onChange={(e) => setUserEdit(prev => ({ ...prev, companyId: e.target.value }))}>
-                    <option value="">Select company</option>
-                    {companyOptions.map((company) => (
-                      <option key={company.id} value={company.id}>{company.label}</option>
-                    ))}
-                  </select>
-                </div>
+              <div>
+                <label className={labelClass}>{t('backoffice.role')}</label>
+                <select
+                  className={inputClass}
+                  value={userEdit.role}
+                  onChange={(e) => {
+                    const role = e.target.value
+                    setUserEdit(prev => ({ ...prev, role, permissionKeys: permissionTemplateForRole(role) }))
+                  }}
+                >
+                  <option value="staff">{t('roles.staff')}</option>
+                  <option value="owner">{t('roles.owner')}</option>
+                  <option value="admin">{t('roles.admin')}</option>
+                  <option value="dispatcher">{t('roles.dispatcher')}</option>
+                  <option value="viewer">{t('roles.viewer')}</option>
+                </select>
               </div>
-              <div className="column is-12">
-                <label className="label">Permissions</label>
+              <div>
+                <label className={labelClass}>{t('backoffice.company')}</label>
+                <select className={inputClass} value={userEdit.companyId} onChange={(e) => setUserEdit(prev => ({ ...prev, companyId: e.target.value }))}>
+                  <option value="">{t('backoffice.selectCompanyShort')}</option>
+                  {companyOptions.map((company) => (
+                    <option key={company.id} value={company.id}>{company.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className={labelClass}>{t('backoffice.permissions')}</label>
                 <div>
                   {PERMISSION_KEYS.map((permission) => (
-                    <label key={permission} className="checkbox mr-4" style={{ display: 'inline-block' }}>
+                    <label key={permission} className={checkboxClass}>
                       <input
                         type="checkbox"
                         checked={userEdit.permissionKeys.includes(permission)}
                         onChange={() => setUserEdit(prev => ({ ...prev, permissionKeys: toggleInArray(prev.permissionKeys, permission) }))}
                       />
-                      {' '}
                       {permission}
                     </label>
                   ))}
                 </div>
               </div>
             </div>
-            <button className="button is-warning is-rounded" type="submit">Update User</button>
+            <button className={primaryButtonClass} type="submit">{t('backoffice.updateUser')}</button>
           </form>
         )}
       </section>
       )}
 
       {activeTab === 'users' && canReadUsers && (
-      <section className="glass-section">
-        <h3 className="title is-5">Users</h3>
+      <section>
+        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.users')}</h3>
         <DataTable
           columns={USER_COLUMNS}
           rows={users}
-          emptyMessage="No users yet."
+          emptyMessage={t('backoffice.noUsers')}
+          variant="flat"
           pageSize={20}
           serverPagination={{
             enabled: true,
@@ -469,6 +495,7 @@ function Backoffice({
         />
       </section>
       )}
+      </div>
     </PageShell>
   )
 }

@@ -5,6 +5,7 @@ type User {
   name: String!
   surname: String!
   email: String!
+  language: String!
   role: String!
   companyId: ID
   permissionKeys: [String!]!
@@ -24,6 +25,7 @@ type BackofficeUser {
   name: String!
   surname: String!
   email: String!
+  language: String!
   role: String!
   companyId: ID
   permissionKeys: [String!]!
@@ -92,12 +94,14 @@ input RegisterUserInput {
   surname: String!
   email: String!
   password: String!
+  language: String
 }
 
 input UpdateUserInput {
   name: String
   surname: String
   email: String
+  language: String
   currentPassword: String
   newPassword: String
 }
@@ -121,6 +125,7 @@ input BackofficeCreateUserInput {
   surname: String!
   email: String!
   password: String!
+  language: String
   role: String!
   companyId: ID!
   permissionKeys: [String!]
@@ -130,6 +135,7 @@ input BackofficeUpdateUserInput {
   name: String
   surname: String
   email: String
+  language: String
   role: String
   companyId: ID
   permissionKeys: [String!]

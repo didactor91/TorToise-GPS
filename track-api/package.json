@@ -9,7 +9,8 @@
     "debug": "node debug .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "promote:staff": "node scripts/promote-staff.js"
+    "promote:staff": "node scripts/promote-staff.js",
+    "seed:e2e": "node scripts/seed-e2e.js"
   },
   "keywords": [],
   "author": "",

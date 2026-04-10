@@ -1,5 +1,6 @@
 import { toast } from 'react-toastify'
 import { useGetTrackersQuery, useDeleteTrackerMutation, useLastTracksQuery, GetTrackersQuery } from '../generated/graphql'
+import i18n from '../i18n'
 
 export type Tracker = NonNullable<NonNullable<GetTrackersQuery['trackers']>['items']>[number]
 
@@ -13,7 +14,7 @@ export function useTrackers(page = 1, pageSize = 20) {
 
   const [deleteTrackerMutation] = useDeleteTrackerMutation({
     onCompleted: () => {
-      toast.success('Tracker deleted')
+      toast.success(i18n.t('trackers.deleted'))
       refetch()
     },
     onError: (err) => toast.error(err.message)

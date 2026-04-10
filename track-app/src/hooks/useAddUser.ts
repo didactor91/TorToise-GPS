@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useBackofficeCreateUserMutation, useMeQuery } from '../generated/graphql'
+import i18n from '../i18n'
 
 type AddUserInput = {
     name: string
     surname: string
     email: string
     password: string
+    language: string
     role: string
 }
 
@@ -25,7 +27,7 @@ export function useAddUser() {
 
     const addUser = async (input: AddUserInput) => {
         if (!companyId) {
-            toast.error('Company not found for current user')
+            toast.error(i18n.t('users.companyNotFound'))
             return
         }
         await createUserMutation({

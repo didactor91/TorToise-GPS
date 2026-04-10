@@ -50,6 +50,7 @@ export type BackofficeCreateCompanyInput = {
 export type BackofficeCreateUserInput = {
   companyId: Scalars['ID']['input'];
   email: Scalars['String']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   password: Scalars['String']['input'];
   permissionKeys?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -67,6 +68,7 @@ export type BackofficeUpdateCompanyInput = {
 export type BackofficeUpdateUserInput = {
   companyId?: InputMaybe<Scalars['ID']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
+  language?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   permissionKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   role?: InputMaybe<Scalars['String']['input']>;
@@ -78,6 +80,7 @@ export type BackofficeUser = {
   companyId?: Maybe<Scalars['ID']['output']>;
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  language: Scalars['String']['output'];
   name: Scalars['String']['output'];
   permissionKeys: Array<Scalars['String']['output']>;
   role: Scalars['String']['output'];
@@ -294,6 +297,7 @@ export type QueryTrackersArgs = {
 
 export type RegisterUserInput = {
   email: Scalars['String']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   password: Scalars['String']['input'];
   surname: Scalars['String']['input'];
@@ -337,6 +341,7 @@ export type UpdateTrackerInput = {
 export type UpdateUserInput = {
   currentPassword?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
+  language?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   newPassword?: InputMaybe<Scalars['String']['input']>;
   surname?: InputMaybe<Scalars['String']['input']>;
@@ -348,6 +353,7 @@ export type User = {
   email: Scalars['String']['output'];
   featureKeys: Array<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  language: Scalars['String']['output'];
   name: Scalars['String']['output'];
   permissionKeys: Array<Scalars['String']['output']>;
   role: Scalars['String']['output'];
@@ -366,7 +372,7 @@ export type BackofficeUsersQueryVariables = Exact<{
 }>;
 
 
-export type BackofficeUsersQuery = { __typename?: 'Query', backofficeUsers: { __typename?: 'PagedBackofficeUsers', totalCount: number, items: Array<{ __typename?: 'BackofficeUser', id: string, name: string, surname: string, email: string, role: string, companyId?: string | null, permissionKeys: Array<string> }> } };
+export type BackofficeUsersQuery = { __typename?: 'Query', backofficeUsers: { __typename?: 'PagedBackofficeUsers', totalCount: number, items: Array<{ __typename?: 'BackofficeUser', id: string, name: string, surname: string, email: string, language: string, role: string, companyId?: string | null, permissionKeys: Array<string> }> } };
 
 export type BackofficeCreateCompanyMutationVariables = Exact<{
   input: BackofficeCreateCompanyInput;
@@ -453,7 +459,7 @@ export type RegisterUserMutation = { __typename?: 'Mutation', registerUser: { __
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, name: string, surname: string, email: string, role: string, companyId?: string | null, permissionKeys: Array<string>, featureKeys: Array<string> } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, name: string, surname: string, email: string, language: string, role: string, companyId?: string | null, permissionKeys: Array<string>, featureKeys: Array<string> } };
 
 export type UpdateUserMutationVariables = Exact<{
   input: UpdateUserInput;
@@ -564,6 +570,7 @@ export const BackofficeUsersDocument = gql`
       name
       surname
       email
+      language
       role
       companyId
       permissionKeys
@@ -1019,6 +1026,7 @@ export const MeDocument = gql`
     name
     surname
     email
+    language
     role
     companyId
     permissionKeys

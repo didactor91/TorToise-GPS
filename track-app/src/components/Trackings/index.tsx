@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import PageShell from '../shared/PageShell'
 import DataTable, { Column } from '../shared/DataTable'
 import { useTrackers, Tracker } from '../../hooks/useTrackers'
+import { Map, Eye, Trash } from 'iconoir-react'
+import { useTranslation } from 'react-i18next'
 
 type TrackerRow = Tracker & {
   status: string
 }
 
 function Trackings() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [pendingDelete, setPendingDelete] = useState<TrackerRow | null>(null)
@@ -26,10 +29,10 @@ function Trackings() {
   const TRACKER_COLUMNS: Column<TrackerRow>[] = [
     {
       key: 'status',
-      label: 'Status',
+      label: t('ui.status'),
       render: (row) => (
         <span
-          title={row.status}
+          title={row.status === 'ON' ? t('ui.on') : t('ui.off')}
           style={{
             display: 'inline-block',
             width: 12,
@@ -41,39 +44,42 @@ function Trackings() {
         />
       )
     },
-    { key: 'licensePlate', label: 'Alias' },
-    { key: 'serialNumber', label: 'Serial' },
+    { key: 'licensePlate', label: t('ui.alias') },
+    { key: 'serialNumber', label: t('ui.serial') },
     {
       key: 'actions',
-      label: 'Actions',
+      label: t('ui.actions'),
       render: (row) => (
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="flex gap-2">
           <button
-            className="button is-small is-warning is-rounded"
-            style={{ fontSize: 16, lineHeight: 1, minWidth: 36, color: '#1f2937' }}
+            className="inline-flex min-w-9 items-center justify-center rounded-full border border-amber-500 bg-amber-400 px-3 py-1.5 text-xs font-semibold leading-none text-slate-800 transition hover:brightness-105"
+            style={{ fontSize: 16 }}
             onClick={() => navigate('/home', { state: { focusSerial: row.serialNumber } })}
-            title="Ver en el mapa"
-            aria-label="Ver en el mapa"
+            title={t('trackers.goToMap')}
+            aria-label={t('trackers.goToMap')}
+            type="button"
           >
-            <span aria-hidden="true">🌍</span>
+            <Map width="18" height="18" strokeWidth={1.8} />
           </button>
           <button
-            className="button is-small is-info is-rounded"
-            style={{ fontSize: 16, lineHeight: 1, minWidth: 36, color: '#ffffff' }}
+            className="inline-flex min-w-9 items-center justify-center rounded-full border border-cyan-700 bg-cyan-600 px-3 py-1.5 text-xs font-semibold leading-none text-white transition hover:brightness-105"
+            style={{ fontSize: 16 }}
             onClick={() => navigate(`/detail/${row.serialNumber}`)}
-            title="Ver detalle"
-            aria-label="Ver detalle"
+            title={t('trackers.viewDetail')}
+            aria-label={t('trackers.viewDetail')}
+            type="button"
           >
-            <span aria-hidden="true">👁</span>
+            <Eye width="18" height="18" strokeWidth={1.8} />
           </button>
           <button
-            className="button is-small is-danger is-rounded"
-            style={{ fontSize: 16, lineHeight: 1, minWidth: 36, color: '#ffffff' }}
+            className="inline-flex min-w-9 items-center justify-center rounded-full border border-red-700 bg-red-600 px-3 py-1.5 text-xs font-semibold leading-none text-white transition hover:brightness-105"
+            style={{ fontSize: 16 }}
             onClick={() => setPendingDelete(row)}
-            title="Eliminar tracker"
-            aria-label="Eliminar tracker"
+            title={t('trackers.deleteTracker')}
+            aria-label={t('trackers.deleteTracker')}
+            type="button"
           >
-            <span aria-hidden="true">🗑</span>
+            <Trash width="18" height="18" strokeWidth={1.8} />
           </button>
         </div>
       )
@@ -83,16 +89,16 @@ function Trackings() {
   return (
     <>
       <PageShell
-        title="Trackers"
-        actionLabel="+ New Tracker"
+        title={t('trackers.title')}
+        actionLabel={t('trackers.newTrackerAction')}
         onAction={() => navigate('/trackers/new')}
       >
         {loading
-          ? <p className="has-text-centered has-text-grey">Loading…</p>
+          ? <p className="text-center text-[var(--text-muted)]">{t('ui.loading')}</p>
           : <DataTable
               columns={TRACKER_COLUMNS}
               rows={rows}
-              emptyMessage="No trackers yet. Add your first one!"
+              emptyMessage={t('trackers.empty')}
               pageSize={20}
               serverPagination={{
                 enabled: true,
@@ -104,23 +110,31 @@ function Trackings() {
         }
       </PageShell>
 
-      <div className={`modal ${pendingDelete ? 'is-active' : ''}`}>
-        <div className="modal-background" onClick={() => !deleting && setPendingDelete(null)} />
-        <div className="modal-card glass-card">
-          <header className="modal-card-head">
-            <p className="modal-card-title">Confirm Delete</p>
-            <button className="delete" aria-label="close" onClick={() => !deleting && setPendingDelete(null)} />
+      <div className={`fixed inset-0 z-50 items-center justify-center p-4 ${pendingDelete ? 'flex' : 'hidden'}`}>
+        <div className="absolute inset-0 bg-slate-900/45" onClick={() => !deleting && setPendingDelete(null)} />
+        <div className="glass-card relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border" style={{ borderColor: 'var(--glass-border)', background: 'var(--bg-glass-strong)' }}>
+          <header className="flex items-center justify-between gap-3 border-b px-4 py-3" style={{ borderColor: 'var(--border-default)' }}>
+            <p className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{t('trackers.confirmDelete')}</p>
+            <button
+              className="relative h-7 w-7 rounded-full border border-[var(--border-default)] bg-transparent"
+              aria-label={t('ui.cancel')}
+              onClick={() => !deleting && setPendingDelete(null)}
+              type="button"
+            >
+              <span className="absolute left-1/2 top-1/2 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-slate-500" />
+              <span className="absolute left-1/2 top-1/2 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 -rotate-45 bg-slate-500" />
+            </button>
           </header>
-          <section className="modal-card-body">
+          <section className="px-4 py-3">
             {pendingDelete && (
               <p>
-                Delete tracker <strong>{pendingDelete.licensePlate || pendingDelete.serialNumber}</strong>?
+                {t('trackers.deleteQuestion', { name: pendingDelete.licensePlate || pendingDelete.serialNumber })} 
               </p>
             )}
           </section>
-          <footer className="modal-card-foot">
+          <footer className="flex items-center justify-between gap-3 border-t px-4 py-3" style={{ borderColor: 'var(--border-default)' }}>
             <button
-              className={`button is-danger ${deleting ? 'is-loading' : ''}`}
+              className="inline-flex min-w-24 items-center justify-center rounded-full border border-red-700 bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!pendingDelete || deleting}
               onClick={async () => {
                 if (!pendingDelete) return
@@ -132,10 +146,11 @@ function Trackings() {
                   setDeleting(false)
                 }
               }}
+              type="button"
             >
-              Delete
+              {deleting ? t('trackers.deleting') : t('ui.delete')}
             </button>
-            <button className="button" disabled={deleting} onClick={() => setPendingDelete(null)}>Cancel</button>
+            <button className="inline-flex items-center justify-center rounded-full border border-[var(--border-default)] bg-[var(--glass-input)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60" disabled={deleting} onClick={() => setPendingDelete(null)} type="button">{t('ui.cancel')}</button>
           </footer>
         </div>
       </div>

@@ -23,6 +23,7 @@ const identityResolver = {
           name: user.name,
           surname: user.surname,
           email: user.email,
+          language: user.language || 'en',
           role: user.role || 'admin',
           companyId: user.companyId ? user.companyId.toString() : null,
           permissionKeys: [...access.permissionKeys],
@@ -37,11 +38,11 @@ const identityResolver = {
   Mutation: {
     /**
      * @param {unknown} _
-     * @param {{ input: { name: string, surname: string, email: string, password: string } }} args
+     * @param {{ input: { name: string, surname: string, email: string, password: string, language?: string } }} args
      */
     async registerUser(_, { input }) {
       try {
-        await service.registerUser(input.name, input.surname, input.email, input.password)
+        await service.registerUser(input.name, input.surname, input.email, input.password, input.language || 'en')
         return { success: true, message: 'Ok, user registered.' }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
@@ -64,7 +65,7 @@ const identityResolver = {
 
     /**
      * @param {unknown} _
-     * @param {{ input: { name?: string, surname?: string, email?: string, currentPassword?: string, newPassword?: string } }} args
+     * @param {{ input: { name?: string, surname?: string, email?: string, language?: string, currentPassword?: string, newPassword?: string } }} args
      * @param {{ userId: string|null }} ctx
      */
     async updateUser(_, { input }, ctx) {

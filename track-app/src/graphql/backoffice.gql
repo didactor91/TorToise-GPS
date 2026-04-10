@@ -16,6 +16,7 @@ query BackofficeUsers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
       name
       surname
       email
+      language
       role
       companyId
       permissionKeys

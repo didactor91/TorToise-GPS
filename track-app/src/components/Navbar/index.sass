@@ -1,33 +1,146 @@
 /* Navbar — host of --navbar-height token */
 .nav-home
-  height: var(--navbar-height)
-  position: relative
-  z-index: 1000
+  min-height: var(--navbar-height)
+  height: auto
+  position: fixed
+  top: 0
+  left: 0
+  width: 100%
+  right: auto
+  z-index: 1200
   font-family: var(--font-sans)
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.2)
-  background: color-mix(in srgb, var(--bg-surface) 84%, var(--brand-primary) 16%) !important
-  backdrop-filter: blur(8px)
-  -webkit-backdrop-filter: blur(8px)
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14)
+  background: var(--nav-glass-bg)
+  backdrop-filter: none
+  -webkit-backdrop-filter: none
   border-bottom: 1px solid var(--border-default)
+  padding-left: .5rem
+  padding-right: .2rem
+  transition: width .35s ease, box-shadow .25s ease
+  overflow: hidden
 
-.nav-home .navbar-menu
-  background: transparent !important
+.nav-home--minimized
+  width: 10.4rem !important
+  max-width: 10.4rem !important
+  border-right: 1px solid var(--border-default)
+  padding-right: .2rem
 
-.nav-home .navbar-item
+.nav-home__brand
+  margin-right: .5rem
+
+.nav-home__collapse-toggle
+  width: auto
+  height: auto
+  border-radius: 0
+  border: none
+  background: transparent
+  color: var(--text-primary)
+  font-size: 1.15rem
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  cursor: pointer
+  margin-left: .15rem
+  flex-shrink: 0
+  padding: .2rem .2rem
+  opacity: .9
+
+.nav-home__collapse-toggle:hover
+  opacity: 1
+  color: var(--brand-primary)
+
+.nav-home__menu
+  transition: opacity .22s ease, transform .28s ease
+
+.nav-home__menu--desktop
+  position: static
+  margin-left: .75rem
+  flex: 1
+  display: flex
+  align-items: center
+  justify-content: space-between
+  transform-origin: left center
+  margin-right: .25rem
+  max-width: calc(100vw - 14rem)
+  overflow: hidden
+
+.nav-home__menu--desktop.nav-home__menu--hidden
+  opacity: 0
+  transform: translateX(10px) scaleX(.92)
+  width: 0
+  min-width: 0
+  max-width: 0
+  overflow: hidden
+  pointer-events: none
+
+.nav-home__menu--desktop.nav-home__menu--visible
+  opacity: 1
+  transform: translateX(0) scaleX(1)
+  width: auto
+
+.nav-home__menu--mobile
+  position: absolute
+  left: 0
+  right: 0
+  top: 100%
+  z-index: 40
+  flex-direction: column
+  gap: .5rem
+  border-bottom: 1px solid
+  padding: .75rem
+
+.nav-home__menu--mobile.nav-home__menu--hidden
+  display: none
+
+.nav-home__menu--mobile.nav-home__menu--visible
+  display: flex
+
+@media (min-width: 768px)
+  .nav-home
+    height: var(--navbar-height)
+    width: 100%
+
+  .nav-home.nav-home--minimized
+    width: 10.4rem !important
+    max-width: 10.4rem !important
+
+  .nav-home.nav-home--minimized .nav-home__menu--desktop
+    display: none !important
+
+  .nav-home.nav-home--minimized .nav-home__brand
+    margin-right: .2rem
+    padding-right: .2rem
+    border-right: none
+
+  .nav-home.nav-home--minimized .nav-home__collapse-toggle
+    margin-left: .1rem
+    padding-left: .2rem
+    padding-right: .2rem
+
+.nav-home #navibarmenu
+  background: var(--nav-glass-bg)
+  border-color: color-mix(in srgb, var(--border-default) 55%, transparent)
+  box-shadow: none
+  backdrop-filter: none
+  -webkit-backdrop-filter: none
+
+@media (min-width: 768px)
+  .nav-home #navibarmenu
+    background: transparent
+    border-color: transparent
+    box-shadow: none
+
+@media (max-width: 767px)
+  .nav-home__collapse-toggle
+    display: none
+
+.nav-home #navibarmenu button
   color: var(--text-primary)
   font-weight: 600
 
-.nav-home .navbar-item:hover
-  background: color-mix(in srgb, var(--bg-surface) 50%, transparent) !important
+.nav-home #navibarmenu .nav-home__links button:hover
+  background: color-mix(in srgb, var(--bg-surface) 50%, transparent)
   border-radius: 10px
-
-.nav-home .button.is-dark
-  background: var(--brand-primary)
-  border-color: var(--brand-primary-hover)
-  color: var(--text-on-brand)
-
-.nav-home .button.is-dark:hover
-  background: var(--brand-primary-hover)
 
 .theme-switch
   display: inline-flex
@@ -79,27 +192,54 @@
   text-align: left
 
 .nav-icon-button
-  width: 2.15rem
-  height: 2.15rem
-  min-width: 2.15rem
-  min-height: 2.15rem
-  padding: 0
-  border-radius: 999px
+  width: auto
+  height: auto
+  min-width: auto
+  min-height: auto
+  padding: .2rem .35rem
+  border-radius: 0
   display: inline-flex
   align-items: center
   justify-content: center
-  background: color-mix(in srgb, var(--bg-surface) 86%, transparent)
-  border: 1px solid var(--border-default)
+  background: transparent
+  border: none
   color: var(--text-primary)
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16)
+  box-shadow: none
+  opacity: .9
 
 .nav-icon-button:hover
-  background: color-mix(in srgb, var(--bg-surface) 96%, transparent)
+  opacity: 1
+  color: var(--brand-primary)
 
 .nav-icon-button span
-  font-size: 1rem
+  font-size: 1.15rem
   line-height: 1
 
-.navbar-brand img
+@media (min-width: 768px)
+  .nav-home__brand
+    padding-right: .6rem
+    margin-right: .6rem
+    border-right: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent)
+
+  .nav-home__links
+    padding-right: .45rem
+    margin-right: .45rem
+    border-right: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent)
+
+  .nav-home__actions
+    padding-right: .3rem
+    margin-right: .3rem
+    border-right: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent)
+
+.menu-open span:nth-child(1)
+  transform: translateY(8px) rotate(45deg)
+
+.menu-open span:nth-child(2)
+  opacity: 0
+
+.menu-open span:nth-child(3)
+  transform: translateY(-8px) rotate(-45deg)
+
+.nav-home img
   height: 2rem
   width: auto
