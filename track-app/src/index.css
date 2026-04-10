@@ -159,6 +159,31 @@ body {
   box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.18);
 }
 
+.auth-shell__card .input,
+.auth-shell__card .textarea,
+.auth-shell__card .select select {
+  background: var(--glass-input);
+  border-color: rgba(148, 163, 184, 0.35);
+  box-shadow: none;
+}
+
+.auth-shell__card .input:focus,
+.auth-shell__card .textarea:focus,
+.auth-shell__card .select select:focus {
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.18);
+}
+
+.auth-shell__card .button.is-ghost {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #1f2937;
+}
+
+.auth-shell__card .button.is-ghost:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
 .page-shell__content .tabs.is-toggle li a {
   background: rgba(255, 255, 255, 0.42);
   border-color: rgba(148, 163, 184, 0.35);
