@@ -1,5 +1,3 @@
-![TorToiseGPS](track-doc/img/logo.png)
-
 # **T**or**T**oise **GPS**
 
 ### 🚚 Real-time fleet tracking — 🛰 GPS over TCP
