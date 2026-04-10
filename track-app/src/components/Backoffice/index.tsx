@@ -325,6 +325,7 @@ function Backoffice({
       </section>
       )}
 
+      {activeTab === 'companies' && (
       <section style={{ marginBottom: 24 }}>
         <h3 className="title is-5">Edit Company</h3>
         <div className="field">
@@ -375,6 +376,7 @@ function Backoffice({
           </form>
         )}
       </section>
+      )}
 
       {activeTab === 'users' && canReadUsers && canUpdateUsers && (
       <section style={{ marginBottom: 24 }}>
