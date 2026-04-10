@@ -64,7 +64,7 @@ const identityResolver = {
 
     /**
      * @param {unknown} _
-     * @param {{ input: { name?: string, surname?: string, email?: string } }} args
+     * @param {{ input: { name?: string, surname?: string, email?: string, currentPassword?: string, newPassword?: string } }} args
      * @param {{ userId: string|null }} ctx
      */
     async updateUser(_, { input }, ctx) {

@@ -335,8 +335,10 @@ export type UpdateTrackerInput = {
 };
 
 export type UpdateUserInput = {
+  currentPassword?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  newPassword?: InputMaybe<Scalars['String']['input']>;
   surname?: InputMaybe<Scalars['String']['input']>;
 };
 

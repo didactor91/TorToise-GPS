@@ -2,6 +2,7 @@ import React from 'react'
 import PageShell from '../shared/PageShell'
 import { useProfile } from '../../hooks/useProfile'
 import { UpdateUserInput } from '../../generated/graphql'
+import { toast } from 'react-toastify'
 
 function Profile() {
   const { user, updateUser, deleteUser } = useProfile()
@@ -22,6 +23,26 @@ function Profile() {
   function handleSubmitDelete(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     deleteUser()
+  }
+
+  function handleSubmitChangePassword(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const form = e.currentTarget
+    const currentPassword = (form.elements.namedItem('currentPassword') as HTMLInputElement).value
+    const newPassword = (form.elements.namedItem('newPassword') as HTMLInputElement).value
+    const confirmPassword = (form.elements.namedItem('confirmPassword') as HTMLInputElement).value
+
+    if (newPassword !== confirmPassword) {
+      toast.error('New password and confirmation do not match.')
+      return
+    }
+    if (!currentPassword || !newPassword) {
+      toast.error('Current password and new password are required.')
+      return
+    }
+
+    updateUser({ currentPassword, newPassword })
+    form.reset()
   }
 
   return (
@@ -77,6 +98,47 @@ function Profile() {
               <div className="control">
                 <button className="button is-warning is-rounded is-fullwidth" type="submit">
                   <strong>Update</strong>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <h3 className="title is-5" style={{ color: 'var(--color-text-dark)', marginTop: '2rem', marginBottom: '1rem' }}>
+        Change Password
+      </h3>
+      <form onSubmit={handleSubmitChangePassword}>
+        <div className="columns is-multiline">
+          <div className="column is-half">
+            <div className="field">
+              <label className="label">Current password</label>
+              <div className="control">
+                <input className="input is-rounded" type="password" name="currentPassword" required />
+              </div>
+            </div>
+          </div>
+          <div className="column is-half">
+            <div className="field">
+              <label className="label">New password</label>
+              <div className="control">
+                <input className="input is-rounded" type="password" name="newPassword" minLength={6} required />
+              </div>
+            </div>
+          </div>
+          <div className="column is-half">
+            <div className="field">
+              <label className="label">Confirm new password</label>
+              <div className="control">
+                <input className="input is-rounded" type="password" name="confirmPassword" minLength={6} required />
+              </div>
+            </div>
+          </div>
+          <div className="column is-half" style={{ display: 'flex', alignItems: 'flex-end' }}>
+            <div className="field" style={{ width: '100%' }}>
+              <div className="control">
+                <button className="button is-warning is-rounded is-fullwidth" type="submit">
+                  <strong>Update Password</strong>
                 </button>
               </div>
             </div>

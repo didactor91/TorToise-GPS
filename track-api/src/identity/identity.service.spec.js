@@ -220,6 +220,33 @@ describe('identityService', () => {
                 expect(error.message).toBe(`email ${repeatData.email} already registered`)
             }
         })
+
+        it('should succeed on password change with correct current password', async () => {
+            const currentPassword = password
+            const newPassword = 'new-password-123'
+            await service.updateUser(user.id, { currentPassword, newPassword })
+
+            const updatedUser = await User.findById(user.id)
+            expect(await argon2.verify(updatedUser.password, newPassword)).toBe(true)
+        })
+
+        it('should fail on password change with wrong current password', async () => {
+            try {
+                await service.updateUser(user.id, { currentPassword: 'wrong-pass', newPassword: 'new-pass' })
+            } catch (error) {
+                expect(error).toBeInstanceOf(LogicError)
+                expect(error.message).toBe('invalid current password')
+            }
+        })
+
+        it('should fail when only one password field is provided', async () => {
+            try {
+                await service.updateUser(user.id, { newPassword: 'new-pass-only' })
+            } catch (error) {
+                expect(error).toBeInstanceOf(InputError)
+                expect(error.message).toBe('currentPassword and newPassword are both required to change password')
+            }
+        })
     })
 
     describe('delete user', () => {
