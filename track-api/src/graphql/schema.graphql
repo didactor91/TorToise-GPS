@@ -98,6 +98,8 @@ input UpdateUserInput {
   name: String
   surname: String
   email: String
+  currentPassword: String
+  newPassword: String
 }
 
 input BackofficeCreateCompanyInput {

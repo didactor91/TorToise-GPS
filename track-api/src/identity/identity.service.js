@@ -66,7 +66,7 @@ const identityService = {
         })()
     },
 
-    updateUser(id, { name, surname, email } = {}) {
+    updateUser(id, { name, surname, email, currentPassword, newPassword } = {}) {
         validate.arguments([
             { name: 'id', value: id, type: String, notEmpty: true }
         ])
@@ -81,11 +81,20 @@ const identityService = {
                     throw new LogicError(`email ${email} already registered`)
                 }
             }
-
             const patch = {}
             if (name) patch.name = name
             if (surname) patch.surname = surname
             if (email) patch.email = email
+
+            if ((currentPassword && !newPassword) || (!currentPassword && newPassword)) {
+                throw new InputError('currentPassword and newPassword are both required to change password')
+            }
+            if (currentPassword && newPassword) {
+                if (!(await argon2.verify(existing.password, currentPassword))) {
+                    throw new LogicError('invalid current password')
+                }
+                patch.password = await argon2.hash(newPassword)
+            }
 
             await repo.updateById(id, patch)
         })()
