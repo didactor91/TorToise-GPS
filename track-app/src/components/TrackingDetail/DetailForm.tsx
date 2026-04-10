@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface DetailFormProps {
@@ -11,6 +11,20 @@ function DetailForm({ onSubmitDetail, licensePlate, serialNumber }: DetailFormPr
   const { t } = useTranslation()
   const labelClass = 'mb-2 block text-sm font-semibold'
   const inputClass = 'glass-input-base w-full rounded-full border px-4 py-2 text-sm outline-none transition'
+  const defaultRange = useMemo(() => {
+    const now = new Date()
+    const yyyy = now.getFullYear()
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const dd = String(now.getDate()).padStart(2, '0')
+    const date = `${yyyy}-${mm}-${dd}`
+    return {
+      fromDate: date,
+      fromTime: '00:00',
+      // HTML time input does not support 24:00 consistently; 23:59 is end-of-day compatible.
+      toDate: date,
+      toTime: '23:59'
+    }
+  }, [])
 
   function handleSubmitDetail(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -23,29 +37,33 @@ function DetailForm({ onSubmitDetail, licensePlate, serialNumber }: DetailFormPr
   }
 
   return (
-    <section>
+    <section className="tracking-detail__form">
       <h2 className="tracking-detail__title">{licensePlate || t('detail.trackerNotLoaded')}</h2>
-      <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-4)' }}>
+      <p className="tracking-detail__subtitle">
         {serialNumber}
       </p>
-      <hr />
-      <form onSubmit={handleSubmitDetail} className="space-y-4">
-        <p className={labelClass} style={{ marginBottom: 'var(--space-2)' }}>{t('detail.from')}</p>
-        <div>
-          <input className={inputClass} type="date" name="dateFrom" autoFocus required />
+      <form onSubmit={handleSubmitDetail} className="tracking-detail__form-grid">
+        <div className="tracking-detail__form-section">
+          <p className={labelClass}>{t('detail.from')}</p>
+          <div className="tracking-detail__field-wrap">
+            <input className={inputClass} type="date" name="dateFrom" autoFocus required defaultValue={defaultRange.fromDate} />
+          </div>
+          <div className="tracking-detail__field-wrap">
+            <input className={inputClass} type="time" name="timeFrom" required defaultValue={defaultRange.fromTime} />
+          </div>
         </div>
-        <div>
-          <input className={inputClass} type="time" name="timeFrom" required />
+
+        <div className="tracking-detail__form-section">
+          <p className={labelClass}>{t('detail.to')}</p>
+          <div className="tracking-detail__field-wrap">
+            <input className={inputClass} type="date" name="dateTo" required defaultValue={defaultRange.toDate} />
+          </div>
+          <div className="tracking-detail__field-wrap">
+            <input className={inputClass} type="time" name="timeTo" required defaultValue={defaultRange.toTime} />
+          </div>
         </div>
-        <hr />
-        <p className={labelClass} style={{ marginBottom: 'var(--space-2)' }}>{t('detail.to')}</p>
-        <div>
-          <input className={inputClass} type="date" name="dateTo" required />
-        </div>
-        <div>
-          <input className={inputClass} type="time" name="timeTo" required />
-        </div>
-        <div className="pt-2">
+
+        <div className="tracking-detail__submit-wrap">
           <button className="w-full rounded-full border border-amber-500 bg-amber-400 px-4 py-2 font-semibold text-slate-800 transition hover:brightness-105" type="submit">
             {t('ui.search')}
           </button>

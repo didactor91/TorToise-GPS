@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import logo from '../../common/img/logo.png'
 import { ArrowLeft, ArrowRight, LogOut, Menu } from 'iconoir-react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import './index.sass'
 
 interface NavbarProps {
@@ -14,8 +15,6 @@ interface NavbarProps {
   onBackoffice?: () => void
   showBackoffice?: boolean
   onLogout: () => void
-  onDarkMode: () => void
-  darkmode: boolean
 }
 
 function Navbar({
@@ -27,11 +26,10 @@ function Navbar({
   onTrackings,
   onBackoffice,
   showBackoffice = false,
-  onLogout,
-  onDarkMode,
-  darkmode
+  onLogout
 }: NavbarProps) {
   const { t } = useTranslation()
+  const location = useLocation()
   const [menuOpen, setMenuOpen] = useState<boolean>(false)
   const [desktopMinimized, setDesktopMinimized] = useState<boolean>(false)
   const [isMobile, setIsMobile] = useState<boolean>(() => {
@@ -42,6 +40,7 @@ function Navbar({
   const toggle = () => setMenuOpen(prev => !prev)
   const close = () => setMenuOpen(false)
   const toggleDesktopMinimized = () => setDesktopMinimized(prev => !prev)
+  const canMinimize = !isMobile && location.pathname.startsWith('/home')
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -54,18 +53,24 @@ function Navbar({
   }, [isMobile])
 
   useEffect(() => {
+    if (!canMinimize) setDesktopMinimized(false)
+  }, [canMinimize])
+
+  useEffect(() => {
     const root = document.documentElement
-    const minimized = desktopMinimized && !isMobile
+    const minimized = desktopMinimized && canMinimize
     root.classList.toggle('nav-minimized', minimized)
     return () => {
       root.classList.remove('nav-minimized')
     }
-  }, [desktopMinimized, isMobile])
+  }, [desktopMinimized, canMinimize])
 
-  const menuVisible = isMobile ? menuOpen : !desktopMinimized
+  const menuVisible = isMobile ? menuOpen : (canMinimize ? !desktopMinimized : true)
 
   return (
-    <nav className={`nav-home flex items-center px-3 ${desktopMinimized && !isMobile ? 'nav-home--minimized' : ''}`}>
+    <nav
+      className={`nav-home flex items-center px-3 ${desktopMinimized && !isMobile ? 'nav-home--minimized' : ''} ${!canMinimize ? 'nav-home--no-collapse' : ''}`}
+    >
       <button className="nav-home__brand inline-flex items-center rounded-lg px-3 py-2" type="button" onClick={() => { onHome(); close() }}>
         <img src={logo} alt={t('app.brandName')} width="100" height="40" />
       </button>
@@ -100,18 +105,6 @@ function Navbar({
 
         <div className="nav-home__actions flex flex-col gap-1 md:flex-row md:items-center md:gap-0">
           <div className="inline-flex items-center px-3 py-2 text-sm font-semibold">
-            <label className="theme-switch" title={t('nav.toggleTheme')}>
-              <input
-                type="checkbox"
-                checked={darkmode}
-                onChange={() => onDarkMode()}
-                aria-label={t('nav.toggleTheme')}
-              />
-              <span className="theme-switch__slider" />
-              <span className="theme-switch__label">{darkmode ? t('nav.themeDark') : t('nav.themeLight')}</span>
-            </label>
-          </div>
-          <div className="inline-flex items-center px-3 py-2 text-sm font-semibold">
             <button
               className="nav-icon-button"
               onClick={() => { onLogout(); close() }}
@@ -124,7 +117,7 @@ function Navbar({
           </div>
         </div>
       </div>
-      {!isMobile && (
+      {canMinimize && (
         <button
           className="nav-home__collapse-toggle"
           type="button"

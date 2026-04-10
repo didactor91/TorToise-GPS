@@ -25,6 +25,9 @@
   border-right: 1px solid var(--border-default)
   padding-right: .2rem
 
+.nav-home--no-collapse
+  padding-right: .5rem
+
 .nav-home__brand
   margin-right: .5rem
 
@@ -56,12 +59,14 @@
   position: static
   margin-left: .75rem
   flex: 1
+  width: 100%
+  min-width: 0
   display: flex
   align-items: center
   justify-content: space-between
   transform-origin: left center
   margin-right: .25rem
-  max-width: calc(100vw - 14rem)
+  max-width: none
   overflow: hidden
 
 .nav-home__menu--desktop.nav-home__menu--hidden
@@ -85,9 +90,19 @@
   top: 100%
   z-index: 40
   flex-direction: column
+  align-items: center
   gap: .5rem
   border-bottom: 1px solid
   padding: .75rem
+
+.nav-home__menu--mobile .nav-home__links,
+.nav-home__menu--mobile .nav-home__actions
+  align-items: center
+
+.nav-home__menu--mobile button,
+.nav-home__menu--mobile .theme-switch,
+.nav-home__menu--mobile .theme-switch__label
+  text-align: center
 
 .nav-home__menu--mobile.nav-home__menu--hidden
   display: none
@@ -126,11 +141,16 @@
 
 @media (min-width: 768px)
   .nav-home #navibarmenu
+    width: 100%
+    max-width: none
     background: transparent
     border-color: transparent
     box-shadow: none
 
 @media (max-width: 767px)
+  .nav-home
+    overflow: visible
+
   .nav-home__collapse-toggle
     display: none
 
@@ -219,7 +239,6 @@
   .nav-home__brand
     padding-right: .6rem
     margin-right: .6rem
-    border-right: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent)
 
   .nav-home__links
     padding-right: .45rem
@@ -230,6 +249,14 @@
     padding-right: .3rem
     margin-right: .3rem
     border-right: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent)
+
+  .nav-home--no-collapse .nav-home__menu--desktop
+    margin-right: 0
+
+  .nav-home--no-collapse .nav-home__actions
+    padding-right: 0
+    margin-right: 0
+    border-right: none
 
 .menu-open span:nth-child(1)
   transform: translateY(8px) rotate(45deg)

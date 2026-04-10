@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import '../shared/MapPopupGlass.sass'
 import './index.sass'
 import { useLiveTracks, HomePoi, HomeTracker, LiveTrack } from '../../hooks/useLiveTracks'
 import { useTranslation } from 'react-i18next'
@@ -180,7 +181,7 @@ function Home({ darkmode }: HomeProps) {
           const now = Date.now()
           // Throttle follow pan for smoother UX.
           if (now - lastFollowPanAtRef.current >= 1200) {
-            mapRef.current.panTo(existing.getLatLng(), { animate: true })
+            mapRef.current.panTo(existing.getLatLng(), { animate: false })
             lastFollowPanAtRef.current = now
           }
         }
@@ -193,7 +194,8 @@ function Home({ darkmode }: HomeProps) {
         marker.bindPopup(popupHtml, {
           autoClose: false,
           closeOnClick: false,
-          closeButton: true
+          closeButton: true,
+          autoPan: false
         })
         marker.on('click', () => {
           marker.openPopup()
@@ -260,8 +262,9 @@ function Home({ darkmode }: HomeProps) {
       center: [lat, lng],
       zoom,
       minZoom: 3,
-      zoomControl: true
+      zoomControl: false
     })
+    L.control.zoom({ position: 'topright' }).addTo(mapRef.current)
 
     tileLightRef.current = L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -327,6 +330,36 @@ function Home({ darkmode }: HomeProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [darkmode])
+
+  // Recalculate Leaflet viewport when navbar minimize/expand changes layout.
+  useEffect(() => {
+    const root = document.documentElement
+    let timeoutId: number | null = null
+
+    const invalidateMapSize = () => {
+      if (!mapRef.current) return
+      mapRef.current.invalidateSize()
+    }
+
+    const scheduleInvalidate = () => {
+      invalidateMapSize()
+      window.requestAnimationFrame(() => invalidateMapSize())
+      if (timeoutId) window.clearTimeout(timeoutId)
+      timeoutId = window.setTimeout(() => invalidateMapSize(), 380)
+    }
+
+    const observer = new MutationObserver((mutations) => {
+      const changed = mutations.some(m => m.type === 'attributes' && m.attributeName === 'class')
+      if (changed) scheduleInvalidate()
+    })
+
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] })
+
+    return () => {
+      observer.disconnect()
+      if (timeoutId) window.clearTimeout(timeoutId)
+    }
+  }, [])
 
   // Cleanup map on unmount
   useEffect(() => {
