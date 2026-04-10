@@ -5,6 +5,16 @@ const repo = require('./tracking.repository')
 const { ensureUserCompany } = require('../shared/company-context')
 
 const trackingService = {
+    async resolveUserCompanyId(userId) {
+        validate.arguments([
+            { name: 'id', value: userId, type: String, notEmpty: true }
+        ])
+
+        const user = await User.findById(userId)
+        if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
+        return ensureUserCompany(user)
+    },
+
     addTrack(userId, trackData) {
         if (!trackData) throw new InputError('incorrect track info')
         if (typeof trackData.speed === 'undefined') trackData.speed = 0
@@ -61,14 +71,20 @@ const trackingService = {
             if (!tracker) {
                 const owner = await repo.findLegacyOwnerBySerial(serialNumber)
                 if (!owner) return null
-                const legacy = owner.trackers.find(t => t.serialNumber === serialNumber)
-                tracker = { serialNumber, licensePlate: legacy?.licensePlate || null }
+                const ownerUser = await User.findById(owner._id)
+                if (!ownerUser) return null
+                const ownerCompanyId = await ensureUserCompany(ownerUser)
+                await repo.syncLegacyTrackers(ownerCompanyId, ownerUser.trackers || [])
+                tracker = await repo.findTrackerBySerial(serialNumber)
+                if (!tracker) return null
             }
 
             const track = await repo.createTrack({ serialNumber, latitude, longitude, speed, status, date })
 
             const pubsub = require('../graphql/pubsub')
-            pubsub.publish('LIVE_TRACKS_UPDATED', {
+            const companyId = tracker.companyId ? tracker.companyId.toString() : null
+            if (!companyId) return track
+            pubsub.publish(`LIVE_TRACKS_UPDATED_${companyId}`, {
                 liveTracksUpdated: [{
                     serialNumber,
                     latitude,

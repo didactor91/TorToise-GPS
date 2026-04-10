@@ -96,7 +96,8 @@ const trackingResolver = {
       subscribe: async (_, __, ctx) => {
         const userId = requireAuth(ctx) // throws UNAUTHENTICATED if no userId
         await requireAccess(userId, { feature: 'tracking', permission: 'tracking.read' })
-        return pubsub.asyncIterator(['LIVE_TRACKS_UPDATED'])
+        const companyId = await service.resolveUserCompanyId(userId)
+        return pubsub.asyncIterator([`LIVE_TRACKS_UPDATED_${companyId}`])
       }
     }
   }
