@@ -60,14 +60,31 @@ export function useLiveTracks() {
     const incoming = liveData?.liveTracksUpdated ?? []
     if (!incoming.length) return
 
+    const ownSerials = new Set((trackersData?.trackers?.items ?? []).map(t => t.serialNumber))
+    const scopedIncoming = incoming.filter(track => ownSerials.has(track.serialNumber))
+    if (!scopedIncoming.length) return
+
     // Upsert each incoming track into the accumulated map
-    incoming.forEach(track => {
+    scopedIncoming.forEach(track => {
       positionsMapRef.current.set(track.serialNumber, track)
     })
 
     // Emit a new array snapshot to trigger map update
     setLivePositions([...positionsMapRef.current.values()])
-  }, [liveData])
+  }, [liveData, trackersData])
+
+  useEffect(() => {
+    const ownSerials = new Set((trackersData?.trackers?.items ?? []).map(t => t.serialNumber))
+    if (!ownSerials.size) {
+      positionsMapRef.current.clear()
+      setLivePositions([])
+      return
+    }
+
+    const next = [...positionsMapRef.current.values()].filter(track => ownSerials.has(track.serialNumber))
+    positionsMapRef.current = new Map(next.map(track => [track.serialNumber, track]))
+    setLivePositions(next)
+  }, [trackersData])
 
   const pois: HomePoi[] = poisData?.pois?.items ?? []
   const trackers: HomeTracker[] = trackersData?.trackers?.items ?? []

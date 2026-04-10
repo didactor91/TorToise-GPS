@@ -151,7 +151,7 @@ describe('trackingService', () => {
             await trackingService.addTrackTCP(trackData)
 
             expect(publishSpy).toHaveBeenCalledWith(
-                'LIVE_TRACKS_UPDATED',
+                expect.stringMatching(/^LIVE_TRACKS_UPDATED_/),
                 expect.objectContaining({
                     liveTracksUpdated: expect.arrayContaining([
                         expect.objectContaining({ serialNumber: '1234567890' })
