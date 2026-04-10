@@ -86,6 +86,40 @@ cd track-api
 npm run promote:staff -- livedemo@example.com
 ```
 
+### Production migrations (MongoDB)
+
+`track-api` includes a simple migration runner with execution journal in the `migrations` collection.
+
+```bash
+# Dry-run pending migrations
+npm run migrate:api:dry
+
+# Run all pending migrations
+npm run migrate:api
+
+# Run one specific migration by timestamp or timestamp+name
+npm run migrate:api -- 20260411143000
+npm run migrate:api -- 20260411143000-add-company-index
+npm run migrate:api -- 2026-04-10-backfill-user-language  # compatibilidad legacy
+```
+
+For this to work in production, make sure `MONGO_URL` points to your production database.
+
+Current migration included:
+- `2026-04-10-backfill-user-language`: sets `language = "en"` for users where language is missing/null/empty.
+
+Create a new migration template (timestamp auto-generated):
+
+```bash
+npm run migrate:api:new -- add-company-index
+```
+
+Optional: pass full name manually:
+
+```bash
+npm run migrate:api:new -- 20260411143000-add-company-index
+```
+
 ### Simulated trucks
 
 - Total: `30` trucks

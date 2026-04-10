@@ -10,7 +10,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "promote:staff": "node scripts/promote-staff.js",
-    "seed:e2e": "node scripts/seed-e2e.js"
+    "seed:e2e": "node scripts/seed-e2e.js",
+    "migrate": "node scripts/migrate.js",
+    "migrate:dry": "node scripts/migrate.js --dry-run",
+    "migrate:new": "node scripts/migrate-new.js"
   },
   "keywords": [],
   "author": "",

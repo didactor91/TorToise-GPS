@@ -2,12 +2,24 @@ import { expect, test, type Page } from '@playwright/test'
 
 const E2E_EMAIL = process.env.E2E_ADMIN_EMAIL || 'e2e.admin@tortoise.local'
 const E2E_PASSWORD = process.env.E2E_ADMIN_PASSWORD || 'e2e-password'
+const DEMO_EMAIL = process.env.DEMO_EMAIL || 'livedemo@example.com'
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'LiveDemo'
 
 async function login(page: Page): Promise<void> {
   await page.goto('/login')
-  await page.locator('input[name="email"]').fill(E2E_EMAIL)
-  await page.locator('input[name="password"]').fill(E2E_PASSWORD)
-  await page.locator('button[type="submit"]').click()
+  const credentials = [
+    { email: E2E_EMAIL, password: E2E_PASSWORD },
+    { email: DEMO_EMAIL, password: DEMO_PASSWORD }
+  ]
+
+  for (const cred of credentials) {
+    await page.locator('input[name="email"]').fill(cred.email)
+    await page.locator('input[name="password"]').fill(cred.password)
+    await page.locator('button[type="submit"]').click()
+    await page.waitForTimeout(600)
+    if (/\/home$/.test(page.url())) return
+  }
+
   await expect(page).toHaveURL(/\/home$/)
 }
 
