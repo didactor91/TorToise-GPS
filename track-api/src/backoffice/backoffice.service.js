@@ -10,6 +10,40 @@ function assertValidRole(role) {
     if (!VALID_ROLES.has(role)) throw new InputError(`invalid role ${role}`)
 }
 
+function slugifyCompanyName(name) {
+    const base = String(name || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .replace(/-{2,}/g, '-')
+    return base || 'company'
+}
+
+function shortTimestamp() {
+    const d = new Date()
+    const pad = (value) => String(value).padStart(2, '0')
+    return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}`
+}
+
+async function buildUniqueCompanySlug(baseSlug) {
+    const existing = await repo.findCompanyBySlug(baseSlug)
+    if (!existing) return baseSlug
+
+    const tsSlug = `${baseSlug}-${shortTimestamp()}`
+    const existingTs = await repo.findCompanyBySlug(tsSlug)
+    if (!existingTs) return tsSlug
+
+    // Defensive fallback in the unlikely case of same-second collision.
+    let attempt = 2
+    let candidate = `${tsSlug}-${attempt}`
+    while (await repo.findCompanyBySlug(candidate)) {
+        attempt += 1
+        candidate = `${tsSlug}-${attempt}`
+    }
+    return candidate
+}
+
 const backofficeService = {
     normalizePagination(offset = 0, limit = 20) {
         const _offset = Math.max(0, Number(offset || 0))
@@ -26,22 +60,21 @@ const backofficeService = {
         return repo.listCompanies()
     },
 
-    async createCompany(requesterId, { name, slug, active = true, featureKeys } = {}) {
+    async createCompany(requesterId, { name, active = true, featureKeys } = {}) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.create' })
         validate.arguments([
-            { name: 'name', value: name, type: String, notEmpty: true },
-            { name: 'slug', value: slug, type: String, notEmpty: true }
+            { name: 'name', value: name, type: String, notEmpty: true }
         ])
         if (typeof active !== 'boolean') throw new InputError('active should be a boolean')
         if (featureKeys && !Array.isArray(featureKeys)) throw new InputError('featureKeys should be an array')
 
-        const existing = await repo.findCompanyBySlug(slug)
-        if (existing) throw new LogicError(`company with slug ${slug} already exists`)
+        const baseSlug = slugifyCompanyName(name)
+        const resolvedSlug = await buildUniqueCompanySlug(baseSlug)
 
         const resolvedFeatureKeys = featureKeys && featureKeys.length > 0 ? featureKeys : FEATURE_KEYS
         return repo.createCompany({
             name,
-            slug,
+            slug: resolvedSlug,
             active,
             featuresVersion: ACCESS_VERSION,
             featuresPacked: encodeFeatureKeys(resolvedFeatureKeys)

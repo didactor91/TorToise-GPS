@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import PageShell from '../shared/PageShell'
 import DataTable, { Column } from '../shared/DataTable'
 import { useBackoffice, BackofficeCompany, BackofficeUser } from '../../hooks/useBackoffice'
@@ -51,6 +51,8 @@ interface BackofficeProps {
   canUpdateUsers?: boolean
 }
 
+type BackofficeTab = 'companies' | 'users'
+
 function Backoffice({
   canReadUsers = true,
   canCreateUsers = true,
@@ -58,9 +60,10 @@ function Backoffice({
 }: BackofficeProps) {
   const [usersPage, setUsersPage] = useState(1)
   const { companies, users, usersTotalCount, loading, createCompany, createUser, updateCompany, updateUser } = useBackoffice(usersPage, 20, canReadUsers)
+  const canSeeUsersTab = canReadUsers || canCreateUsers || canUpdateUsers
+  const [activeTab, setActiveTab] = useState<BackofficeTab>('companies')
   const [companyForm, setCompanyForm] = useState({
     name: '',
-    slug: '',
     active: true,
     featureKeys: [...FEATURE_KEYS]
   })
@@ -83,14 +86,17 @@ function Backoffice({
 
   const onCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault()
-    await createCompany(companyForm.name, companyForm.slug, companyForm.active, companyForm.featureKeys)
+    await createCompany(companyForm.name, companyForm.active, companyForm.featureKeys)
     setCompanyForm({
       name: '',
-      slug: '',
       active: true,
       featureKeys: [...FEATURE_KEYS]
     })
   }
+
+  useEffect(() => {
+    if (!canSeeUsersTab && activeTab === 'users') setActiveTab('companies')
+  }, [activeTab, canSeeUsersTab])
 
   const onCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -189,6 +195,21 @@ function Backoffice({
     <PageShell title="Backoffice">
       {loading && <p className="has-text-centered has-text-grey">Loading...</p>}
 
+      <div className="tabs is-toggle is-toggle-rounded" style={{ marginBottom: 24 }}>
+        <ul>
+          <li className={activeTab === 'companies' ? 'is-active' : ''}>
+            <a onClick={() => setActiveTab('companies')}>Companies</a>
+          </li>
+          {canSeeUsersTab && (
+            <li className={activeTab === 'users' ? 'is-active' : ''}>
+              <a onClick={() => setActiveTab('users')}>Users</a>
+            </li>
+          )}
+        </ul>
+      </div>
+
+      {activeTab === 'companies' && (
+      <>
       <section style={{ marginBottom: 24 }}>
         <h3 className="title is-5">Create Company</h3>
         <form onSubmit={onCreateCompany}>
@@ -196,12 +217,6 @@ function Backoffice({
             <label className="label">Name</label>
             <div className="control">
               <input className="input" value={companyForm.name} onChange={(e) => setCompanyForm(prev => ({ ...prev, name: e.target.value }))} required />
-            </div>
-          </div>
-          <div className="field">
-            <label className="label">Slug</label>
-            <div className="control">
-              <input className="input" value={companyForm.slug} onChange={(e) => setCompanyForm(prev => ({ ...prev, slug: e.target.value }))} required />
             </div>
           </div>
           <div className="field">
@@ -235,8 +250,10 @@ function Backoffice({
         <h3 className="title is-5">Companies</h3>
         <DataTable columns={COMPANY_COLUMNS} rows={companies} emptyMessage="No companies yet." />
       </section>
+      </>
+      )}
 
-      {canCreateUsers && (
+      {activeTab === 'users' && canCreateUsers && (
       <section style={{ marginBottom: 24 }}>
         <h3 className="title is-5">Create User</h3>
         <form onSubmit={onCreateUser}>
@@ -308,6 +325,7 @@ function Backoffice({
       </section>
       )}
 
+      {activeTab === 'companies' && (
       <section style={{ marginBottom: 24 }}>
         <h3 className="title is-5">Edit Company</h3>
         <div className="field">
@@ -329,7 +347,7 @@ function Backoffice({
             </div>
             <div className="field">
               <label className="label">Slug</label>
-              <input className="input" value={companyEdit.slug} onChange={(e) => setCompanyEdit(prev => ({ ...prev, slug: e.target.value }))} required />
+              <input className="input" value={companyEdit.slug} readOnly />
             </div>
             <div className="field">
               <label className="checkbox">
@@ -358,8 +376,9 @@ function Backoffice({
           </form>
         )}
       </section>
+      )}
 
-      {canReadUsers && canUpdateUsers && (
+      {activeTab === 'users' && canReadUsers && canUpdateUsers && (
       <section style={{ marginBottom: 24 }}>
         <h3 className="title is-5">Edit User</h3>
         <div className="field">
@@ -440,7 +459,7 @@ function Backoffice({
       </section>
       )}
 
-      {canReadUsers && (
+      {activeTab === 'users' && canReadUsers && (
       <section>
         <h3 className="title is-5">Users</h3>
         <DataTable

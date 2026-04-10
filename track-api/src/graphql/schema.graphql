@@ -102,7 +102,7 @@ input UpdateUserInput {
 
 input BackofficeCreateCompanyInput {
   name: String!
-  slug: String!
+  slug: String
   active: Boolean
   featureKeys: [String!]
 }

@@ -44,7 +44,7 @@ export type BackofficeCreateCompanyInput = {
   active?: InputMaybe<Scalars['Boolean']['input']>;
   featureKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   name: Scalars['String']['input'];
-  slug: Scalars['String']['input'];
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type BackofficeCreateUserInput = {

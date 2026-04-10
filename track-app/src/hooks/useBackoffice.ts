@@ -88,8 +88,8 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
         [usersQuery.data]
     )
 
-    const createCompany = async (name: string, slug: string, active: boolean, featureKeys?: string[]) => {
-        const res = await createCompanyMutation({ variables: { input: { name, slug, active, featureKeys } } })
+    const createCompany = async (name: string, active: boolean, featureKeys?: string[]) => {
+        const res = await createCompanyMutation({ variables: { input: { name, active, featureKeys } } })
         if (res.data?.backofficeCreateCompany.success) toast.success(res.data.backofficeCreateCompany.message)
     }
 
