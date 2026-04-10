@@ -3,6 +3,7 @@
   background-size: cover
   background-position: center
   background-color: var(--color-bg-fallback)
+  position: relative
   min-height: 100dvh
   display: flex
   flex-direction: column
@@ -11,19 +12,33 @@
   padding: var(--space-4)
   gap: var(--space-6)
 
+.auth-shell::before
+  content: ''
+  position: absolute
+  inset: 0
+  background: radial-gradient(circle at 16% 12%, color-mix(in srgb, var(--bg-surface) 22%, transparent), transparent 38%), radial-gradient(circle at 82% 0%, color-mix(in srgb, var(--brand-primary) 24%, transparent), transparent 34%), linear-gradient(180deg, color-mix(in srgb, var(--overlay) 68%, transparent) 0%, color-mix(in srgb, var(--overlay) 92%, transparent) 100%)
+  z-index: 0
+
 .auth-shell__hero
+  position: relative
+  z-index: 1
   text-align: center
   color: var(--color-text-on-dark)
   text-shadow: 0 2px 8px rgba(0,0,0,0.5)
 
 .auth-shell__card
-  background: var(--color-bg-card)
+  position: relative
+  z-index: 1
+  color: var(--text-secondary)
+  background: var(--bg-glass)
+  border: 1px solid var(--glass-border)
   border-radius: var(--radius-lg)
-  box-shadow: var(--shadow-card)
+  box-shadow: var(--shadow-glass)
   padding: var(--space-8)
   width: 100%
   max-width: var(--form-max-w)
-  backdrop-filter: blur(8px)
+  backdrop-filter: blur(14px)
+  -webkit-backdrop-filter: blur(14px)
 
   // Ensure Bulma .field blocks never collapse margin
   .field
@@ -42,4 +57,4 @@
     margin-bottom: var(--space-2)
     font-weight: 600
     font-size: var(--text-sm)
-    color: var(--color-text-body)
+    color: var(--text-primary)

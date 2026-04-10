@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import logo from '../../common/img/logo.png'
 import './index.sass'
 
@@ -66,13 +66,25 @@ function Navbar({
 
         <div className="navbar-end">
           <div className="navbar-item">
-            <a className="button is-dark is-outlined is-rounded" onClick={() => { onDarkMode(); close() }}>
-              <span>{darkmode ? '☀️ Light Map' : '🌙 Dark Map'}</span>
-            </a>
+            <label className="theme-switch" title="Toggle theme">
+              <input
+                type="checkbox"
+                checked={darkmode}
+                onChange={() => onDarkMode()}
+                aria-label="Toggle Light/Dark theme"
+              />
+              <span className="theme-switch__slider" />
+              <span className="theme-switch__label">{darkmode ? 'Dark' : 'Light'}</span>
+            </label>
           </div>
           <div className="navbar-item">
-            <a className="button is-dark is-outlined is-rounded" onClick={() => { onLogout(); close() }}>
-              <span>Log Out</span>
+            <a
+              className="button nav-icon-button"
+              onClick={() => { onLogout(); close() }}
+              title="Log Out"
+              aria-label="Log Out"
+            >
+              <span aria-hidden="true">⎋</span>
             </a>
           </div>
         </div>

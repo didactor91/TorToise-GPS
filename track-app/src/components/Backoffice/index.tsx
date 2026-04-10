@@ -32,13 +32,6 @@ const USER_COLUMNS: Column<BackofficeUser>[] = [
   }
 ]
 
-function splitCsv(input: string): string[] {
-  return input
-    .split(',')
-    .map((token) => token.trim())
-    .filter(Boolean)
-}
-
 function toggleInArray(list: string[], value: string): string[] {
   return list.includes(value)
     ? list.filter(item => item !== value)
@@ -210,9 +203,9 @@ function Backoffice({
 
       {activeTab === 'companies' && (
       <>
-      <section style={{ marginBottom: 24 }}>
+      <section className="glass-section">
         <h3 className="title is-5">Create Company</h3>
-        <form onSubmit={onCreateCompany}>
+        <form onSubmit={onCreateCompany} className="glass-form">
           <div className="field">
             <label className="label">Name</label>
             <div className="control">
@@ -246,7 +239,7 @@ function Backoffice({
         </form>
       </section>
 
-      <section style={{ marginBottom: 24 }}>
+      <section className="glass-section">
         <h3 className="title is-5">Companies</h3>
         <DataTable columns={COMPANY_COLUMNS} rows={companies} emptyMessage="No companies yet." />
       </section>
@@ -254,9 +247,9 @@ function Backoffice({
       )}
 
       {activeTab === 'users' && canCreateUsers && (
-      <section style={{ marginBottom: 24 }}>
+      <section className="glass-section">
         <h3 className="title is-5">Create User</h3>
-        <form onSubmit={onCreateUser}>
+        <form onSubmit={onCreateUser} className="glass-form">
           <div className="columns is-multiline">
             <div className="column is-6">
               <label className="label">Name</label>
@@ -326,7 +319,7 @@ function Backoffice({
       )}
 
       {activeTab === 'companies' && (
-      <section style={{ marginBottom: 24 }}>
+      <section className="glass-section">
         <h3 className="title is-5">Edit Company</h3>
         <div className="field">
           <label className="label">Company</label>
@@ -340,7 +333,7 @@ function Backoffice({
           </div>
         </div>
         {selectedCompany && (
-          <form onSubmit={onUpdateCompany}>
+          <form onSubmit={onUpdateCompany} className="glass-form">
             <div className="field">
               <label className="label">Name</label>
               <input className="input" value={companyEdit.name} onChange={(e) => setCompanyEdit(prev => ({ ...prev, name: e.target.value }))} required />
@@ -379,7 +372,7 @@ function Backoffice({
       )}
 
       {activeTab === 'users' && canReadUsers && canUpdateUsers && (
-      <section style={{ marginBottom: 24 }}>
+      <section className="glass-section">
         <h3 className="title is-5">Edit User</h3>
         <div className="field">
           <label className="label">User</label>
@@ -393,7 +386,7 @@ function Backoffice({
           </div>
         </div>
         {selectedUser && (
-          <form onSubmit={onUpdateUser}>
+          <form onSubmit={onUpdateUser} className="glass-form">
             <div className="columns is-multiline">
               <div className="column is-6">
                 <label className="label">Name</label>
@@ -460,7 +453,7 @@ function Backoffice({
       )}
 
       {activeTab === 'users' && canReadUsers && (
-      <section>
+      <section className="glass-section">
         <h3 className="title is-5">Users</h3>
         <DataTable
           columns={USER_COLUMNS}

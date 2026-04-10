@@ -4,7 +4,101 @@
   position: relative
   z-index: 1000
   font-family: var(--font-sans)
-  box-shadow: var(--shadow-sm)
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.2)
+  background: color-mix(in srgb, var(--bg-surface) 84%, var(--brand-primary) 16%) !important
+  backdrop-filter: blur(8px)
+  -webkit-backdrop-filter: blur(8px)
+  border-bottom: 1px solid var(--border-default)
+
+.nav-home .navbar-menu
+  background: transparent !important
+
+.nav-home .navbar-item
+  color: var(--text-primary)
+  font-weight: 600
+
+.nav-home .navbar-item:hover
+  background: color-mix(in srgb, var(--bg-surface) 50%, transparent) !important
+  border-radius: 10px
+
+.nav-home .button.is-dark
+  background: var(--brand-primary)
+  border-color: var(--brand-primary-hover)
+  color: var(--text-on-brand)
+
+.nav-home .button.is-dark:hover
+  background: var(--brand-primary-hover)
+
+.theme-switch
+  display: inline-flex
+  align-items: center
+  gap: .55rem
+  cursor: pointer
+  user-select: none
+  color: var(--text-primary)
+  font-weight: 600
+
+.theme-switch input
+  position: absolute
+  opacity: 0
+  pointer-events: none
+
+.theme-switch__slider
+  position: relative
+  width: 2.6rem
+  height: 1.45rem
+  border-radius: 999px
+  background: color-mix(in srgb, var(--bg-surface-alt) 70%, transparent)
+  border: 1px solid var(--border-default)
+  transition: background .2s ease
+
+.theme-switch__slider::after
+  content: ''
+  position: absolute
+  top: 1px
+  left: 1px
+  width: 1.15rem
+  height: 1.15rem
+  border-radius: 50%
+  background: var(--bg-surface)
+  box-shadow: 0 2px 6px rgba(15, 23, 42, .25)
+  transition: transform .2s ease
+
+.theme-switch input:checked + .theme-switch__slider
+  background: color-mix(in srgb, var(--brand-primary) 58%, transparent)
+
+.theme-switch input:checked + .theme-switch__slider::after
+  transform: translateX(1.12rem)
+
+.theme-switch input:focus-visible + .theme-switch__slider
+  outline: 2px solid var(--focus-ring)
+  outline-offset: 2px
+
+.theme-switch__label
+  min-width: 3rem
+  text-align: left
+
+.nav-icon-button
+  width: 2.15rem
+  height: 2.15rem
+  min-width: 2.15rem
+  min-height: 2.15rem
+  padding: 0
+  border-radius: 999px
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent)
+  border: 1px solid var(--border-default)
+  color: var(--text-primary)
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16)
+
+.nav-icon-button:hover
+  background: color-mix(in srgb, var(--bg-surface) 96%, transparent)
+
+.nav-icon-button span
+  font-size: 1rem
+  line-height: 1
 
 .navbar-brand img
   height: 2rem

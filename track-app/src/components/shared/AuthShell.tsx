@@ -11,7 +11,7 @@ function AuthShell({ children, hero }: AuthShellProps) {
   return (
     <section className="auth-shell">
       {hero && <div className="auth-shell__hero">{hero}</div>}
-      <div className="auth-shell__card">
+      <div className="auth-shell__card glass-card">
         {children}
       </div>
     </section>
