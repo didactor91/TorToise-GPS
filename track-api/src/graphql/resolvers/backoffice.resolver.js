@@ -126,6 +126,21 @@ const backofficeResolver = {
 
     /**
      * @param {unknown} _
+     * @param {{ input: { serialNumber: string, alias?: string, companyId: string } }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeCreateTracker(_, { input }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        await service.createTracker(userId, input)
+        return { success: true, message: 'Ok, tracker created.' }
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
+    },
+
+    /**
+     * @param {unknown} _
      * @param {{ id: string, input: { name?: string, surname?: string, email?: string, language?: string, role?: string, companyId?: string, permissionKeys?: string[] } }} args
      * @param {{ userId: string|null }} ctx
      */

@@ -48,6 +48,13 @@ mutation BackofficeCreateUser($input: BackofficeCreateUserInput!) {
   }
 }
 
+mutation BackofficeCreateTracker($input: BackofficeCreateTrackerInput!) {
+  backofficeCreateTracker(input: $input) {
+    success
+    message
+  }
+}
+
 mutation BackofficeUpdateUser($id: ID!, $input: BackofficeUpdateUserInput!) {
   backofficeUpdateUser(id: $id, input: $input) {
     success

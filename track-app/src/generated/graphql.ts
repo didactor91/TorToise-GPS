@@ -47,6 +47,12 @@ export type BackofficeCreateCompanyInput = {
   slug?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type BackofficeCreateTrackerInput = {
+  alias?: InputMaybe<Scalars['String']['input']>;
+  companyId: Scalars['ID']['input'];
+  serialNumber: Scalars['String']['input'];
+};
+
 export type BackofficeCreateUserInput = {
   companyId: Scalars['ID']['input'];
   email: Scalars['String']['input'];
@@ -112,6 +118,7 @@ export type Mutation = {
   addPOI: MutationResult;
   addTracker: MutationResult;
   backofficeCreateCompany: MutationResult;
+  backofficeCreateTracker: MutationResult;
   backofficeCreateUser: MutationResult;
   backofficeUpdateCompany: MutationResult;
   backofficeUpdateUser: MutationResult;
@@ -138,6 +145,11 @@ export type MutationAddTrackerArgs = {
 
 export type MutationBackofficeCreateCompanyArgs = {
   input: BackofficeCreateCompanyInput;
+};
+
+
+export type MutationBackofficeCreateTrackerArgs = {
+  input: BackofficeCreateTrackerInput;
 };
 
 
@@ -395,6 +407,13 @@ export type BackofficeCreateUserMutationVariables = Exact<{
 
 
 export type BackofficeCreateUserMutation = { __typename?: 'Mutation', backofficeCreateUser: { __typename?: 'MutationResult', success: boolean, message: string } };
+
+export type BackofficeCreateTrackerMutationVariables = Exact<{
+  input: BackofficeCreateTrackerInput;
+}>;
+
+
+export type BackofficeCreateTrackerMutation = { __typename?: 'Mutation', backofficeCreateTracker: { __typename?: 'MutationResult', success: boolean, message: string } };
 
 export type BackofficeUpdateUserMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -719,6 +738,40 @@ export function useBackofficeCreateUserMutation(baseOptions?: Apollo.MutationHoo
 export type BackofficeCreateUserMutationHookResult = ReturnType<typeof useBackofficeCreateUserMutation>;
 export type BackofficeCreateUserMutationResult = Apollo.MutationResult<BackofficeCreateUserMutation>;
 export type BackofficeCreateUserMutationOptions = Apollo.BaseMutationOptions<BackofficeCreateUserMutation, BackofficeCreateUserMutationVariables>;
+export const BackofficeCreateTrackerDocument = gql`
+    mutation BackofficeCreateTracker($input: BackofficeCreateTrackerInput!) {
+  backofficeCreateTracker(input: $input) {
+    success
+    message
+  }
+}
+    `;
+export type BackofficeCreateTrackerMutationFn = Apollo.MutationFunction<BackofficeCreateTrackerMutation, BackofficeCreateTrackerMutationVariables>;
+
+/**
+ * __useBackofficeCreateTrackerMutation__
+ *
+ * To run a mutation, you first call `useBackofficeCreateTrackerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeCreateTrackerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [backofficeCreateTrackerMutation, { data, loading, error }] = useBackofficeCreateTrackerMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useBackofficeCreateTrackerMutation(baseOptions?: Apollo.MutationHookOptions<BackofficeCreateTrackerMutation, BackofficeCreateTrackerMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BackofficeCreateTrackerMutation, BackofficeCreateTrackerMutationVariables>(BackofficeCreateTrackerDocument, options);
+      }
+export type BackofficeCreateTrackerMutationHookResult = ReturnType<typeof useBackofficeCreateTrackerMutation>;
+export type BackofficeCreateTrackerMutationResult = Apollo.MutationResult<BackofficeCreateTrackerMutation>;
+export type BackofficeCreateTrackerMutationOptions = Apollo.BaseMutationOptions<BackofficeCreateTrackerMutation, BackofficeCreateTrackerMutationVariables>;
 export const BackofficeUpdateUserDocument = gql`
     mutation BackofficeUpdateUser($id: ID!, $input: BackofficeUpdateUserInput!) {
   backofficeUpdateUser(id: $id, input: $input) {

@@ -1,4 +1,4 @@
-const { models: { Company, User }, mongoose } = require('track-data')
+const { models: { Company, User, Tracker }, mongoose } = require('track-data')
 
 module.exports = {
     async findUserById(id) {
@@ -50,5 +50,17 @@ module.exports = {
     async updateUserById(id, patch) {
         if (!mongoose.Types.ObjectId.isValid(id)) return null
         return User.findByIdAndUpdate(id, { $set: patch }, { new: true })
+    },
+
+    async findTrackerBySerial(serialNumber) {
+        return Tracker.findOne({ serialNumber })
+    },
+
+    async findTrackerByAlias(alias) {
+        return Tracker.findOne({ alias })
+    },
+
+    async createTracker(data) {
+        return Tracker.create(data)
     }
 }

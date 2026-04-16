@@ -141,6 +141,12 @@ input BackofficeUpdateUserInput {
   permissionKeys: [String!]
 }
 
+input BackofficeCreateTrackerInput {
+  serialNumber: String!
+  alias: String
+  companyId: ID!
+}
+
 input AddTrackerInput {
   serialNumber: String!
   alias: String
@@ -201,6 +207,7 @@ type Mutation {
     input: BackofficeUpdateCompanyInput!
   ): MutationResult!
   backofficeCreateUser(input: BackofficeCreateUserInput!): MutationResult!
+  backofficeCreateTracker(input: BackofficeCreateTrackerInput!): MutationResult!
   backofficeUpdateUser(
     id: ID!
     input: BackofficeUpdateUserInput!

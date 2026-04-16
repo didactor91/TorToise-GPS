@@ -27,6 +27,10 @@ function shortTimestamp() {
     return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}`
 }
 
+function generateFallbackAlias() {
+    return '#IS-' + (Math.floor(Math.random() * (9999 - 1000)) + 1000).toString() + '-FAKE'
+}
+
 async function buildUniqueCompanySlug(baseSlug) {
     const existing = await repo.findCompanyBySlug(baseSlug)
     if (!existing) return baseSlug
@@ -168,6 +172,39 @@ const backofficeService = {
             companyId,
             permissionsVersion: ACCESS_VERSION,
             permissionsPacked: encodePermissionKeys(resolvedPermissionKeys)
+        })
+    },
+
+    async createTracker(requesterId, { serialNumber, alias, companyId } = {}) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.update' })
+        validate.arguments([
+            { name: 'serialNumber', value: serialNumber, type: String, notEmpty: true },
+            { name: 'companyId', value: companyId, type: String, notEmpty: true }
+        ])
+
+        let resolvedAlias = alias
+        if (!resolvedAlias || (typeof resolvedAlias === 'string' && !resolvedAlias.trim())) {
+            resolvedAlias = generateFallbackAlias()
+        }
+        validate.arguments([
+            { name: 'alias', value: resolvedAlias, type: String, notEmpty: true }
+        ])
+
+        const company = await repo.findCompanyById(companyId)
+        if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
+
+        const serial = await repo.findTrackerBySerial(serialNumber)
+        if (serial) throw new LogicError(`Serial Number ${serialNumber} already registered`)
+
+        if (resolvedAlias[0] !== '#') {
+            const aliasTracker = await repo.findTrackerByAlias(resolvedAlias)
+            if (aliasTracker) throw new LogicError(`Alias ${resolvedAlias} already registered`)
+        }
+
+        return repo.createTracker({
+            companyId,
+            serialNumber,
+            alias: resolvedAlias
         })
     },
 
