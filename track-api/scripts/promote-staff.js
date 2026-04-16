@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-require('dotenv').config()
+require('../src/shared/load-env')()
 
 const { models: { User }, mongoose } = require('track-data')
 

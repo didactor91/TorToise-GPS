@@ -75,6 +75,15 @@ Created automatically on first run:
 | **Email** | `livedemo@example.com` |
 | **Password** | `LiveDemo` |
 
+## Environment Strategy
+
+- **Local dev (monorepo):** use root `.env` (template: `.env.dist`).
+- **track-api standalone:** use `track-api/.env` (template: `track-api/.env.dist`).
+- **Production deploy:** use `deploy/.env.prod` (template: `deploy/.env.prod.example`).
+- **Override for scripts/services:** set `ENV_FILE=/path/to/file` to force dotenv file.
+- **Important:** never commit real `.env` or `.env.prod` files.
+- **Sync helper (prod):** `./deploy/sync-prod-env.sh` links/copies `deploy/.env.prod` to service `.env` files.
+
 ### Backoffice (`/backoffice`)
 
 - Access is restricted to users with `role = staff`.
@@ -103,7 +112,12 @@ npm run migrate:api -- 20260411143000-add-company-index
 npm run migrate:api -- 20260410000000-backfill-user-language
 ```
 
-For this to work in production, make sure `MONGO_URL` points to your production database.
+If production vars are in `deploy/.env.prod`, run:
+
+```bash
+ENV_FILE=deploy/.env.prod npm run migrate:api:dry
+ENV_FILE=deploy/.env.prod npm run migrate:api
+```
 
 Current migration included:
 - `20260410000000-backfill-user-language`: sets `language = "en"` for users where language is missing/null/empty.
@@ -137,11 +151,10 @@ npm run db:report -w track-api
 
 ### Simulator track retention (MongoDB cleanup)
 
-`track-api` runs an automatic cleanup job that deletes old `Track` documents **only** for simulator serial numbers.
+`track-api` runs an automatic cleanup job that deletes **all** `Track` documents for simulator serial numbers.
 
-- Default retention: `60` days
-- Default interval: every `60` minutes
-- Default initial delay after API start: `2` minutes
+- First run: next local midnight (`00:00`)
+- Interval: every `24h`
 - Default simulator serials: `9900111001` to `9900111030` (30 serials)
 
 Environment variables (optional):
@@ -149,9 +162,6 @@ Environment variables (optional):
 | Variable | Default | Description |
 |---------|---------|-------------|
 | `SIM_TRACK_CLEANUP_ENABLED` | `true` | Set to `false` to disable the cleanup job |
-| `SIM_TRACK_RETENTION_DAYS` | `60` | Number of days to keep simulator tracks |
-| `SIM_TRACK_CLEANUP_INTERVAL_MINUTES` | `60` | How often cleanup runs |
-| `SIM_TRACK_CLEANUP_INITIAL_DELAY_MINUTES` | `2` | Delay before first cleanup after API start/deploy |
 | `SIM_TRACK_SERIALS` | built-in list | Comma-separated serials to clean (simulator-only) |
 
 ---
