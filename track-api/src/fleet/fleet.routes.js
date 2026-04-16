@@ -5,9 +5,9 @@ const service = require('./fleet.service')
 const router = express.Router()
 
 router.post('/trackers/add', auth, async (req, res) => {
-    const { userId, body: { serialNumber, licensePlate } } = req
+    const { userId, body: { serialNumber, alias } } = req
 
-    await service.addTracker(userId, { serialNumber, licensePlate })
+    await service.addTracker(userId, { serialNumber, alias })
     res.status(201).json({ message: 'Ok, Tracker added.' })
 })
 
@@ -32,17 +32,17 @@ router.get('/trackers/sn/:sn', auth, async (req, res) => {
     return res.json(tracker)
 })
 
-router.get('/trackers/lp/:lp', auth, async (req, res) => {
-    const { userId, params: { lp } } = req
+router.get('/trackers/alias/:alias', auth, async (req, res) => {
+    const { userId, params: { alias } } = req
 
-    const tracker = await service.retrieveTrackerByLicense(userId, lp)
+    const tracker = await service.retrieveTrackerByAlias(userId, alias)
     return res.json(tracker)
 })
 
 router.put('/trackers/:id/update', auth, async (req, res) => {
-    const { userId, params: { id }, body: { serialNumber, licensePlate } } = req
+    const { userId, params: { id }, body: { serialNumber, alias } } = req
 
-    await service.updateTracker(userId, id, { serialNumber, licensePlate })
+    await service.updateTracker(userId, id, { serialNumber, alias })
     res.status(201).json({ message: 'Ok, Tracker updated.' })
 })
 

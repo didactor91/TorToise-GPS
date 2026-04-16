@@ -1,5 +1,5 @@
 query LastTracks {
-  lastTracks { serialNumber latitude longitude speed status date licensePlate }
+  lastTracks { serialNumber latitude longitude speed status date alias }
 }
 query TrackRange($trackerId: ID!, $start: DateTime!, $end: DateTime!) {
   trackRange(trackerId: $trackerId, start: $start, end: $end) {
@@ -7,5 +7,5 @@ query TrackRange($trackerId: ID!, $start: DateTime!, $end: DateTime!) {
   }
 }
 subscription LiveTracksUpdated {
-  liveTracksUpdated { serialNumber latitude longitude speed status date licensePlate }
+  liveTracksUpdated { serialNumber latitude longitude speed status date alias }
 }

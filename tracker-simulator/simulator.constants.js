@@ -9,8 +9,8 @@ function buildSimulatorTrackers(total = TOTAL_TRUCKS) {
     return Array.from({ length: total }, (_, index) => {
         const number = index + 1
         const serialNumber = String(SERIAL_BASE + number)
-        const licensePlate = `SIM-${String(number).padStart(4, '0')}`
-        return { serialNumber, licensePlate }
+        const alias = `SIM-${String(number).padStart(4, '0')}`
+        return { serialNumber, alias }
     })
 }
 

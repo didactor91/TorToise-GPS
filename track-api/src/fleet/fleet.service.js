@@ -13,12 +13,15 @@ const fleetService = {
     addTracker(id, trackerData) {
         if (!trackerData) throw new InputError('incorrect tracker info')
 
-        let { serialNumber, licensePlate = '#IS-' + (Math.floor(Math.random() * (9999 - 1000)) + 1000).toString() + '-FAKE' } = trackerData
+        let { serialNumber, alias } = trackerData
+        if (!alias || (typeof alias === 'string' && !alias.trim())) {
+            alias = '#IS-' + (Math.floor(Math.random() * (9999 - 1000)) + 1000).toString() + '-FAKE'
+        }
 
         validate.arguments([
             { name: 'id', value: id, type: String, notEmpty: true },
             { name: 'serialNumber', value: serialNumber, type: String, notEmpty: true },
-            { name: 'licensePlate', value: licensePlate, type: String, notEmpty: true, optional: true }
+            { name: 'alias', value: alias, type: String, notEmpty: true, optional: true }
         ])
 
         return (async () => {
@@ -28,14 +31,14 @@ const fleetService = {
             await repo.syncLegacyTrackers(companyId, user.trackers || [])
 
             let plate = 0
-            if (licensePlate[0] !== '#') plate = await repo.findTrackerByLicensePlate(licensePlate)
-            if (plate) throw new LogicError(`License Plate ${licensePlate} already registered`)
+            if (alias[0] !== '#') plate = await repo.findTrackerByAlias(alias)
+            if (plate) throw new LogicError(`Alias ${alias} already registered`)
 
             const serial = await repo.findTrackerBySerial(serialNumber)
             if (serial) throw new LogicError(`Serial Number ${serialNumber} already registered`)
 
-            await repo.createTracker({ companyId, serialNumber, licensePlate })
-            user.trackers.push({ serialNumber, licensePlate })
+            await repo.createTracker({ companyId, serialNumber, alias })
+            user.trackers.push({ serialNumber, alias })
             await repo.saveUser(user)
         })()
     },
@@ -108,10 +111,10 @@ const fleetService = {
         })()
     },
 
-    retrieveTrackerByLicense(id, licensePlate) {
+    retrieveTrackerByAlias(id, alias) {
         validate.arguments([
             { name: 'id', value: id, type: String, notEmpty: true },
-            { name: 'licensePlate', value: licensePlate, type: String, notEmpty: true }
+            { name: 'alias', value: alias, type: String, notEmpty: true }
         ])
 
         return (async () => {
@@ -120,8 +123,8 @@ const fleetService = {
             const companyId = await ensureUserCompany(user)
             await repo.syncLegacyTrackers(companyId, user.trackers || [])
 
-            const tracker = await repo.findTrackerByLPAndCompany(licensePlate, companyId)
-            if (!tracker) throw new LogicError(`Tracker with License Plate ${licensePlate} doesn't exists`)
+            const tracker = await repo.findTrackerByAliasAndCompany(alias, companyId)
+            if (!tracker) throw new LogicError(`Tracker with alias ${alias} doesn't exists`)
             return tracker
         })()
     },
@@ -148,10 +151,10 @@ const fleetService = {
             }
             if (!tracker) throw new LogicError(`Tracker with id ${trackerID} doesn't exists`)
 
-            if (trackerData.licensePlate && trackerData.licensePlate[0] !== '#') {
-                const plate = await repo.findTrackerByLicensePlate(trackerData.licensePlate)
+            if (trackerData.alias && trackerData.alias[0] !== '#') {
+                const plate = await repo.findTrackerByAlias(trackerData.alias)
                 if (plate && plate._id.toString() !== trackerID) {
-                    throw new LogicError(`License Plate ${trackerData.licensePlate} already registered`)
+                    throw new LogicError(`Alias ${trackerData.alias} already registered`)
                 }
             }
 
@@ -164,13 +167,13 @@ const fleetService = {
 
             await repo.updateTrackerByIdAndCompany(tracker._id, companyId, {
                 serialNumber: trackerData.serialNumber || tracker.serialNumber,
-                licensePlate: trackerData.licensePlate || tracker.licensePlate
+                alias: trackerData.alias || tracker.alias
             })
 
             const legacy = user.trackers.id(trackerID) || user.trackers.find(item => item.serialNumber === tracker.serialNumber)
             if (legacy) {
                 legacy.serialNumber = trackerData.serialNumber || legacy.serialNumber
-                legacy.licensePlate = trackerData.licensePlate || legacy.licensePlate
+                legacy.alias = trackerData.alias || legacy.alias
                 await repo.saveUser(user)
             }
         })()

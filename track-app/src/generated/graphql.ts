@@ -31,7 +31,7 @@ export type AddPoiInput = {
 };
 
 export type AddTrackerInput = {
-  licensePlate?: InputMaybe<Scalars['String']['input']>;
+  alias?: InputMaybe<Scalars['String']['input']>;
   serialNumber: Scalars['String']['input'];
 };
 
@@ -45,6 +45,12 @@ export type BackofficeCreateCompanyInput = {
   featureKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   name: Scalars['String']['input'];
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type BackofficeCreateTrackerInput = {
+  alias?: InputMaybe<Scalars['String']['input']>;
+  companyId: Scalars['ID']['input'];
+  serialNumber: Scalars['String']['input'];
 };
 
 export type BackofficeCreateUserInput = {
@@ -98,9 +104,9 @@ export type Company = {
 
 export type LiveTrack = {
   __typename?: 'LiveTrack';
+  alias?: Maybe<Scalars['String']['output']>;
   date: Scalars['DateTime']['output'];
   latitude: Scalars['Float']['output'];
-  licensePlate?: Maybe<Scalars['String']['output']>;
   longitude: Scalars['Float']['output'];
   serialNumber: Scalars['String']['output'];
   speed: Scalars['Float']['output'];
@@ -112,6 +118,7 @@ export type Mutation = {
   addPOI: MutationResult;
   addTracker: MutationResult;
   backofficeCreateCompany: MutationResult;
+  backofficeCreateTracker: MutationResult;
   backofficeCreateUser: MutationResult;
   backofficeUpdateCompany: MutationResult;
   backofficeUpdateUser: MutationResult;
@@ -138,6 +145,11 @@ export type MutationAddTrackerArgs = {
 
 export type MutationBackofficeCreateCompanyArgs = {
   input: BackofficeCreateCompanyInput;
+};
+
+
+export type MutationBackofficeCreateTrackerArgs = {
+  input: BackofficeCreateTrackerInput;
 };
 
 
@@ -239,7 +251,7 @@ export type Query = {
   pois: PagedPoIs;
   trackRange: Array<Track>;
   tracker: Tracker;
-  trackerByLP: Tracker;
+  trackerByAlias: Tracker;
   trackerBySN: Tracker;
   trackers: PagedTrackers;
 };
@@ -280,8 +292,8 @@ export type QueryTrackerArgs = {
 };
 
 
-export type QueryTrackerByLpArgs = {
-  licensePlate: Scalars['String']['input'];
+export type QueryTrackerByAliasArgs = {
+  alias: Scalars['String']['input'];
 };
 
 
@@ -321,8 +333,8 @@ export type Track = {
 
 export type Tracker = {
   __typename?: 'Tracker';
+  alias?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  licensePlate?: Maybe<Scalars['String']['output']>;
   serialNumber: Scalars['String']['output'];
 };
 
@@ -334,7 +346,7 @@ export type UpdatePoiInput = {
 };
 
 export type UpdateTrackerInput = {
-  licensePlate?: InputMaybe<Scalars['String']['input']>;
+  alias?: InputMaybe<Scalars['String']['input']>;
   serialNumber?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -396,6 +408,13 @@ export type BackofficeCreateUserMutationVariables = Exact<{
 
 export type BackofficeCreateUserMutation = { __typename?: 'Mutation', backofficeCreateUser: { __typename?: 'MutationResult', success: boolean, message: string } };
 
+export type BackofficeCreateTrackerMutationVariables = Exact<{
+  input: BackofficeCreateTrackerInput;
+}>;
+
+
+export type BackofficeCreateTrackerMutation = { __typename?: 'Mutation', backofficeCreateTracker: { __typename?: 'MutationResult', success: boolean, message: string } };
+
 export type BackofficeUpdateUserMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   input: BackofficeUpdateUserInput;
@@ -410,14 +429,14 @@ export type GetTrackersQueryVariables = Exact<{
 }>;
 
 
-export type GetTrackersQuery = { __typename?: 'Query', trackers: { __typename?: 'PagedTrackers', totalCount: number, items: Array<{ __typename?: 'Tracker', id: string, serialNumber: string, licensePlate?: string | null }> } };
+export type GetTrackersQuery = { __typename?: 'Query', trackers: { __typename?: 'PagedTrackers', totalCount: number, items: Array<{ __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null }> } };
 
 export type TrackerBySnQueryVariables = Exact<{
   serialNumber: Scalars['String']['input'];
 }>;
 
 
-export type TrackerBySnQuery = { __typename?: 'Query', trackerBySN: { __typename?: 'Tracker', id: string, serialNumber: string, licensePlate?: string | null } };
+export type TrackerBySnQuery = { __typename?: 'Query', trackerBySN: { __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null } };
 
 export type AddTrackerMutationVariables = Exact<{
   input: AddTrackerInput;
@@ -498,7 +517,7 @@ export type DeletePoiMutation = { __typename?: 'Mutation', deletePOI: { __typena
 export type LastTracksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LastTracksQuery = { __typename?: 'Query', lastTracks: Array<{ __typename?: 'LiveTrack', serialNumber: string, latitude: number, longitude: number, speed: number, status: string, date: any, licensePlate?: string | null }> };
+export type LastTracksQuery = { __typename?: 'Query', lastTracks: Array<{ __typename?: 'LiveTrack', serialNumber: string, latitude: number, longitude: number, speed: number, status: string, date: any, alias?: string | null }> };
 
 export type TrackRangeQueryVariables = Exact<{
   trackerId: Scalars['ID']['input'];
@@ -512,7 +531,7 @@ export type TrackRangeQuery = { __typename?: 'Query', trackRange: Array<{ __type
 export type LiveTracksUpdatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LiveTracksUpdatedSubscription = { __typename?: 'Subscription', liveTracksUpdated: Array<{ __typename?: 'LiveTrack', serialNumber: string, latitude: number, longitude: number, speed: number, status: string, date: any, licensePlate?: string | null }> };
+export type LiveTracksUpdatedSubscription = { __typename?: 'Subscription', liveTracksUpdated: Array<{ __typename?: 'LiveTrack', serialNumber: string, latitude: number, longitude: number, speed: number, status: string, date: any, alias?: string | null }> };
 
 
 export const BackofficeCompaniesDocument = gql`
@@ -719,6 +738,40 @@ export function useBackofficeCreateUserMutation(baseOptions?: Apollo.MutationHoo
 export type BackofficeCreateUserMutationHookResult = ReturnType<typeof useBackofficeCreateUserMutation>;
 export type BackofficeCreateUserMutationResult = Apollo.MutationResult<BackofficeCreateUserMutation>;
 export type BackofficeCreateUserMutationOptions = Apollo.BaseMutationOptions<BackofficeCreateUserMutation, BackofficeCreateUserMutationVariables>;
+export const BackofficeCreateTrackerDocument = gql`
+    mutation BackofficeCreateTracker($input: BackofficeCreateTrackerInput!) {
+  backofficeCreateTracker(input: $input) {
+    success
+    message
+  }
+}
+    `;
+export type BackofficeCreateTrackerMutationFn = Apollo.MutationFunction<BackofficeCreateTrackerMutation, BackofficeCreateTrackerMutationVariables>;
+
+/**
+ * __useBackofficeCreateTrackerMutation__
+ *
+ * To run a mutation, you first call `useBackofficeCreateTrackerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeCreateTrackerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [backofficeCreateTrackerMutation, { data, loading, error }] = useBackofficeCreateTrackerMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useBackofficeCreateTrackerMutation(baseOptions?: Apollo.MutationHookOptions<BackofficeCreateTrackerMutation, BackofficeCreateTrackerMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BackofficeCreateTrackerMutation, BackofficeCreateTrackerMutationVariables>(BackofficeCreateTrackerDocument, options);
+      }
+export type BackofficeCreateTrackerMutationHookResult = ReturnType<typeof useBackofficeCreateTrackerMutation>;
+export type BackofficeCreateTrackerMutationResult = Apollo.MutationResult<BackofficeCreateTrackerMutation>;
+export type BackofficeCreateTrackerMutationOptions = Apollo.BaseMutationOptions<BackofficeCreateTrackerMutation, BackofficeCreateTrackerMutationVariables>;
 export const BackofficeUpdateUserDocument = gql`
     mutation BackofficeUpdateUser($id: ID!, $input: BackofficeUpdateUserInput!) {
   backofficeUpdateUser(id: $id, input: $input) {
@@ -761,7 +814,7 @@ export const GetTrackersDocument = gql`
     items {
       id
       serialNumber
-      licensePlate
+      alias
     }
   }
 }
@@ -808,7 +861,7 @@ export const TrackerBySnDocument = gql`
   trackerBySN(serialNumber: $serialNumber) {
     id
     serialNumber
-    licensePlate
+    alias
   }
 }
     `;
@@ -1264,7 +1317,7 @@ export const LastTracksDocument = gql`
     speed
     status
     date
-    licensePlate
+    alias
   }
 }
     `;
@@ -1363,7 +1416,7 @@ export const LiveTracksUpdatedDocument = gql`
     speed
     status
     date
-    licensePlate
+    alias
   }
 }
     `;

@@ -22,9 +22,9 @@ const trackingResolver = {
           latitude: t.latitude,
           longitude: t.longitude,
           speed: t.speed,
-          status: t.status,
+          status: toApiStatus(t.status),
           date: t.date,
-          licensePlate: t.licensePlate || null
+          alias: t.alias || null
         }))
       } catch (err) {
         throw toGraphQLError(err)
@@ -48,7 +48,7 @@ const trackingResolver = {
           latitude: track.latitude,
           longitude: track.longitude,
           speed: track.speed,
-          status: track.status,
+          status: toApiStatus(track.status),
           date: track.date
         }
       } catch (err) {
@@ -77,7 +77,7 @@ const trackingResolver = {
           latitude: t.latitude,
           longitude: t.longitude,
           speed: t.speed,
-          status: t.status,
+          status: toApiStatus(t.status),
           date: t.date
         }))
       } catch (err) {
@@ -104,3 +104,8 @@ const trackingResolver = {
 }
 
 module.exports = trackingResolver
+
+function toApiStatus(value) {
+  if (value === 0 || value === '0' || value === 'OFF') return 'OFF'
+  return 'ON'
+}

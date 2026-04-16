@@ -23,7 +23,7 @@ const fleetResolver = {
           items: rows.map(t => ({
             id: t._id.toString(),
             serialNumber: t.serialNumber,
-            licensePlate: t.licensePlate || null
+            alias: t.alias || null
           })),
           totalCount: Number(totalCount || 0)
         }
@@ -42,7 +42,7 @@ const fleetResolver = {
       try {
         await requireAccess(userId, { feature: 'fleet', permission: 'fleet.read' })
         const t = await service.retrieveTracker(userId, id)
-        return { id: t._id.toString(), serialNumber: t.serialNumber, licensePlate: t.licensePlate || null }
+        return { id: t._id.toString(), serialNumber: t.serialNumber, alias: t.alias || null }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }
@@ -58,7 +58,7 @@ const fleetResolver = {
       try {
         await requireAccess(userId, { feature: 'fleet', permission: 'fleet.read' })
         const t = await service.retrieveTrackerBySN(userId, serialNumber)
-        return { id: t._id.toString(), serialNumber: t.serialNumber, licensePlate: t.licensePlate || null }
+        return { id: t._id.toString(), serialNumber: t.serialNumber, alias: t.alias || null }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }
@@ -66,15 +66,15 @@ const fleetResolver = {
 
     /**
      * @param {unknown} _
-     * @param {{ licensePlate: string }} args
+     * @param {{ alias: string }} args
      * @param {{ userId: string|null }} ctx
      */
-    async trackerByLP(_, { licensePlate }, ctx) {
+    async trackerByAlias(_, { alias }, ctx) {
       const userId = requireAuth(ctx)
       try {
         await requireAccess(userId, { feature: 'fleet', permission: 'fleet.read' })
-        const t = await service.retrieveTrackerByLicense(userId, licensePlate)
-        return { id: t._id.toString(), serialNumber: t.serialNumber, licensePlate: t.licensePlate || null }
+        const t = await service.retrieveTrackerByAlias(userId, alias)
+        return { id: t._id.toString(), serialNumber: t.serialNumber, alias: t.alias || null }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }
@@ -84,7 +84,7 @@ const fleetResolver = {
   Mutation: {
     /**
      * @param {unknown} _
-     * @param {{ input: { serialNumber: string, licensePlate?: string } }} args
+     * @param {{ input: { serialNumber: string, alias?: string } }} args
      * @param {{ userId: string|null }} ctx
      */
     async addTracker(_, { input }, ctx) {
@@ -100,7 +100,7 @@ const fleetResolver = {
 
     /**
      * @param {unknown} _
-     * @param {{ id: string, input: { serialNumber?: string, licensePlate?: string } }} args
+     * @param {{ id: string, input: { serialNumber?: string, alias?: string } }} args
      * @param {{ userId: string|null }} ctx
      */
     async updateTracker(_, { id, input }, ctx) {

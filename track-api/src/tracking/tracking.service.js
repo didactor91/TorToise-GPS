@@ -21,6 +21,8 @@ const trackingService = {
         if (typeof trackData.status === 'undefined') trackData.status = 'ON'
 
         let { serialNumber, latitude, longitude, speed, status, date } = trackData
+        status = normalizeIncomingStatus(status)
+        ;({ latitude, longitude, speed } = compactTelemetry({ latitude, longitude, speed }))
 
         validate.arguments([
             { name: 'id', value: userId, type: String, notEmpty: true },
@@ -28,7 +30,7 @@ const trackingService = {
             { name: 'latitude', value: latitude, type: Number, notEmpty: true },
             { name: 'longitude', value: longitude, type: Number, notEmpty: true },
             { name: 'speed', value: speed, type: Number, notEmpty: true, optional: true },
-            { name: 'status', value: status, type: String, notEmpty: true, optional: true },
+            { name: 'status', value: status, type: Number, notEmpty: true, optional: true },
             { name: 'date', value: date, type: String, notEmpty: true, optional: true }
         ])
         validateTelemetry({ latitude, longitude, speed, status })
@@ -55,13 +57,15 @@ const trackingService = {
         if (typeof trackData.status === 'undefined') trackData.status = 'ON'
 
         let { serialNumber, latitude, longitude, speed, status, date } = trackData
+        status = normalizeIncomingStatus(status)
+        ;({ latitude, longitude, speed } = compactTelemetry({ latitude, longitude, speed }))
 
         validate.arguments([
             { name: 'serialNumber', value: serialNumber, type: String, notEmpty: true },
             { name: 'latitude', value: latitude, type: Number, notEmpty: true },
             { name: 'longitude', value: longitude, type: Number, notEmpty: true },
             { name: 'speed', value: speed, type: Number, notEmpty: true, optional: true },
-            { name: 'status', value: status, type: String, notEmpty: true, optional: true },
+            { name: 'status', value: status, type: Number, notEmpty: true, optional: true },
             { name: 'date', value: date, type: String, notEmpty: true, optional: true }
         ])
         validateTelemetry({ latitude, longitude, speed, status })
@@ -90,9 +94,9 @@ const trackingService = {
                     latitude,
                     longitude,
                     speed,
-                    status,
+                    status: denormalizeStoredStatus(status),
                     date: new Date().toISOString(),
-                    licensePlate: tracker.licensePlate || null
+                    alias: tracker.alias || null
                 }]
             })
 
@@ -119,7 +123,8 @@ const trackingService = {
             }
             if (!tracker) throw new LogicError(`Tracker with id ${trackerID} doesn't exists`)
 
-            return repo.findLastBySerial(tracker.serialNumber)
+            const lastTrack = await repo.findLastBySerial(tracker.serialNumber)
+            return mapTrackStatusToApi(lastTrack)
         })()
     },
 
@@ -142,12 +147,13 @@ const trackingService = {
             const serialNumbers = companyTrackers.map(t => t.serialNumber)
             const lastBySerial = await repo.findLastBySerials(serialNumbers)
 
-            // Build a lookup map: serialNumber → licensePlate
-            const lpMap = new Map(companyTrackers.map(t => [t.serialNumber, t.licensePlate]))
+            // Build a lookup map: serialNumber → alias
+            const aliasMap = new Map(companyTrackers.map(t => [t.serialNumber, t.alias]))
 
             return [...lastBySerial.entries()].map(([sn, track]) => ({
                 ...track,
-                licensePlate: lpMap.get(sn) || null
+                status: denormalizeStoredStatus(track.status),
+                alias: aliasMap.get(sn) || null
             }))
         })()
     },
@@ -182,7 +188,7 @@ const trackingService = {
                 throw new LogicError(`Tracker without tracks between ${startTime.toISOString()} and ${endTime.toISOString()}`)
             }
 
-            return rangeTracks
+            return rangeTracks.map(mapTrackStatusToApi)
         })()
     }
 }
@@ -200,9 +206,40 @@ function validateTelemetry({ latitude, longitude, speed, status }) {
         throw new InputError('speed out of range')
     }
 
-    if (!['ON', 'OFF'].includes(status)) {
+    if (status !== 0 && status !== 1) {
         throw new InputError('invalid status')
     }
+}
+
+function roundTo(value, decimals) {
+    const factor = 10 ** decimals
+    return Math.round(value * factor) / factor
+}
+
+function compactTelemetry({ latitude, longitude, speed }) {
+    return {
+        latitude: roundTo(latitude, 5),
+        longitude: roundTo(longitude, 5),
+        speed: roundTo(speed, 1)
+    }
+}
+
+function normalizeIncomingStatus(status) {
+    if (status === 1 || status === '1' || status === true) return 1
+    if (status === 0 || status === '0' || status === false) return 0
+    const normalized = String(status || '').trim().toUpperCase()
+    if (normalized === 'ON') return 1
+    if (normalized === 'OFF') return 0
+    throw new InputError('invalid status')
+}
+
+function denormalizeStoredStatus(status) {
+    return status === 0 || status === '0' ? 'OFF' : 'ON'
+}
+
+function mapTrackStatusToApi(track) {
+    if (!track) return track
+    return { ...track, status: denormalizeStoredStatus(track.status) }
 }
 
 module.exports = trackingService

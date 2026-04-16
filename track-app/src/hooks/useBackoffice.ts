@@ -5,6 +5,7 @@ import {
     BackofficeUsersDocument,
     useBackofficeCompaniesQuery,
     useBackofficeCreateCompanyMutation,
+    useBackofficeCreateTrackerMutation,
     useBackofficeCreateUserMutation,
     useBackofficeUpdateCompanyMutation,
     useBackofficeUpdateUserMutation,
@@ -58,6 +59,11 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
     const [createUserMutation] = useBackofficeCreateUserMutation({
         onError: (err) => toast.error(err.message),
         refetchQueries: [{ query: BackofficeUsersDocument }]
+    })
+
+    const [createTrackerMutation] = useBackofficeCreateTrackerMutation({
+        onError: (err) => toast.error(err.message),
+        refetchQueries: [{ query: BackofficeCompaniesDocument }]
     })
 
     const [updateUserMutation] = useBackofficeUpdateUserMutation({
@@ -114,6 +120,15 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
         if (res.data?.backofficeCreateUser.success) toast.success(res.data.backofficeCreateUser.message)
     }
 
+    const createTracker = async (input: {
+        serialNumber: string
+        alias?: string
+        companyId: string
+    }) => {
+        const res = await createTrackerMutation({ variables: { input } })
+        if (res.data?.backofficeCreateTracker.success) toast.success(res.data.backofficeCreateTracker.message)
+    }
+
     const updateUser = async (id: string, input: {
         name?: string
         surname?: string
@@ -135,6 +150,7 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
         createCompany,
         updateCompany,
         createUser,
+        createTracker,
         updateUser
     }
 }

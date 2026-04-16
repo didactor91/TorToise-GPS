@@ -13,8 +13,8 @@ function TrackingsNew() {
     e.preventDefault()
     const form = e.currentTarget
     const serialNumber = (form.elements.namedItem('serialNumber') as HTMLInputElement).value
-    const licensePlate = (form.elements.namedItem('licensePlate') as HTMLInputElement).value
-    addTracker({ serialNumber, licensePlate: licensePlate || null })
+    const alias = (form.elements.namedItem('alias') as HTMLInputElement).value
+    addTracker({ serialNumber, alias: alias || null })
     form.reset()
   }
 
@@ -38,7 +38,7 @@ function TrackingsNew() {
           <input
             className={inputClass}
             type="text"
-            name="licensePlate"
+            name="alias"
             placeholder={t('ui.alias')}
           />
         </div>

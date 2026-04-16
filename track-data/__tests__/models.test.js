@@ -9,7 +9,7 @@ describe('Track model (standalone collection)', () => {
             latitude: 41.390205,
             longitude: 2.154007,
             speed: 90,
-            status: 'ON'
+            status: 1
         })
         const saved = await track.save()
         expect(saved._id).toBeDefined()
@@ -17,7 +17,7 @@ describe('Track model (standalone collection)', () => {
         expect(saved.latitude).toBe(41.390205)
         expect(saved.longitude).toBe(2.154007)
         expect(saved.speed).toBe(90)
-        expect(saved.status).toBe('ON')
+        expect(saved.status).toBe(1)
         expect(saved.date).toBeInstanceOf(Date)
     })
 
@@ -88,12 +88,12 @@ describe('User model', () => {
             surname: 'User',
             email: 'tracker-test@example.com',
             password: 'hashed',
-            trackers: [{ serialNumber: '9900220022', licensePlate: 'ABC-1234' }]
+            trackers: [{ serialNumber: '9900220022', alias: 'ABC-1234' }]
         })
         const saved = await user.save()
         expect(saved.trackers).toHaveLength(1)
         expect(saved.trackers[0].serialNumber).toBe('9900220022')
-        expect(saved.trackers[0].licensePlate).toBe('ABC-1234')
+        expect(saved.trackers[0].alias).toBe('ABC-1234')
         expect(saved.trackers[0].tracks).toBeUndefined()
     })
 })

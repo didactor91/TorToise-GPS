@@ -3,6 +3,11 @@ services:
     image: mongo:7
     container_name: tortoise-mongo
     restart: unless-stopped
+    command:
+      - "mongod"
+      - "--wiredTigerCollectionBlockCompressor=zstd"
+      - "--wiredTigerJournalCompressor=zstd"
+      - "--wiredTigerIndexPrefixCompression=1"
     volumes:
       - mongo-data:/data/db
     # No port exposed publicly — only accessible internally

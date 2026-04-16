@@ -10,8 +10,8 @@ module.exports = {
         return Tracker.findOne({ serialNumber })
     },
 
-    async findTrackerByLicensePlate(licensePlate) {
-        return Tracker.findOne({ licensePlate })
+    async findTrackerByAlias(alias) {
+        return Tracker.findOne({ alias })
     },
 
     async findTrackersByCompany(companyId, { offset = 0, limit } = {}) {
@@ -33,8 +33,8 @@ module.exports = {
         return Tracker.findOne({ serialNumber, companyId }).lean()
     },
 
-    async findTrackerByLPAndCompany(licensePlate, companyId) {
-        return Tracker.findOne({ licensePlate, companyId }).lean()
+    async findTrackerByAliasAndCompany(alias, companyId) {
+        return Tracker.findOne({ alias, companyId }).lean()
     },
 
     async createTracker(data) {
@@ -59,7 +59,7 @@ module.exports = {
             await Tracker.create({
                 companyId,
                 serialNumber: tracker.serialNumber,
-                licensePlate: tracker.licensePlate || `#MIG-${tracker.serialNumber}`
+                alias: tracker.alias || `#MIG-${tracker.serialNumber}`
             })
         }
     },

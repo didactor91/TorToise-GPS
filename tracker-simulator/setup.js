@@ -128,7 +128,7 @@ async function main() {
 
     // ── 4. Assign each simulator tracker ─────────────────────────────────────
     for (const tracker of SIM_TRACKERS) {
-        const { serialNumber, licensePlate } = tracker
+        const { serialNumber, alias } = tracker
 
         if (!DEMO_SERIALS.has(serialNumber)) {
             log('⛔', `Refusing to assign non-demo serial ${serialNumber}`)
@@ -148,9 +148,9 @@ async function main() {
             await api('/trackers/add', {
                 method: 'POST',
                 token,
-                data: { serialNumber, licensePlate }
+                data: { serialNumber, alias }
             })
-            log('✅', `SN ${serialNumber} (${licensePlate}) added to livedemo`)
+            log('✅', `SN ${serialNumber} (${alias}) added to livedemo`)
         } catch (err) {
             if (err.status === 409) {
                 log('⚠️ ', `SN ${serialNumber} is already registered to another account — skipped`)
@@ -170,7 +170,7 @@ async function main() {
 
     log('🏁', `Setup complete. livedemo has ${finalTrackers.length} tracker(s):`)
     finalTrackers.forEach(t => {
-        log('   🚚', `SN: ${t.serialNumber}  LP: ${t.licensePlate}`)
+        log('   🚚', `SN: ${t.serialNumber}  Alias: ${t.alias}`)
     })
 }
 

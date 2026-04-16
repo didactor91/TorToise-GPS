@@ -108,7 +108,7 @@ const ROUTES = TRUCK_ASSIGNMENTS.map(truck => {
 
     return {
         serialNumber: truck.serialNumber,
-        licensePlate: truck.licensePlate,
+        alias: truck.alias,
         routeName: route.name,
         startsInbound: truck.startsInbound,
         restStopIndexes: buildRestStopIndexes(route.waypoints.length),

@@ -68,6 +68,10 @@ function App() {
     meData?.me?.featureKeys?.includes('backoffice') &&
     meData?.me?.permissionKeys?.includes('users.update')
   )
+  const canCreateTrackers = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('fleet.create')
+  )
   const canAccessBackoffice = Boolean(
     meData?.me?.featureKeys?.includes('backoffice') &&
     (meData?.me?.permissionKeys?.includes('companies.read') || meData?.me?.permissionKeys?.includes('users.read'))
@@ -156,6 +160,7 @@ function App() {
               canReadUsers={canReadUsers}
               canCreateUsers={canCreateUsers}
               canUpdateUsers={canUpdateUsers}
+              canCreateTrackers={canCreateTrackers}
             />
           )}
         />

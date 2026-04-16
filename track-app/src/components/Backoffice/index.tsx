@@ -15,6 +15,7 @@ interface BackofficeProps {
   canReadUsers?: boolean
   canCreateUsers?: boolean
   canUpdateUsers?: boolean
+  canCreateTrackers?: boolean
 }
 
 type BackofficeTab = 'companies' | 'users'
@@ -22,7 +23,8 @@ type BackofficeTab = 'companies' | 'users'
 function Backoffice({
   canReadUsers = true,
   canCreateUsers = true,
-  canUpdateUsers = true
+  canUpdateUsers = true,
+  canCreateTrackers = true
 }: BackofficeProps) {
   const { t } = useTranslation()
   const labelClass = 'mb-2 block text-sm font-semibold'
@@ -31,7 +33,7 @@ function Backoffice({
   const checkboxClass = 'mr-4 inline-flex items-center gap-2 text-sm text-[var(--text-primary)]'
 
   const [usersPage, setUsersPage] = useState(1)
-  const { companies, users, usersTotalCount, loading, createCompany, createUser, updateCompany, updateUser } = useBackoffice(usersPage, 20, canReadUsers)
+  const { companies, users, usersTotalCount, loading, createCompany, createUser, createTracker, updateCompany, updateUser } = useBackoffice(usersPage, 20, canReadUsers)
   const canSeeUsersTab = canReadUsers || canCreateUsers || canUpdateUsers
   const [activeTab, setActiveTab] = useState<BackofficeTab>('companies')
   const [companyForm, setCompanyForm] = useState({
@@ -48,6 +50,11 @@ function Backoffice({
     role: 'admin',
     companyId: '',
     permissionKeys: permissionTemplateForRole('admin')
+  })
+  const [trackerForm, setTrackerForm] = useState({
+    serialNumber: '',
+    alias: '',
+    companyId: ''
   })
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
   const [selectedUserId, setSelectedUserId] = useState<string>('')
@@ -119,6 +126,20 @@ function Backoffice({
       role: 'admin',
       companyId: '',
       permissionKeys: permissionTemplateForRole('admin')
+    })
+  }
+
+  const onCreateTracker = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await createTracker({
+      serialNumber: trackerForm.serialNumber,
+      alias: trackerForm.alias || undefined,
+      companyId: trackerForm.companyId
+    })
+    setTrackerForm({
+      serialNumber: '',
+      alias: '',
+      companyId: ''
     })
   }
 
@@ -253,6 +274,49 @@ function Backoffice({
           <button className={primaryButtonClass} type="submit">{t('backoffice.createCompany')}</button>
         </form>
       </section>
+
+      {canCreateTrackers && (
+      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createTracker')}</h3>
+        <form onSubmit={onCreateTracker}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClass}>{t('trackers.serialNumber')}</label>
+              <input
+                className={inputClass}
+                value={trackerForm.serialNumber}
+                onChange={(e) => setTrackerForm(prev => ({ ...prev, serialNumber: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
+              <label className={labelClass}>{t('ui.alias')}</label>
+              <input
+                className={inputClass}
+                value={trackerForm.alias}
+                onChange={(e) => setTrackerForm(prev => ({ ...prev, alias: e.target.value }))}
+                placeholder={t('ui.optional')}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelClass}>{t('backoffice.company')}</label>
+              <select
+                className={inputClass}
+                value={trackerForm.companyId}
+                onChange={(e) => setTrackerForm(prev => ({ ...prev, companyId: e.target.value }))}
+                required
+              >
+                <option value="">{t('backoffice.selectCompany')}</option>
+                {companyOptions.map((company) => (
+                  <option key={company.id} value={company.id}>{company.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <button className={primaryButtonClass} type="submit">{t('backoffice.createTracker')}</button>
+        </form>
+      </section>
+      )}
 
       <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
         <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.companies')}</h3>

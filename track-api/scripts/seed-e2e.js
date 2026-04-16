@@ -77,7 +77,7 @@ async function main() {
             $set: {
                 companyId: company._id,
                 serialNumber: trackerSerial,
-                licensePlate: trackerAlias
+                alias: trackerAlias
             }
         },
         { upsert: true }
@@ -103,7 +103,7 @@ async function main() {
         latitude: 41.3874,
         longitude: 2.1686,
         speed: 38,
-        status: 'ON',
+        status: 1,
         date: new Date()
     })
 

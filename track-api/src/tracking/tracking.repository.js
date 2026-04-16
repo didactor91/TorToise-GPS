@@ -20,8 +20,8 @@ module.exports = {
     async findLastBySerials(serialNumbers) {
         const docs = await Track.aggregate([
             { $match: { serialNumber: { $in: serialNumbers } } },
-            { $sort: { serialNumber: 1, date: -1 } },
-            { $group: { _id: '$serialNumber', doc: { $first: '$$ROOT' } } }
+            { $sort: { serialNumber: 1, date: 1 } },
+            { $group: { _id: '$serialNumber', doc: { $last: '$$ROOT' } } }
         ])
         const map = new Map()
         docs.forEach(({ _id, doc }) => map.set(_id, doc))
@@ -57,7 +57,7 @@ module.exports = {
             await Tracker.create({
                 companyId,
                 serialNumber: tracker.serialNumber,
-                licensePlate: tracker.licensePlate || `#MIG-${tracker.serialNumber}`
+                alias: tracker.alias || `#MIG-${tracker.serialNumber}`
             })
         }
     },
@@ -66,6 +66,14 @@ module.exports = {
         const result = await Track.deleteMany({
             serialNumber: { $in: serialNumbers },
             date: { $lt: cutoffDate }
+        })
+
+        return result.deletedCount || 0
+    },
+
+    async deleteBySerials(serialNumbers) {
+        const result = await Track.deleteMany({
+            serialNumber: { $in: serialNumbers }
         })
 
         return result.deletedCount || 0
