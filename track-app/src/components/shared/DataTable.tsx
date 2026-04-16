@@ -11,6 +11,7 @@ export interface Column<T> {
 interface DataTableProps<T extends object> {
   columns: Column<T>[]
   rows: T[]
+  onEdit?: (row: T) => void
   onDelete?: (row: T) => void
   emptyMessage?: string
   pageSize?: number
@@ -26,6 +27,7 @@ interface DataTableProps<T extends object> {
 function DataTable<T extends object>({
   columns,
   rows,
+  onEdit,
   onDelete,
   emptyMessage,
   pageSize = 20,
@@ -90,7 +92,7 @@ function DataTable<T extends object>({
               {columns.map(col => (
                 <th key={String(col.key)} className={headerClass} style={{ borderColor: 'var(--border-default)' }}>{col.label}</th>
               ))}
-              {onDelete && <th style={{ width: '80px', borderColor: 'var(--border-default)' }} className={headerClass}>{t('ui.actions')}</th>}
+              {(onEdit || onDelete) && <th style={{ width: '140px', borderColor: 'var(--border-default)' }} className={headerClass}>{t('ui.actions')}</th>}
             </tr>
           </thead>
           <tbody>
@@ -103,14 +105,28 @@ function DataTable<T extends object>({
                       : String((row as Record<string, unknown>)[col.key as string] ?? '')}
                   </td>
                 ))}
-                {onDelete && (
+                {(onEdit || onDelete) && (
                   <td className="border-b px-3 py-2 align-middle" style={{ borderColor: 'var(--border-default)' }}>
-                    <button
-                      className="inline-flex items-center justify-center rounded-full border border-red-700 bg-transparent px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
-                      onClick={() => onDelete(row)}
-                    >
-                      {t('ui.delete')}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {onEdit && (
+                        <button
+                          className="inline-flex items-center justify-center rounded-full border border-[var(--border-default)] bg-[var(--glass-input)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] transition hover:brightness-105"
+                          onClick={() => onEdit(row)}
+                          type="button"
+                        >
+                          {t('ui.edit')}
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          className="inline-flex items-center justify-center rounded-full border border-red-700 bg-transparent px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                          onClick={() => onDelete(row)}
+                          type="button"
+                        >
+                          {t('ui.delete')}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 )}
               </tr>

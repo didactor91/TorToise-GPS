@@ -14,6 +14,11 @@ interface NavbarProps {
   onTrackings: () => void
   onBackoffice?: () => void
   showBackoffice?: boolean
+  onBackofficeCompanies?: () => void
+  onBackofficeUsers?: () => void
+  onBackofficeTrackers?: () => void
+  showBackofficeUsers?: boolean
+  showBackofficeTrackers?: boolean
   onLogout: () => void
 }
 
@@ -26,6 +31,11 @@ function Navbar({
   onTrackings,
   onBackoffice,
   showBackoffice = false,
+  onBackofficeCompanies,
+  onBackofficeUsers,
+  onBackofficeTrackers,
+  showBackofficeUsers = false,
+  showBackofficeTrackers = false,
   onLogout
 }: NavbarProps) {
   const { t } = useTranslation()
@@ -41,6 +51,7 @@ function Navbar({
   const close = () => setMenuOpen(false)
   const toggleDesktopMinimized = () => setDesktopMinimized(prev => !prev)
   const canMinimize = !isMobile && location.pathname.startsWith('/home')
+  const isBackofficeMode = showBackoffice && location.pathname.startsWith('/backoffice')
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -91,15 +102,34 @@ function Navbar({
         className={`nav-home__menu ${menuVisible ? 'nav-home__menu--visible' : 'nav-home__menu--hidden'} ${isMobile ? 'nav-home__menu--mobile' : 'nav-home__menu--desktop'}`}
       >
         <div className="nav-home__links flex flex-col gap-1 md:flex-row md:items-center md:gap-0">
-          <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onHome(); close() }} type="button">{t('nav.home')}</button>
-          <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onProfile(); close() }} type="button">{t('nav.profile')}</button>
-          {showUsers && onUsers && (
-            <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onUsers(); close() }} type="button">{t('nav.users')}</button>
+          {!isBackofficeMode && (
+            <>
+              <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onHome(); close() }} type="button">{t('nav.home')}</button>
+              <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onProfile(); close() }} type="button">{t('nav.profile')}</button>
+              {showUsers && onUsers && (
+                <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onUsers(); close() }} type="button">{t('nav.users')}</button>
+              )}
+              <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onPlaces(); close() }} type="button">{t('nav.places')}</button>
+              <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onTrackings(); close() }} type="button">{t('nav.trackers')}</button>
+              {showBackoffice && onBackoffice && (
+                <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onBackoffice(); close() }} type="button">{t('nav.backoffice')}</button>
+              )}
+            </>
           )}
-          <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onPlaces(); close() }} type="button">{t('nav.places')}</button>
-          <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onTrackings(); close() }} type="button">{t('nav.trackers')}</button>
-          {showBackoffice && onBackoffice && (
-            <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onBackoffice(); close() }} type="button">{t('nav.backoffice')}</button>
+          {isBackofficeMode && (
+            <>
+              {onBackofficeCompanies && (
+                <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onBackofficeCompanies(); close() }} type="button">{t('backoffice.companies')}</button>
+              )}
+              {showBackofficeUsers && onBackofficeUsers && (
+                <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onBackofficeUsers(); close() }} type="button">{t('backoffice.users')}</button>
+              )}
+              {showBackofficeTrackers && onBackofficeTrackers && (
+                <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onBackofficeTrackers(); close() }} type="button">{t('trackers.title')}</button>
+              )}
+              <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onHome(); close() }} type="button">{t('nav.home')}</button>
+              <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onProfile(); close() }} type="button">{t('nav.profile')}</button>
+            </>
           )}
         </div>
 

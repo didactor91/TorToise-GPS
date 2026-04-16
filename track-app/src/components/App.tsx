@@ -37,9 +37,46 @@ interface TrackingDetailRouteProps {
   darkmode: boolean
 }
 
+type BackofficeSection = 'companies' | 'users' | 'trackers'
+
+function normalizeBackofficeSection(section?: string): BackofficeSection {
+  if (section === 'users' || section === 'trackers') return section
+  return 'companies'
+}
+
 function TrackingDetailRoute({ darkmode }: TrackingDetailRouteProps) {
   const { serialNumber } = useParams<{ serialNumber: string }>()
   return <TrackingDetail darkmode={darkmode} serialNumber={serialNumber ?? ''} />
+}
+
+interface BackofficeRouteProps {
+  canReadUsers: boolean
+  canCreateUsers: boolean
+  canUpdateUsers: boolean
+  canCreateTrackers: boolean
+}
+
+function BackofficeRoute({
+  canReadUsers,
+  canCreateUsers,
+  canUpdateUsers,
+  canCreateTrackers
+}: BackofficeRouteProps) {
+  const { section, entityId } = useParams<{ section: string, entityId?: string }>()
+  const normalizedSection = normalizeBackofficeSection(section)
+  if (section !== normalizedSection) return <Navigate to="/backoffice/companies" replace />
+  if (normalizedSection === 'trackers' && entityId) return <Navigate to="/backoffice/trackers" replace />
+
+  return (
+    <Backoffice
+      section={normalizedSection}
+      entityId={entityId}
+      canReadUsers={canReadUsers}
+      canCreateUsers={canCreateUsers}
+      canUpdateUsers={canUpdateUsers}
+      canCreateTrackers={canCreateTrackers}
+    />
+  )
 }
 
 function App() {
@@ -106,7 +143,10 @@ function App() {
   const handleTrackings = () => navigate('/trackers')
   const handleProfile   = () => navigate('/profile')
   const handleUsers = () => navigate('/users')
-  const handleBackoffice = () => navigate('/backoffice')
+  const handleBackoffice = () => navigate('/backoffice/companies')
+  const handleBackofficeCompanies = () => navigate('/backoffice/companies')
+  const handleBackofficeUsers = () => navigate('/backoffice/users')
+  const handleBackofficeTrackers = () => navigate('/backoffice/trackers')
   const handleDarkMode  = () => setDarkmode(prev => !prev)
 
   // ── shorthand for protected routes ───────────────────────────────────────
@@ -132,6 +172,11 @@ function App() {
           onTrackings={handleTrackings}
           onBackoffice={handleBackoffice}
           showBackoffice={canAccessBackoffice}
+          onBackofficeCompanies={handleBackofficeCompanies}
+          onBackofficeUsers={handleBackofficeUsers}
+          onBackofficeTrackers={handleBackofficeTrackers}
+          showBackofficeUsers={canReadUsers || canCreateUsers || canUpdateUsers}
+          showBackofficeTrackers={canCreateTrackers}
           onLogout={handleLogout}
         />
       )}
@@ -153,10 +198,22 @@ function App() {
 
         <Route path="/trackers"     element={guard(<Trackings />)} />
         <Route path="/trackers/new" element={guard(<TrackingsNew />)} />
+        <Route path="/backoffice" element={<Navigate to="/backoffice/companies" replace />} />
         <Route
-          path="/backoffice"
+          path="/backoffice/:section"
           element={staffGuard(
-            <Backoffice
+            <BackofficeRoute
+              canReadUsers={canReadUsers}
+              canCreateUsers={canCreateUsers}
+              canUpdateUsers={canUpdateUsers}
+              canCreateTrackers={canCreateTrackers}
+            />
+          )}
+        />
+        <Route
+          path="/backoffice/:section/:entityId"
+          element={staffGuard(
+            <BackofficeRoute
               canReadUsers={canReadUsers}
               canCreateUsers={canCreateUsers}
               canUpdateUsers={canUpdateUsers}

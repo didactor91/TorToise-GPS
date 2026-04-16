@@ -55,7 +55,8 @@
     "languageEnglish": "Inglés",
     "languageSpanish": "Español",
     "languageCatalan": "Catalán",
-    "optional": "opcional"
+    "optional": "opcional",
+    "edit": "Editar"
   },
   "roles": {
     "staff": "staff",
