@@ -30,7 +30,9 @@ function Backoffice({
   const labelClass = 'mb-2 block text-sm font-semibold'
   const inputClass = 'glass-input-base w-full rounded-xl border px-3 py-2 text-sm outline-none transition'
   const primaryButtonClass = 'inline-flex items-center justify-center rounded-full border border-amber-500 bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:brightness-105'
-  const checkboxClass = 'mr-4 inline-flex items-center gap-2 text-sm text-[var(--text-primary)]'
+  const checkboxClass = 'inline-flex items-center gap-2 text-sm text-[var(--text-primary)]'
+  const sectionClass = 'pb-8 border-b space-y-4'
+  const checkboxesWrapClass = 'flex flex-wrap gap-x-4 gap-y-2'
 
   const [usersPage, setUsersPage] = useState(1)
   const { companies, users, usersTotalCount, loading, createCompany, createUser, createTracker, updateCompany, updateUser } = useBackoffice(usersPage, 20, canReadUsers)
@@ -243,7 +245,7 @@ function Backoffice({
 
       {activeTab === 'companies' && (
       <>
-      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
         <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createCompany')}</h3>
         <form onSubmit={onCreateCompany}>
           <div className="mb-4">
@@ -258,7 +260,7 @@ function Backoffice({
           </div>
           <div className="mb-4">
             <label className={labelClass}>{t('backoffice.features')}</label>
-            <div>
+            <div className={checkboxesWrapClass}>
               {FEATURE_KEYS.map((feature) => (
                 <label key={feature} className={checkboxClass}>
                   <input
@@ -271,12 +273,12 @@ function Backoffice({
               ))}
             </div>
           </div>
-          <button className={primaryButtonClass} type="submit">{t('backoffice.createCompany')}</button>
+          <button className={`${primaryButtonClass} mt-2`} type="submit">{t('backoffice.createCompany')}</button>
         </form>
       </section>
 
       {canCreateTrackers && (
-      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
         <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createTracker')}</h3>
         <form onSubmit={onCreateTracker}>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -313,12 +315,12 @@ function Backoffice({
               </select>
             </div>
           </div>
-          <button className={primaryButtonClass} type="submit">{t('backoffice.createTracker')}</button>
+          <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.createTracker')}</button>
         </form>
       </section>
       )}
 
-      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
         <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.companies')}</h3>
         <DataTable columns={COMPANY_COLUMNS} rows={companies} emptyMessage={t('backoffice.noCompanies')} variant="flat" />
       </section>
@@ -326,7 +328,7 @@ function Backoffice({
       )}
 
       {activeTab === 'users' && canCreateUsers && (
-      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
         <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createUser')}</h3>
         <form onSubmit={onCreateUser}>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -386,7 +388,7 @@ function Backoffice({
             </div>
             <div className="md:col-span-2">
               <label className={labelClass}>{t('backoffice.permissions')}</label>
-              <div>
+              <div className={checkboxesWrapClass}>
                 {PERMISSION_KEYS.map((permission) => (
                   <label key={permission} className={checkboxClass}>
                     <input
@@ -400,13 +402,13 @@ function Backoffice({
               </div>
             </div>
           </div>
-          <button className={primaryButtonClass} type="submit">{t('backoffice.createUser')}</button>
+          <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.createUser')}</button>
         </form>
       </section>
       )}
 
       {activeTab === 'companies' && (
-      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
         <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editCompany')}</h3>
         <div className="mb-4">
           <label className={labelClass}>{t('backoffice.company')}</label>
@@ -435,7 +437,7 @@ function Backoffice({
             </div>
             <div className="mb-4">
               <label className={labelClass}>{t('backoffice.features')}</label>
-              <div>
+              <div className={checkboxesWrapClass}>
                 {FEATURE_KEYS.map((feature) => (
                   <label key={feature} className={checkboxClass}>
                     <input
@@ -448,14 +450,14 @@ function Backoffice({
                 ))}
               </div>
             </div>
-            <button className={primaryButtonClass} type="submit">{t('backoffice.updateCompany')}</button>
+            <button className={`${primaryButtonClass} mt-2`} type="submit">{t('backoffice.updateCompany')}</button>
           </form>
         )}
       </section>
       )}
 
       {activeTab === 'users' && canReadUsers && canUpdateUsers && (
-      <section className="pb-8 border-b" style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
         <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editUser')}</h3>
         <div className="mb-4">
           <label className={labelClass}>{t('backoffice.usersTab')}</label>
@@ -521,7 +523,7 @@ function Backoffice({
               </div>
               <div className="md:col-span-2">
                 <label className={labelClass}>{t('backoffice.permissions')}</label>
-                <div>
+                <div className={checkboxesWrapClass}>
                   {PERMISSION_KEYS.map((permission) => (
                     <label key={permission} className={checkboxClass}>
                       <input
@@ -535,7 +537,7 @@ function Backoffice({
                 </div>
               </div>
             </div>
-            <button className={primaryButtonClass} type="submit">{t('backoffice.updateUser')}</button>
+            <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.updateUser')}</button>
           </form>
         )}
       </section>

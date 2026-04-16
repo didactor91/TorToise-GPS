@@ -12,8 +12,7 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "minimize": "Minimize navbar",
-    "expand": "Expand navbar",
-    "language": "Language"
+    "expand": "Expand navbar"
   },
   "landing": {
     "tagline": "Real-time fleet tracking",
@@ -53,7 +52,6 @@
     "longitude": "Longitude",
     "color": "Color",
     "role": "Role",
-    "company": "Company",
     "languageEnglish": "English",
     "languageSpanish": "Spanish",
     "languageCatalan": "Catalan",
@@ -96,7 +94,6 @@
     "newUserAction": "+ New User",
     "empty": "No users found in this company.",
     "createUser": "Create User",
-    "createTracker": "Create Tracker",
     "companyNotFound": "Company not found for current user"
   },
   "places": {
@@ -157,6 +154,7 @@
     "companiesTab": "Companies",
     "usersTab": "Users",
     "createCompany": "Create Company",
+    "createTracker": "Create Tracker",
     "companies": "Companies",
     "editCompany": "Edit Company",
     "createUser": "Create User",
