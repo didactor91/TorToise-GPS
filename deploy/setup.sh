@@ -53,6 +53,8 @@ if [ ! -f "$APP_DIR/deploy/.env.prod" ]; then
     echo "  Fill in:"
     echo "    MONGO_URL   — MongoDB Atlas connection string"
     echo "    JWT_SECRET  — 64 random bytes"
+    echo "    CORS_ORIGINS — allowed frontend origin(s)"
+    echo "    VITE_API_URL — public API URL used at frontend build time"
     echo ""
 fi
 

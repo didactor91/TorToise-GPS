@@ -15,7 +15,7 @@
  *          - If unassigned → add to livedemo.
  */
 
-require('dotenv').config()
+require('./load-env')()
 const { SIM_TRACKERS } = require('./simulator.constants')
 
 const API_URL = process.env.API_URL || 'http://localhost:8085/api'

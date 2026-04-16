@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('./src/shared/load-env')()
 const http = require('http')
 const express = require('express')
 const cors = require('cors')

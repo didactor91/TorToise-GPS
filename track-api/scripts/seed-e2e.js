@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-require('dotenv').config()
+require('../src/shared/load-env')()
 
 const argon2 = require('argon2')
 const {

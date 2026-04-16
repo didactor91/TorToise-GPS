@@ -1,3 +1,4 @@
+require('./load-env')()
 const net = require('net')
 const call = require('track-utils/call')
 const { parseGPSFrame } = require('./parse-gps')
