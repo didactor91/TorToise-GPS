@@ -42,6 +42,11 @@ export default defineConfig({
     }
   },
   build: {
+    // Vite 8 uses `oxc` minifier by default. In some environments it fails when
+    // lowering vendor bundles (e.g. react-toastify) to older browser targets.
+    // Keep a stable target/minifier combo for deterministic Docker builds.
+    target: 'es2020',
+    minify: 'esbuild',
     rolldownOptions: {
       output: {
         manualChunks(id) {
