@@ -15,8 +15,8 @@ function Home({ darkmode }: HomeProps) {
   const { t } = useTranslation()
   const { pois, trackers, lastTracks, livePositions, deletePOI, goToDetail } = useLiveTracks()
   const location = useLocation()
-  const licenseBySerial = useMemo(
-    () => new Map(trackers.map(tracker => [tracker.serialNumber, tracker.licensePlate || tracker.serialNumber])),
+  const aliasBySerial = useMemo(
+    () => new Map(trackers.map(tracker => [tracker.serialNumber, tracker.alias || tracker.serialNumber])),
     [trackers]
   )
 
@@ -139,11 +139,11 @@ function Home({ darkmode }: HomeProps) {
       const status = 'status' in truck ? truck.status : undefined
       const freshness = 'date' in truck ? telemetryFreshness(truck.date) : { label: 'STALE', color: '#f59e0b' }
       const sn = truck.serialNumber
-      const lp = truck.licensePlate || licenseBySerial.get(sn) || sn
-      const popupSignature = `${lp}|${status || ''}|${speed.toFixed(2)}|${freshness.label}`
+      const alias = truck.alias || aliasBySerial.get(sn) || sn
+      const popupSignature = `${alias}|${status || ''}|${speed.toFixed(2)}|${freshness.label}`
       const popupHtml = `
         <div class="tracker-popup">
-          <div class="tracker-popup__title">${lp}</div>
+          <div class="tracker-popup__title">${alias}</div>
           <div class="tracker-popup__meta">${t('home.sn')}: ${sn}</div>
           <div class="tracker-popup__row">
             <span>${t('home.speed')}</span>

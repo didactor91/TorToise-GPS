@@ -31,7 +31,7 @@ export type AddPoiInput = {
 };
 
 export type AddTrackerInput = {
-  licensePlate?: InputMaybe<Scalars['String']['input']>;
+  alias?: InputMaybe<Scalars['String']['input']>;
   serialNumber: Scalars['String']['input'];
 };
 
@@ -98,9 +98,9 @@ export type Company = {
 
 export type LiveTrack = {
   __typename?: 'LiveTrack';
+  alias?: Maybe<Scalars['String']['output']>;
   date: Scalars['DateTime']['output'];
   latitude: Scalars['Float']['output'];
-  licensePlate?: Maybe<Scalars['String']['output']>;
   longitude: Scalars['Float']['output'];
   serialNumber: Scalars['String']['output'];
   speed: Scalars['Float']['output'];
@@ -239,7 +239,7 @@ export type Query = {
   pois: PagedPoIs;
   trackRange: Array<Track>;
   tracker: Tracker;
-  trackerByLP: Tracker;
+  trackerByAlias: Tracker;
   trackerBySN: Tracker;
   trackers: PagedTrackers;
 };
@@ -280,8 +280,8 @@ export type QueryTrackerArgs = {
 };
 
 
-export type QueryTrackerByLpArgs = {
-  licensePlate: Scalars['String']['input'];
+export type QueryTrackerByAliasArgs = {
+  alias: Scalars['String']['input'];
 };
 
 
@@ -321,8 +321,8 @@ export type Track = {
 
 export type Tracker = {
   __typename?: 'Tracker';
+  alias?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  licensePlate?: Maybe<Scalars['String']['output']>;
   serialNumber: Scalars['String']['output'];
 };
 
@@ -334,7 +334,7 @@ export type UpdatePoiInput = {
 };
 
 export type UpdateTrackerInput = {
-  licensePlate?: InputMaybe<Scalars['String']['input']>;
+  alias?: InputMaybe<Scalars['String']['input']>;
   serialNumber?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -410,14 +410,14 @@ export type GetTrackersQueryVariables = Exact<{
 }>;
 
 
-export type GetTrackersQuery = { __typename?: 'Query', trackers: { __typename?: 'PagedTrackers', totalCount: number, items: Array<{ __typename?: 'Tracker', id: string, serialNumber: string, licensePlate?: string | null }> } };
+export type GetTrackersQuery = { __typename?: 'Query', trackers: { __typename?: 'PagedTrackers', totalCount: number, items: Array<{ __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null }> } };
 
 export type TrackerBySnQueryVariables = Exact<{
   serialNumber: Scalars['String']['input'];
 }>;
 
 
-export type TrackerBySnQuery = { __typename?: 'Query', trackerBySN: { __typename?: 'Tracker', id: string, serialNumber: string, licensePlate?: string | null } };
+export type TrackerBySnQuery = { __typename?: 'Query', trackerBySN: { __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null } };
 
 export type AddTrackerMutationVariables = Exact<{
   input: AddTrackerInput;
@@ -498,7 +498,7 @@ export type DeletePoiMutation = { __typename?: 'Mutation', deletePOI: { __typena
 export type LastTracksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LastTracksQuery = { __typename?: 'Query', lastTracks: Array<{ __typename?: 'LiveTrack', serialNumber: string, latitude: number, longitude: number, speed: number, status: string, date: any, licensePlate?: string | null }> };
+export type LastTracksQuery = { __typename?: 'Query', lastTracks: Array<{ __typename?: 'LiveTrack', serialNumber: string, latitude: number, longitude: number, speed: number, status: string, date: any, alias?: string | null }> };
 
 export type TrackRangeQueryVariables = Exact<{
   trackerId: Scalars['ID']['input'];
@@ -512,7 +512,7 @@ export type TrackRangeQuery = { __typename?: 'Query', trackRange: Array<{ __type
 export type LiveTracksUpdatedSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LiveTracksUpdatedSubscription = { __typename?: 'Subscription', liveTracksUpdated: Array<{ __typename?: 'LiveTrack', serialNumber: string, latitude: number, longitude: number, speed: number, status: string, date: any, licensePlate?: string | null }> };
+export type LiveTracksUpdatedSubscription = { __typename?: 'Subscription', liveTracksUpdated: Array<{ __typename?: 'LiveTrack', serialNumber: string, latitude: number, longitude: number, speed: number, status: string, date: any, alias?: string | null }> };
 
 
 export const BackofficeCompaniesDocument = gql`
@@ -761,7 +761,7 @@ export const GetTrackersDocument = gql`
     items {
       id
       serialNumber
-      licensePlate
+      alias
     }
   }
 }
@@ -808,7 +808,7 @@ export const TrackerBySnDocument = gql`
   trackerBySN(serialNumber: $serialNumber) {
     id
     serialNumber
-    licensePlate
+    alias
   }
 }
     `;
@@ -1264,7 +1264,7 @@ export const LastTracksDocument = gql`
     speed
     status
     date
-    licensePlate
+    alias
   }
 }
     `;
@@ -1363,7 +1363,7 @@ export const LiveTracksUpdatedDocument = gql`
     speed
     status
     date
-    licensePlate
+    alias
   }
 }
     `;

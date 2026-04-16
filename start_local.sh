@@ -11,7 +11,12 @@ sleep 2
 
 echo "🍃 Iniciando MongoDB local en /tmp/tortoise_mongo..."
 mkdir -p /tmp/tortoise_mongo
-mongod --dbpath /tmp/tortoise_mongo --port 27017 > /tmp/mongo.log 2>&1 &
+mongod \
+  --dbpath /tmp/tortoise_mongo \
+  --port 27017 \
+  --wiredTigerCollectionBlockCompressor=zstd \
+  --wiredTigerJournalCompressor=zstd \
+  --wiredTigerIndexPrefixCompression=1 > /tmp/mongo.log 2>&1 &
 sleep 3
 
 echo "🔌 Iniciando Backend API (Puerto 8085)..."

@@ -23,12 +23,12 @@ describe('fleetService', () => {
         })
 
         it('should succeed on correct tracker data [FULL]', async () => {
-            const trackerData = { serialNumber: '1234567890', licensePlate: '1234-ABC' }
+            const trackerData = { serialNumber: '1234567890', alias: '1234-ABC' }
             await service.addTracker(user.id, trackerData)
             const resp = await User.findById(user.id)
             const pos = resp.trackers.length - 1
             expect(resp.trackers[pos].serialNumber).toBe('1234567890')
-            expect(resp.trackers[pos].licensePlate).toBe('1234-ABC')
+            expect(resp.trackers[pos].alias).toBe('1234-ABC')
         })
 
         it('should succeed on correct data [without license plate]', async () => {
@@ -37,7 +37,7 @@ describe('fleetService', () => {
             const resp = await User.findById(user.id)
             const pos = resp.trackers.length - 1
             expect(resp.trackers[pos].serialNumber).toBe('1234567890')
-            expect(resp.trackers[pos].licensePlate).toBeDefined()
+            expect(resp.trackers[pos].alias).toBeDefined()
         })
 
         it('should fail on incorrect id user', async () => {
@@ -99,14 +99,14 @@ describe('fleetService', () => {
 
         it('should fail on add existing tracker license plate', async () => {
             const _serialNumber = '1234500000'
-            const _licensePlate = '1234-SKY'
+            const _alias = '1234-SKY'
             const __serialNumber = '1231456456'
             try {
-                await service.addTracker(user.id, { serialNumber: _serialNumber, licensePlate: _licensePlate })
-                await service.addTracker(user.id, { serialNumber: __serialNumber, licensePlate: _licensePlate })
+                await service.addTracker(user.id, { serialNumber: _serialNumber, alias: _alias })
+                await service.addTracker(user.id, { serialNumber: __serialNumber, alias: _alias })
             } catch (error) {
                 expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`License Plate ${_licensePlate} already registered`)
+                expect(error.message).toBe(`Alias ${_alias} already registered`)
             }
         })
     })
@@ -116,8 +116,8 @@ describe('fleetService', () => {
 
         beforeEach(async () => {
             _password = await argon2.hash(password)
-            const trackerData = { serialNumber: '1234567890', licensePlate: '1234-ABC' }
-            const trackerData2 = { serialNumber: '12332100', licensePlate: '9089-POP' }
+            const trackerData = { serialNumber: '1234567890', alias: '1234-ABC' }
+            const trackerData2 = { serialNumber: '12332100', alias: '9089-POP' }
             user = await User.create({ name, surname, email, password: _password, trackers: [trackerData, trackerData2] })
             _user = await User.create({ name, surname, email: '123@123.ccc', password: _password })
         })
@@ -149,8 +149,8 @@ describe('fleetService', () => {
         beforeEach(async () => {
             _password = await argon2.hash(password)
             user = await User.create({ name, surname, email, password: _password, trackers: [
-                { serialNumber: '1234567890', licensePlate: '1234-ABC' },
-                { serialNumber: '12332100', licensePlate: '9089-POP' }
+                { serialNumber: '1234567890', alias: '1234-ABC' },
+                { serialNumber: '12332100', alias: '9089-POP' }
             ]})
             _user = await User.create({ name, surname, email: '123@123.ccc', password: _password })
         })
@@ -158,7 +158,7 @@ describe('fleetService', () => {
         it('should succeed on correct id from existing user', async () => {
             const data = await service.retrieveTracker(user.id, user.trackers[0].id)
             expect(data.serialNumber).toBe('1234567890')
-            expect(data.licensePlate).toBe('1234-ABC')
+            expect(data.alias).toBe('1234-ABC')
         })
 
         it('should fail on incorrect user id', async () => {
@@ -197,8 +197,8 @@ describe('fleetService', () => {
         beforeEach(async () => {
             _password = await argon2.hash(password)
             user = await User.create({ name, surname, email, password: _password, trackers: [
-                { serialNumber: '1234567890', licensePlate: '1234-ABC' },
-                { serialNumber: '12332100', licensePlate: '9089-POP' }
+                { serialNumber: '1234567890', alias: '1234-ABC' },
+                { serialNumber: '12332100', alias: '9089-POP' }
             ]})
             _user = await User.create({ name, surname, email: '123@123.ccc', password: _password })
         })
@@ -206,7 +206,7 @@ describe('fleetService', () => {
         it('should succeed on correct id from existing user', async () => {
             const data = await service.retrieveTrackerBySN(user.id, '1234567890')
             expect(data.serialNumber).toBe('1234567890')
-            expect(data.licensePlate).toBe('1234-ABC')
+            expect(data.alias).toBe('1234-ABC')
         })
 
         it('should fail on incorrect user id', async () => {
@@ -239,50 +239,50 @@ describe('fleetService', () => {
         })
     })
 
-    describe('retrieve Tracker by License Plate', () => {
+    describe('retrieve Tracker by Alias', () => {
         let user, _user, _password
 
         beforeEach(async () => {
             _password = await argon2.hash(password)
             user = await User.create({ name, surname, email, password: _password, trackers: [
-                { serialNumber: '1234567890', licensePlate: '1234-ABC' },
-                { serialNumber: '12332100', licensePlate: '9089-POP' }
+                { serialNumber: '1234567890', alias: '1234-ABC' },
+                { serialNumber: '12332100', alias: '9089-POP' }
             ]})
             _user = await User.create({ name, surname, email: '123@123.ccc', password: _password })
         })
 
         it('should succeed on correct id from existing user', async () => {
-            const data = await service.retrieveTrackerByLicense(user.id, '1234-ABC')
+            const data = await service.retrieveTrackerByAlias(user.id, '1234-ABC')
             expect(data.serialNumber).toBe('1234567890')
-            expect(data.licensePlate).toBe('1234-ABC')
+            expect(data.alias).toBe('1234-ABC')
         })
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
             try {
-                await service.retrieveTrackerByLicense(wrongId, '1234-ABC')
+                await service.retrieveTrackerByAlias(wrongId, '1234-ABC')
             } catch (error) {
                 expect(error).toBeInstanceOf(LogicError)
                 expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
             }
         })
 
-        it('should fail on user with wrong Tracker License', async () => {
+        it('should fail on user with wrong Tracker alias', async () => {
             const trackerLicense = 'FAKE_FAKE'
             try {
-                await service.retrieveTrackerByLicense(user.id, trackerLicense)
+                await service.retrieveTrackerByAlias(user.id, trackerLicense)
             } catch (error) {
                 expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`Tracker with License Plate ${trackerLicense} doesn't exists`)
+                expect(error.message).toBe(`Tracker with alias ${trackerLicense} doesn't exists`)
             }
         })
 
-        it('should fail on undefined License', async () => {
+        it('should fail on undefined alias', async () => {
             try {
-                await service.retrieveTrackerByLicense(user.id, undefined)
+                await service.retrieveTrackerByAlias(user.id, undefined)
             } catch (error) {
                 expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`licensePlate is not optional`)
+                expect(error.message).toBe(`alias is not optional`)
             }
         })
     })
@@ -294,17 +294,17 @@ describe('fleetService', () => {
             _password = await argon2.hash(password)
             _user = await User.create({ name, surname, email: '12__3@123.com', password: _password })
             user = await User.create({ name, surname, email, password: _password, trackers: [
-                { serialNumber: '1234567890', licensePlate: '1234-ABC' },
-                { serialNumber: '0987654321', licensePlate: '0909-CXD' }
+                { serialNumber: '1234567890', alias: '1234-ABC' },
+                { serialNumber: '0987654321', alias: '0909-CXD' }
             ]})
         })
 
         it('should succeed on correct id from existing user', async () => {
-            const _trackerData = { serialNumber: '09-UPDATE-91', licensePlate: '0909-UPDATE' }
+            const _trackerData = { serialNumber: '09-UPDATE-91', alias: '0909-UPDATE' }
             await service.updateTracker(user.id, user.trackers[0].id, _trackerData)
             const data = await User.findById(user.id)
             expect(data.trackers[0].serialNumber).toBe('09-UPDATE-91')
-            expect(data.trackers[0].licensePlate).toBe('0909-UPDATE')
+            expect(data.trackers[0].alias).toBe('0909-UPDATE')
         })
 
         it('should succeed on correct id from existing user [only serialnumber]', async () => {
@@ -312,15 +312,15 @@ describe('fleetService', () => {
             await service.updateTracker(user.id, user.trackers[0].id, _trackerData)
             const data = await User.findById(user.id)
             expect(data.trackers[0].serialNumber).toBe('09-UPDATE-91')
-            expect(data.trackers[0].licensePlate).toBe('1234-ABC')
+            expect(data.trackers[0].alias).toBe('1234-ABC')
         })
 
-        it('should succeed on correct id from existing user [only licenseplate]', async () => {
-            const _trackerData = { licensePlate: '0909-UPDATE' }
+        it('should succeed on correct id from existing user [only alias]', async () => {
+            const _trackerData = { alias: '0909-UPDATE' }
             await service.updateTracker(user.id, user.trackers[0].id, _trackerData)
             const data = await User.findById(user.id)
             expect(data.trackers[0].serialNumber).toBe('1234567890')
-            expect(data.trackers[0].licensePlate).toBe('0909-UPDATE')
+            expect(data.trackers[0].alias).toBe('0909-UPDATE')
         })
 
         it('should fail on incorrect user id', async () => {
@@ -369,8 +369,8 @@ describe('fleetService', () => {
             _password = await argon2.hash(password)
             _user = await User.create({ name, surname, email: '12__3@123.com', password: _password })
             user = await User.create({ name, surname, email, password: _password, trackers: [
-                { serialNumber: '1234567890', licensePlate: '1234-ABC' },
-                { serialNumber: '0987654321', licensePlate: '0909-CXD' }
+                { serialNumber: '1234567890', alias: '1234-ABC' },
+                { serialNumber: '0987654321', alias: '0909-CXD' }
             ]})
         })
 
@@ -378,7 +378,7 @@ describe('fleetService', () => {
             await service.deleteTracker(user.id, user.trackers[0].id)
             const data = await User.findById(user.id)
             expect(data.trackers.length).toBe(1)
-            expect(data.trackers[0].licensePlate).toBe('0909-CXD')
+            expect(data.trackers[0].alias).toBe('0909-CXD')
         })
 
         it('should fail on incorrect user id', async () => {

@@ -49,7 +49,7 @@ type PagedBackofficeUsers {
 type Tracker {
   id: ID!
   serialNumber: String!
-  licensePlate: String
+  alias: String
 }
 
 type Track {
@@ -69,7 +69,7 @@ type LiveTrack {
   speed: Float!
   status: String!
   date: DateTime!
-  licensePlate: String
+  alias: String
 }
 
 type POI {
@@ -143,12 +143,12 @@ input BackofficeUpdateUserInput {
 
 input AddTrackerInput {
   serialNumber: String!
-  licensePlate: String
+  alias: String
 }
 
 input UpdateTrackerInput {
   serialNumber: String
-  licensePlate: String
+  alias: String
 }
 
 input AddPOIInput {
@@ -170,7 +170,7 @@ type Query {
   trackers(offset: Int = 0, limit: Int = 20): PagedTrackers!
   tracker(id: ID!): Tracker!
   trackerBySN(serialNumber: String!): Tracker!
-  trackerByLP(licensePlate: String!): Tracker!
+  trackerByAlias(alias: String!): Tracker!
   lastTracks: [LiveTrack!]!
   lastTrack(trackerId: ID!): Track
   trackRange(trackerId: ID!, start: DateTime!, end: DateTime!): [Track!]!

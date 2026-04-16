@@ -1,7 +1,9 @@
-const NAME = '2026-04-10-backfill-user-language'
+const NAME = '20260410000000-backfill-user-language'
+const LEGACY_NAMES = ['2026-04-10-backfill-user-language']
 
 module.exports = {
     name: NAME,
+    aliases: LEGACY_NAMES,
     /**
      * @param {{ models: { User: import('mongoose').Model<any> }, logger: Console, dryRun: boolean }} ctx
      */
@@ -30,4 +32,3 @@ module.exports = {
         return { matched: result.matchedCount, modified: result.modifiedCount }
     }
 }
-

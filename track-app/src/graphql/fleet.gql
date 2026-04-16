@@ -1,11 +1,11 @@
 query GetTrackers($offset: Int = 0, $limit: Int = 20) {
   trackers(offset: $offset, limit: $limit) {
     totalCount
-    items { id serialNumber licensePlate }
+    items { id serialNumber alias }
   }
 }
 query TrackerBySN($serialNumber: String!) {
-  trackerBySN(serialNumber: $serialNumber) { id serialNumber licensePlate }
+  trackerBySN(serialNumber: $serialNumber) { id serialNumber alias }
 }
 mutation AddTracker($input: AddTrackerInput!) {
   addTracker(input: $input) { success message }

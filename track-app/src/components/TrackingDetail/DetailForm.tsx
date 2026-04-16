@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next'
 
 interface DetailFormProps {
   onSubmitDetail: (dateFrom: string, timeFrom: string, dateTo: string, timeTo: string) => void
-  licensePlate?: string | null
+  alias?: string | null
   serialNumber?: string
 }
 
-function DetailForm({ onSubmitDetail, licensePlate, serialNumber }: DetailFormProps) {
+function DetailForm({ onSubmitDetail, alias, serialNumber }: DetailFormProps) {
   const { t } = useTranslation()
   const labelClass = 'mb-2 block text-sm font-semibold'
   const inputClass = 'glass-input-base w-full rounded-full border px-4 py-2 text-sm outline-none transition'
@@ -38,7 +38,7 @@ function DetailForm({ onSubmitDetail, licensePlate, serialNumber }: DetailFormPr
 
   return (
     <section className="tracking-detail__form">
-      <h2 className="tracking-detail__title">{licensePlate || t('detail.trackerNotLoaded')}</h2>
+      <h2 className="tracking-detail__title">{alias || t('detail.trackerNotLoaded')}</h2>
       <p className="tracking-detail__subtitle">
         {serialNumber}
       </p>

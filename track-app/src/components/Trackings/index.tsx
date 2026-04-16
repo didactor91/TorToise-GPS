@@ -44,7 +44,7 @@ function Trackings() {
         />
       )
     },
-    { key: 'licensePlate', label: t('ui.alias') },
+    { key: 'alias', label: t('ui.alias') },
     { key: 'serialNumber', label: t('ui.serial') },
     {
       key: 'actions',
@@ -128,7 +128,7 @@ function Trackings() {
           <section className="px-4 py-3">
             {pendingDelete && (
               <p>
-                {t('trackers.deleteQuestion', { name: pendingDelete.licensePlate || pendingDelete.serialNumber })} 
+                {t('trackers.deleteQuestion', { name: pendingDelete.alias || pendingDelete.serialNumber })} 
               </p>
             )}
           </section>

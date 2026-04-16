@@ -24,11 +24,15 @@ function printHelp() {
     console.log('  node scripts/migrate.js --dry-run')
     console.log('  node scripts/migrate.js 20260411143000')
     console.log('  node scripts/migrate.js 20260411143000-add-company-index')
-    console.log('  node scripts/migrate.js 2026-04-10-backfill-user-language')
+    console.log('  node scripts/migrate.js 20260410000000-backfill-user-language')
 }
 
 function normalizeDatePrefix(value) {
     return value.replace(/^(\d{4})-(\d{2})-(\d{2})/, '$1$2$3')
+}
+
+function isValidMigrationFileName(fileName) {
+    return /^\d{14}-[a-z0-9]+(?:-[a-z0-9]+)*\.js$/.test(fileName)
 }
 
 async function loadMigrations(dir, onlyRef) {
@@ -37,13 +41,23 @@ async function loadMigrations(dir, onlyRef) {
         .filter((f) => f.endsWith('.js'))
         .sort()
 
+    const invalidFiles = files.filter((file) => !isValidMigrationFileName(file))
+    if (invalidFiles.length) {
+        throw new Error(
+            `invalid migration filename(s): ${invalidFiles.join(', ')}. Expected pattern YYYYMMDDHHmmss-name.js`
+        )
+    }
+
     const loaded = files.map((file) => {
         const migration = require(path.join(dir, file))
         const name = migration.name || file.replace(/\.js$/, '')
+        const aliases = Array.isArray(migration.aliases)
+            ? [...new Set(migration.aliases.filter((value) => typeof value === 'string' && value.trim()))]
+            : []
         if (typeof migration.up !== 'function') {
             throw new Error(`invalid migration ${file}: missing up()`)
         }
-        return { file, name, up: migration.up }
+        return { file, name, aliases, up: migration.up }
     })
 
     if (!onlyRef) return loaded
@@ -52,18 +66,20 @@ async function loadMigrations(dir, onlyRef) {
     const onlyNormalized = normalizeDatePrefix(only)
     const filtered = loaded.filter((m) => {
         const base = m.file.replace(/\.js$/, '')
+        const refs = [m.name, base, ...m.aliases]
         const nameNormalized = normalizeDatePrefix(m.name)
         const baseNormalized = normalizeDatePrefix(base)
+        const aliasNormalized = m.aliases.map(normalizeDatePrefix)
         return (
-            m.name === only ||
+            refs.includes(only) ||
             m.file === onlyRef ||
-            base === only ||
-            m.name.startsWith(only) ||
-            base.startsWith(only) ||
+            refs.some((ref) => ref.startsWith(only)) ||
             nameNormalized === onlyNormalized ||
             baseNormalized === onlyNormalized ||
+            aliasNormalized.includes(onlyNormalized) ||
             nameNormalized.startsWith(onlyNormalized) ||
-            baseNormalized.startsWith(onlyNormalized)
+            baseNormalized.startsWith(onlyNormalized) ||
+            aliasNormalized.some((ref) => ref.startsWith(onlyNormalized))
         )
     })
 
@@ -99,7 +115,10 @@ async function main() {
 
     const executed = await journal.find({}, { projection: { _id: 0, name: 1 } }).toArray()
     const executedSet = new Set(executed.map((d) => d.name))
-    const pending = migrations.filter((m) => !executedSet.has(m.name))
+    const pending = migrations.filter((m) => {
+        const allNames = [m.name, ...m.aliases]
+        return !allNames.some((migrationName) => executedSet.has(migrationName))
+    })
 
     if (pending.length === 0) {
         console.log(dryRun ? 'No pending migrations (dry-run).' : 'No pending migrations.')
@@ -120,6 +139,7 @@ async function main() {
             await journal.insertOne({
                 name: migration.name,
                 file: migration.file,
+                aliases: migration.aliases,
                 executedAt: new Date(),
                 details: details || null
             })

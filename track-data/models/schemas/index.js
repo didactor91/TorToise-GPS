@@ -15,14 +15,14 @@ const TrackSchema = new Schema({
     latitude:     { type: Number, required: true },
     longitude:    { type: Number, required: true },
     speed:        { type: Number, required: true },
-    status:       { type: String, default: 'ON' },
+    status:       { type: Number, enum: [0, 1], default: 1 },
     date:         { type: Date, default: Date.now }
 })
-TrackSchema.index({ serialNumber: 1, date: -1 })
+TrackSchema.index({ serialNumber: 1, date: 1 })
 
 const tracker = new Schema({
     serialNumber: { type: String, required: true, index: true },
-    licensePlate: { type: String }
+    alias: { type: String }
 })
 
 const company = new Schema({
@@ -36,7 +36,7 @@ const company = new Schema({
 const companyTracker = new Schema({
     companyId: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
     serialNumber: { type: String, required: true, unique: true, index: true },
-    licensePlate: { type: String, required: true, index: true }
+    alias: { type: String, required: true, index: true }
 }, { timestamps: true })
 
 const poi = new Schema({

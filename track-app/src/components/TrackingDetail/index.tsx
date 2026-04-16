@@ -160,7 +160,7 @@ function TrackingDetail({ darkmode, serialNumber }: TrackingDetailProps) {
     })
     const popupHtml = `
       <div class="tracker-popup">
-        <div class="tracker-popup__title">${tracker?.licensePlate || serialNumber}</div>
+        <div class="tracker-popup__title">${tracker?.alias || serialNumber}</div>
         <div class="tracker-popup__meta">${t('home.sn')}: ${serialNumber}</div>
         <div class="tracker-popup__row">
           <span>${t('home.speed')}</span>
@@ -531,7 +531,7 @@ function TrackingDetail({ darkmode, serialNumber }: TrackingDetailProps) {
         )}
         <DetailForm
           onSubmitDetail={handleSubmitDetail}
-          licensePlate={tracker?.licensePlate}
+          alias={tracker?.alias}
           serialNumber={tracker?.serialNumber}
         />
       </div>
