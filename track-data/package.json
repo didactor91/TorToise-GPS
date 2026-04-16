@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "mongoose": "^8.0.0",
-    "validator": "^11.0.0"
+    "validator": "^13.15.35"
   },
   "devDependencies": {
     "mongodb-memory-server": "^10.1.4",
