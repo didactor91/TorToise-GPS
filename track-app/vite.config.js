@@ -12,7 +12,6 @@ export default defineConfig({
   server: { 
     port: 3000,
     host: '0.0.0.0',
-    historyApiFallback: true,
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8085',
@@ -42,16 +41,31 @@ export default defineConfig({
       }
     }
   },
-  optimizeDeps: {
-    include: ['track-utils', 'track-data'],
-    esbuildOptions: {
-      loader: {
-        '.js': 'jsx'
+  build: {
+    rolldownOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/react-router-dom/')
+          ) return 'vendor-react'
+          if (
+            id.includes('/@apollo/') ||
+            id.includes('/graphql/') ||
+            id.includes('/graphql-ws/')
+          ) return 'vendor-apollo'
+          if (id.includes('/leaflet/')) return 'vendor-map'
+          if (
+            id.includes('/i18next/') ||
+            id.includes('/react-i18next/') ||
+            id.includes('/react-toastify/') ||
+            id.includes('/iconoir-react/')
+          ) return 'vendor-ui'
+          return 'vendor-misc'
+        }
       }
     }
-  },
-  esbuild: {
-    include: /src\/.*\.[jt]sx?$/,
-    exclude: []
   }
 })

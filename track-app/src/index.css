@@ -1,11 +1,5 @@
 @import "tailwindcss";
 
-/* ── Inter font (local package, SIL Open Font License) ───────────────────── */
-@import '@fontsource/inter/400.css';
-@import '@fontsource/inter/500.css';
-@import '@fontsource/inter/600.css';
-@import '@fontsource/inter/700.css';
-
 /* ── Design tokens (Accessible palettes) ─────────────────────────────────── */
 :root,
 :root[data-theme='light'] {

@@ -9,7 +9,7 @@ const { mongoose } = require('track-data')
 const errorMiddleware = require('./src/shared/error.middleware')
 
 const { ApolloServer } = require('@apollo/server')
-const { expressMiddleware } = require('@apollo/server/express4')
+const { expressMiddleware } = require('@as-integrations/express5')
 const { WebSocketServer } = require('ws')
 const { useServer } = require('graphql-ws/lib/use/ws')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
@@ -77,7 +77,7 @@ const schema = makeExecutableSchema({ typeDefs, resolvers })
         wsServer
     )
 
-    // Apollo Server 4
+    // Apollo Server
     const apolloServer = new ApolloServer({
         schema,
         plugins: [
