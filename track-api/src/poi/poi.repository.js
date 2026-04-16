@@ -49,6 +49,7 @@ module.exports = {
                 companyId,
                 title: poi.title || 'Migrated POI',
                 color: poi.color || '#89c800',
+                emoji: poi.emoji || '📍',
                 latitude: poi.latitude,
                 longitude: poi.longitude
             })

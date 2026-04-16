@@ -23,7 +23,8 @@ const fleetResolver = {
           items: rows.map(t => ({
             id: t._id.toString(),
             serialNumber: t.serialNumber,
-            alias: t.alias || null
+            alias: t.alias || null,
+            emoji: t.emoji || '🚚'
           })),
           totalCount: Number(totalCount || 0)
         }
@@ -42,7 +43,7 @@ const fleetResolver = {
       try {
         await requireAccess(userId, { feature: 'fleet', permission: 'fleet.read' })
         const t = await service.retrieveTracker(userId, id)
-        return { id: t._id.toString(), serialNumber: t.serialNumber, alias: t.alias || null }
+        return { id: t._id.toString(), serialNumber: t.serialNumber, alias: t.alias || null, emoji: t.emoji || '🚚' }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }
@@ -58,7 +59,7 @@ const fleetResolver = {
       try {
         await requireAccess(userId, { feature: 'fleet', permission: 'fleet.read' })
         const t = await service.retrieveTrackerBySN(userId, serialNumber)
-        return { id: t._id.toString(), serialNumber: t.serialNumber, alias: t.alias || null }
+        return { id: t._id.toString(), serialNumber: t.serialNumber, alias: t.alias || null, emoji: t.emoji || '🚚' }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }
@@ -74,7 +75,7 @@ const fleetResolver = {
       try {
         await requireAccess(userId, { feature: 'fleet', permission: 'fleet.read' })
         const t = await service.retrieveTrackerByAlias(userId, alias)
-        return { id: t._id.toString(), serialNumber: t.serialNumber, alias: t.alias || null }
+        return { id: t._id.toString(), serialNumber: t.serialNumber, alias: t.alias || null, emoji: t.emoji || '🚚' }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }

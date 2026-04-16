@@ -59,7 +59,8 @@ module.exports = {
             await Tracker.create({
                 companyId,
                 serialNumber: tracker.serialNumber,
-                alias: tracker.alias || `#MIG-${tracker.serialNumber}`
+                alias: tracker.alias || `#MIG-${tracker.serialNumber}`,
+                emoji: tracker.emoji || '🚚'
             })
         }
     },

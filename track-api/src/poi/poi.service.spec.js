@@ -82,6 +82,24 @@ describe('poiService', () => {
             const pos = resp.pois.length - 1
             expect(resp.pois[pos].title).toBeDefined()
             expect(resp.pois[pos].color).toBe('#89c800')
+            expect(resp.pois[pos].emoji).toBe('📍')
+        })
+
+        it('should succeed on allowed poi emoji', async () => {
+            const lat = Math.random() * 100
+            const lon = Math.random() * 10
+            const poiData = { title: 'My Fav', color: '#ff0000', emoji: '🏭', latitude: lat, longitude: lon }
+            await service.addPOI(user.id, poiData)
+            const resp = await User.findById(user.id)
+            const pos = resp.pois.length - 1
+            expect(resp.pois[pos].emoji).toBe('🏭')
+        })
+
+        it('should fail on invalid poi emoji', async () => {
+            const lat = Math.random() * 100
+            const lon = Math.random() * 10
+            const poiData = { title: 'My Fav', color: '#ff0000', emoji: '🛸', latitude: lat, longitude: lon }
+            await expectServiceError(() => service.addPOI(user.id, poiData), InputError, 'invalid poi emoji 🛸')
         })
 
         it('should fail on incorrect id user', async () => {
@@ -212,6 +230,16 @@ describe('poiService', () => {
             const data = await User.findById(user.id)
             expect(data.pois[0].title).toBe('Your UPDATED Fav')
             expect(data.pois[0].color).toBe('#ff0000')
+        })
+
+        it('should succeed on valid poi emoji update', async () => {
+            await service.updatePOI(user.id, user.pois[0].id, { emoji: '🏢' })
+            const data = await User.findById(user.id)
+            expect(data.pois[0].emoji).toBe('🏢')
+        })
+
+        it('should fail on invalid poi emoji update', async () => {
+            await expectServiceError(() => service.updatePOI(user.id, user.pois[0].id, { emoji: '🛸' }), InputError, 'invalid poi emoji 🛸')
         })
 
         it('should fail on incorrect user id', async () => {

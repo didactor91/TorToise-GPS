@@ -2,6 +2,7 @@ const { errors: { LogicError, InputError } } = require('track-utils')
 const { validate } = require('track-utils')
 const repo = require('./fleet.repository')
 const { ensureUserCompany } = require('../shared/company-context')
+const { normalizeTrackerEmoji } = require('../shared/emoji-catalog')
 
 const fleetService = {
     normalizePagination(offset = 0, limit = 20) {
@@ -13,7 +14,7 @@ const fleetService = {
     addTracker(id, trackerData) {
         if (!trackerData) throw new InputError('incorrect tracker info')
 
-        let { serialNumber, alias } = trackerData
+        let { serialNumber, alias, emoji } = trackerData
         if (!alias || (typeof alias === 'string' && !alias.trim())) {
             alias = '#IS-' + (Math.floor(Math.random() * (9999 - 1000)) + 1000).toString() + '-FAKE'
         }
@@ -21,8 +22,11 @@ const fleetService = {
         validate.arguments([
             { name: 'id', value: id, type: String, notEmpty: true },
             { name: 'serialNumber', value: serialNumber, type: String, notEmpty: true },
-            { name: 'alias', value: alias, type: String, notEmpty: true, optional: true }
+            { name: 'alias', value: alias, type: String, notEmpty: true, optional: true },
+            { name: 'emoji', value: emoji, type: String, notEmpty: true, optional: true }
         ])
+
+        const normalizedEmoji = normalizeTrackerEmoji(emoji)
 
         return (async () => {
             const user = await repo.findUserById(id)
@@ -37,8 +41,8 @@ const fleetService = {
             const serial = await repo.findTrackerBySerial(serialNumber)
             if (serial) throw new LogicError(`Serial Number ${serialNumber} already registered`)
 
-            await repo.createTracker({ companyId, serialNumber, alias })
-            user.trackers.push({ serialNumber, alias })
+            await repo.createTracker({ companyId, serialNumber, alias, emoji: normalizedEmoji })
+            user.trackers.push({ serialNumber, alias, emoji: normalizedEmoji })
             await repo.saveUser(user)
         })()
     },
@@ -165,15 +169,19 @@ const fleetService = {
                 }
             }
 
+            const normalizedEmoji = normalizeTrackerEmoji(trackerData.emoji || tracker.emoji || '🚚')
+
             await repo.updateTrackerByIdAndCompany(tracker._id, companyId, {
                 serialNumber: trackerData.serialNumber || tracker.serialNumber,
-                alias: trackerData.alias || tracker.alias
+                alias: trackerData.alias || tracker.alias,
+                emoji: normalizedEmoji
             })
 
             const legacy = user.trackers.id(trackerID) || user.trackers.find(item => item.serialNumber === tracker.serialNumber)
             if (legacy) {
                 legacy.serialNumber = trackerData.serialNumber || legacy.serialNumber
                 legacy.alias = trackerData.alias || legacy.alias
+                legacy.emoji = normalizedEmoji
                 await repo.saveUser(user)
             }
         })()

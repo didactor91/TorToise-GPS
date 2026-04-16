@@ -3,6 +3,7 @@ const { validate, errors: { InputError, LogicError } } = require('track-utils')
 const repo = require('./backoffice.repository')
 const { requireAccess } = require('../shared/authorization.service')
 const { ACCESS_VERSION, encodePermissionKeys, encodeFeatureKeys, PERMISSION_KEYS, FEATURE_KEYS } = require('../shared/access-control')
+const { normalizeTrackerEmoji } = require('../shared/emoji-catalog')
 
 const VALID_ROLES = new Set(['staff', 'owner', 'admin', 'dispatcher', 'viewer'])
 const VALID_LANGUAGES = new Set(['en', 'es', 'ca'])
@@ -136,6 +137,36 @@ const backofficeService = {
         return repo.countUsers(companyId)
     },
 
+    async listTrackers(requesterId, companyId = null, pagination) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
+        if (companyId) {
+            validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
+            const company = await repo.findCompanyById(companyId)
+            if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
+        }
+        if (!pagination) return repo.listTrackers(companyId)
+        const _pagination = this.normalizePagination(pagination.offset, pagination.limit)
+        return repo.listTrackers(companyId, _pagination)
+    },
+
+    async countTrackers(requesterId, companyId = null) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
+        if (companyId) {
+            validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
+            const company = await repo.findCompanyById(companyId)
+            if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
+        }
+        return repo.countTrackers(companyId)
+    },
+
+    async retrieveTracker(requesterId, trackerId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
+        validate.arguments([{ name: 'trackerId', value: trackerId, type: String, notEmpty: true }])
+        const tracker = await repo.findTrackerById(trackerId)
+        if (!tracker) throw new LogicError(`tracker with id ${trackerId} doesn't exists`)
+        return tracker
+    },
+
     async createUser(requesterId, { name, surname, email, password, role, companyId, language = 'en', permissionKeys } = {}) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.create' })
         validate.arguments([
@@ -175,7 +206,7 @@ const backofficeService = {
         })
     },
 
-    async createTracker(requesterId, { serialNumber, alias, companyId } = {}) {
+    async createTracker(requesterId, { serialNumber, alias, emoji, companyId } = {}) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.update' })
         validate.arguments([
             { name: 'serialNumber', value: serialNumber, type: String, notEmpty: true },
@@ -189,6 +220,7 @@ const backofficeService = {
         validate.arguments([
             { name: 'alias', value: resolvedAlias, type: String, notEmpty: true }
         ])
+        const normalizedEmoji = normalizeTrackerEmoji(emoji)
 
         const company = await repo.findCompanyById(companyId)
         if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
@@ -204,8 +236,29 @@ const backofficeService = {
         return repo.createTracker({
             companyId,
             serialNumber,
-            alias: resolvedAlias
+            alias: resolvedAlias,
+            emoji: normalizedEmoji
         })
+    },
+
+    async updateTrackerAlias(requesterId, trackerId, alias) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.update' })
+        validate.arguments([
+            { name: 'trackerId', value: trackerId, type: String, notEmpty: true },
+            { name: 'alias', value: alias, type: String, notEmpty: true }
+        ])
+
+        const tracker = await repo.findTrackerById(trackerId)
+        if (!tracker) throw new LogicError(`tracker with id ${trackerId} doesn't exists`)
+
+        if (alias[0] !== '#') {
+            const aliasTracker = await repo.findTrackerByAlias(alias)
+            if (aliasTracker && aliasTracker._id.toString() !== trackerId) {
+                throw new LogicError(`Alias ${alias} already registered`)
+            }
+        }
+
+        return repo.updateTrackerById(trackerId, { alias })
     },
 
     async updateUser(requesterId, userId, { name, surname, email, language, role, companyId, permissionKeys } = {}) {

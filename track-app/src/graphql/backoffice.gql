@@ -55,6 +55,34 @@ mutation BackofficeCreateTracker($input: BackofficeCreateTrackerInput!) {
   }
 }
 
+query BackofficeTrackers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
+  backofficeTrackers(companyId: $companyId, offset: $offset, limit: $limit) {
+    totalCount
+    items {
+      id
+      serialNumber
+      alias
+      emoji
+    }
+  }
+}
+
+query BackofficeTracker($id: ID!) {
+  backofficeTracker(id: $id) {
+    id
+    serialNumber
+    alias
+    emoji
+  }
+}
+
+mutation BackofficeUpdateTrackerAlias($id: ID!, $alias: String!) {
+  backofficeUpdateTrackerAlias(id: $id, alias: $alias) {
+    success
+    message
+  }
+}
+
 mutation BackofficeUpdateUser($id: ID!, $input: BackofficeUpdateUserInput!) {
   backofficeUpdateUser(id: $id, input: $input) {
     success

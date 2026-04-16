@@ -44,6 +44,11 @@ function Trackings() {
         />
       )
     },
+    {
+      key: 'emoji',
+      label: t('ui.emoji'),
+      render: (row) => <span>{row.emoji || '🚚'}</span>
+    },
     { key: 'alias', label: t('ui.alias') },
     { key: 'serialNumber', label: t('ui.serial') },
     {

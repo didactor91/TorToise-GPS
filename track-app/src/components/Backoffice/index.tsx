@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import PageShell from '../shared/PageShell'
 import DataTable, { Column } from '../shared/DataTable'
-import { useBackoffice, BackofficeCompany, BackofficeUser } from '../../hooks/useBackoffice'
+import { useBackoffice, BackofficeCompany, BackofficeTracker, BackofficeUser } from '../../hooks/useBackoffice'
 import { FEATURE_KEYS, PERMISSION_KEYS, permissionTemplateForRole } from './access-catalog'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { TRACKER_EMOJIS } from '../../common/emoji-options'
 
 function toggleInArray(list: string[], value: string): string[] {
   return list.includes(value)
@@ -18,6 +19,8 @@ interface BackofficeProps {
   canReadUsers?: boolean
   canCreateUsers?: boolean
   canUpdateUsers?: boolean
+  canReadTrackers?: boolean
+  canUpdateTrackers?: boolean
   canCreateTrackers?: boolean
 }
 
@@ -27,6 +30,8 @@ function Backoffice({
   canReadUsers = true,
   canCreateUsers = true,
   canUpdateUsers = true,
+  canReadTrackers = true,
+  canUpdateTrackers = true,
   canCreateTrackers = true
 }: BackofficeProps) {
   const { t } = useTranslation()
@@ -42,10 +47,27 @@ function Backoffice({
   const isUsersSection = section === 'users'
   const isTrackersSection = section === 'trackers'
   const canSeeUsersSection = canReadUsers || canCreateUsers || canUpdateUsers
+  const canSeeTrackersSection = canReadTrackers || canUpdateTrackers || canCreateTrackers
   const shouldLoadUsers = isUsersSection && canReadUsers
+  const shouldLoadTrackers = isTrackersSection && canReadTrackers
 
   const [usersPage, setUsersPage] = useState(1)
-  const { companies, users, usersTotalCount, loading, createCompany, createUser, createTracker, updateCompany, updateUser } = useBackoffice(usersPage, 20, shouldLoadUsers)
+  const [trackersPage, setTrackersPage] = useState(1)
+  const {
+    companies,
+    users,
+    trackers,
+    trackerDetail,
+    usersTotalCount,
+    trackersTotalCount,
+    loading,
+    createCompany,
+    createUser,
+    createTracker,
+    updateCompany,
+    updateUser,
+    updateTrackerAlias
+  } = useBackoffice(usersPage, 20, shouldLoadUsers, trackersPage, 20, shouldLoadTrackers, isTrackersSection ? entityId : undefined)
   const [companyForm, setCompanyForm] = useState({
     name: '',
     active: true,
@@ -64,10 +86,12 @@ function Backoffice({
   const [trackerForm, setTrackerForm] = useState({
     serialNumber: '',
     alias: '',
+    emoji: '🚚',
     companyId: ''
   })
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
   const [selectedUserId, setSelectedUserId] = useState<string>('')
+  const [trackerAliasEdit, setTrackerAliasEdit] = useState('')
   const COMPANY_COLUMNS: Column<BackofficeCompany>[] = [
     { key: 'name', label: t('auth.name') },
     { key: 'slug', label: t('backoffice.slug') },
@@ -94,6 +118,15 @@ function Backoffice({
       label: t('backoffice.permissions'),
       render: (row) => row.permissionKeys.join(', ')
     }
+  ]
+  const TRACKER_COLUMNS: Column<BackofficeTracker>[] = [
+    {
+      key: 'emoji',
+      label: t('ui.emoji'),
+      render: (row) => row.emoji || '🚚'
+    },
+    { key: 'serialNumber', label: t('trackers.serialNumber') },
+    { key: 'alias', label: t('ui.alias') }
   ]
 
   const companyOptions = useMemo(
@@ -140,11 +173,13 @@ function Backoffice({
     await createTracker({
       serialNumber: trackerForm.serialNumber,
       alias: trackerForm.alias || undefined,
+      emoji: trackerForm.emoji,
       companyId: trackerForm.companyId
     })
     setTrackerForm({
       serialNumber: '',
       alias: '',
+      emoji: '🚚',
       companyId: ''
     })
   }
@@ -236,6 +271,11 @@ function Backoffice({
       permissionKeys: userEdit.permissionKeys
     })
   }
+  const onUpdateTrackerAlias = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!trackerDetail?.id || !trackerAliasEdit.trim()) return
+    await updateTrackerAlias(trackerDetail.id, trackerAliasEdit.trim())
+  }
 
   useEffect(() => {
     if (!isCompaniesSection) return
@@ -250,6 +290,11 @@ function Backoffice({
     if (nextUserId !== selectedUserId) setSelectedUserId(nextUserId)
     if (nextUserId) fillUserEdit(nextUserId)
   }, [isUsersSection, entityId, selectedUserId, users])
+
+  useEffect(() => {
+    if (!isTrackersSection) return
+    setTrackerAliasEdit(trackerDetail?.alias || '')
+  }, [isTrackersSection, trackerDetail?.id, trackerDetail?.alias])
 
   return (
     <PageShell title={t('backoffice.title')}>
@@ -272,7 +317,7 @@ function Backoffice({
             {t('backoffice.users')}
           </button>
         )}
-        {canCreateTrackers && (
+        {canSeeTrackersSection && (
           <button
             className={`rounded-full border px-3 py-1.5 text-sm font-medium ${isTrackersSection ? 'bg-[var(--bg-glass-strong)] text-[var(--text-primary)]' : 'bg-[var(--bg-glass)] text-[var(--text-secondary)]'}`}
             onClick={() => navigate('/backoffice/trackers')}
@@ -590,7 +635,19 @@ function Backoffice({
                 placeholder={t('ui.optional')}
               />
             </div>
-            <div className="md:col-span-2">
+            <div>
+              <label className={labelClass}>{t('ui.emoji')}</label>
+              <select
+                className={inputClass}
+                value={trackerForm.emoji}
+                onChange={(e) => setTrackerForm(prev => ({ ...prev, emoji: e.target.value }))}
+              >
+                {TRACKER_EMOJIS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.value} {option.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className={labelClass}>{t('backoffice.company')}</label>
               <select
                 className={inputClass}
@@ -606,6 +663,57 @@ function Backoffice({
             </div>
           </div>
           <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.createTracker')}</button>
+        </form>
+      </section>
+      )}
+
+      {isTrackersSection && canReadTrackers && (
+      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('trackers.title')}</h3>
+        <DataTable
+          columns={TRACKER_COLUMNS}
+          rows={trackers}
+          emptyMessage={t('trackers.empty')}
+          variant="flat"
+          onEdit={(tracker) => navigate(`/backoffice/trackers/${tracker.id}`)}
+          pageSize={20}
+          serverPagination={{
+            enabled: true,
+            currentPage: trackersPage,
+            totalCount: trackersTotalCount,
+            onPageChange: setTrackersPage
+          }}
+        />
+      </section>
+      )}
+
+      {isTrackersSection && canReadTrackers && trackerDetail && (
+      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editTrackerAlias')}</h3>
+        <form onSubmit={onUpdateTrackerAlias}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className={labelClass}>{t('trackers.serialNumber')}</label>
+              <input className={inputClass} value={trackerDetail.serialNumber} readOnly />
+            </div>
+            <div>
+              <label className={labelClass}>{t('ui.emoji')}</label>
+              <input className={inputClass} value={trackerDetail.emoji || '🚚'} readOnly />
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelClass}>{t('ui.alias')}</label>
+              <input
+                className={inputClass}
+                value={trackerAliasEdit}
+                onChange={(e) => setTrackerAliasEdit(e.target.value)}
+                required
+                readOnly={!canUpdateTrackers}
+              />
+            </div>
+          </div>
+          {canUpdateTrackers && (
+            <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.updateTrackerAlias')}</button>
+          )}
         </form>
       </section>
       )}

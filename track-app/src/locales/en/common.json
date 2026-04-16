@@ -51,6 +51,7 @@
     "latitude": "Latitude",
     "longitude": "Longitude",
     "color": "Color",
+    "emoji": "Emoji",
     "role": "Role",
     "languageEnglish": "English",
     "languageSpanish": "Spanish",
@@ -101,8 +102,10 @@
     "title": "Points of Interest",
     "newPoiAction": "+ New POI",
     "newPoi": "New Point of Interest",
+    "editPoi": "Edit POI",
     "empty": "No POIs yet. Create your first one!",
     "createPoi": "Create POI",
+    "updatePoi": "Update POI",
     "markerColor": "Marker Color",
     "colors": {
       "blue": "Blue",
@@ -156,6 +159,7 @@
     "usersTab": "Users",
     "createCompany": "Create Company",
     "createTracker": "Create Tracker",
+    "editTrackerAlias": "Edit Tracker Alias",
     "companies": "Companies",
     "editCompany": "Edit Company",
     "createUser": "Create User",
@@ -177,7 +181,8 @@
     "noCompanies": "No companies yet.",
     "noUsers": "No users yet.",
     "updateCompany": "Update Company",
-    "updateUser": "Update User"
+    "updateUser": "Update User",
+    "updateTrackerAlias": "Update Alias"
   },
   "app": {
     "brandName": "TorToise GPS",

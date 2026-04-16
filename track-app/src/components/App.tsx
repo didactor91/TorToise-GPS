@@ -11,6 +11,7 @@ import TrackingsNew from './Trackings/New'
 import TrackingDetail from './TrackingDetail'
 import Places from './Places'
 import PlacesNew from './Places/New'
+import PlacesEdit from './Places/Edit'
 import Backoffice from './Backoffice'
 import { onSessionExpired } from '../apollo/session'
 import Navbar from './Navbar'
@@ -53,6 +54,8 @@ interface BackofficeRouteProps {
   canReadUsers: boolean
   canCreateUsers: boolean
   canUpdateUsers: boolean
+  canReadTrackers: boolean
+  canUpdateTrackers: boolean
   canCreateTrackers: boolean
 }
 
@@ -60,12 +63,13 @@ function BackofficeRoute({
   canReadUsers,
   canCreateUsers,
   canUpdateUsers,
+  canReadTrackers,
+  canUpdateTrackers,
   canCreateTrackers
 }: BackofficeRouteProps) {
   const { section, entityId } = useParams<{ section: string, entityId?: string }>()
   const normalizedSection = normalizeBackofficeSection(section)
   if (section !== normalizedSection) return <Navigate to="/backoffice/companies" replace />
-  if (normalizedSection === 'trackers' && entityId) return <Navigate to="/backoffice/trackers" replace />
 
   return (
     <Backoffice
@@ -74,6 +78,8 @@ function BackofficeRoute({
       canReadUsers={canReadUsers}
       canCreateUsers={canCreateUsers}
       canUpdateUsers={canUpdateUsers}
+      canReadTrackers={canReadTrackers}
+      canUpdateTrackers={canUpdateTrackers}
       canCreateTrackers={canCreateTrackers}
     />
   )
@@ -109,9 +115,23 @@ function App() {
     meData?.me?.featureKeys?.includes('backoffice') &&
     meData?.me?.permissionKeys?.includes('fleet.create')
   )
+  const canReadTrackers = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('fleet.read')
+  )
+  const canUpdateTrackers = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('fleet.update')
+  )
   const canAccessBackoffice = Boolean(
     meData?.me?.featureKeys?.includes('backoffice') &&
-    (meData?.me?.permissionKeys?.includes('companies.read') || meData?.me?.permissionKeys?.includes('users.read'))
+    (
+      meData?.me?.permissionKeys?.includes('companies.read') ||
+      meData?.me?.permissionKeys?.includes('users.read') ||
+      meData?.me?.permissionKeys?.includes('fleet.read') ||
+      meData?.me?.permissionKeys?.includes('fleet.create') ||
+      meData?.me?.permissionKeys?.includes('fleet.update')
+    )
   )
 
   // ── Session expiry handler ────────────────────────────────────────────────
@@ -176,7 +196,7 @@ function App() {
           onBackofficeUsers={handleBackofficeUsers}
           onBackofficeTrackers={handleBackofficeTrackers}
           showBackofficeUsers={canReadUsers || canCreateUsers || canUpdateUsers}
-          showBackofficeTrackers={canCreateTrackers}
+          showBackofficeTrackers={canReadTrackers || canUpdateTrackers || canCreateTrackers}
           onLogout={handleLogout}
         />
       )}
@@ -195,6 +215,7 @@ function App() {
 
         <Route path="/places"     element={guard(<Places />)} />
         <Route path="/places/new" element={guard(<PlacesNew />)} />
+        <Route path="/places/:poiId" element={guard(<PlacesEdit />)} />
 
         <Route path="/trackers"     element={guard(<Trackings />)} />
         <Route path="/trackers/new" element={guard(<TrackingsNew />)} />
@@ -206,6 +227,8 @@ function App() {
               canReadUsers={canReadUsers}
               canCreateUsers={canCreateUsers}
               canUpdateUsers={canUpdateUsers}
+              canReadTrackers={canReadTrackers}
+              canUpdateTrackers={canUpdateTrackers}
               canCreateTrackers={canCreateTrackers}
             />
           )}
@@ -217,6 +240,8 @@ function App() {
               canReadUsers={canReadUsers}
               canCreateUsers={canCreateUsers}
               canUpdateUsers={canUpdateUsers}
+              canReadTrackers={canReadTrackers}
+              canUpdateTrackers={canUpdateTrackers}
               canCreateTrackers={canCreateTrackers}
             />
           )}

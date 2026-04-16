@@ -1,12 +1,17 @@
 import { useMemo } from 'react'
 import { toast } from 'react-toastify'
 import {
+    BackofficeTrackerDocument,
+    BackofficeTrackersDocument,
     BackofficeCompaniesDocument,
     BackofficeUsersDocument,
     useBackofficeCompaniesQuery,
+    useBackofficeTrackerQuery,
+    useBackofficeTrackersQuery,
     useBackofficeCreateCompanyMutation,
     useBackofficeCreateTrackerMutation,
     useBackofficeCreateUserMutation,
+    useBackofficeUpdateTrackerAliasMutation,
     useBackofficeUpdateCompanyMutation,
     useBackofficeUpdateUserMutation,
     useBackofficeUsersQuery
@@ -31,8 +36,24 @@ export type BackofficeUser = {
     permissionKeys: string[]
 }
 
-export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = true) {
+export type BackofficeTracker = {
+    id: string
+    serialNumber: string
+    alias: string | null
+    emoji: string | null
+}
+
+export function useBackoffice(
+    usersPage = 1,
+    pageSize = 20,
+    enableUsersQuery = true,
+    trackersPage = 1,
+    trackersPageSize = 20,
+    enableTrackersQuery = false,
+    trackerId?: string
+) {
     const offset = Math.max(0, (usersPage - 1) * pageSize)
+    const trackersOffset = Math.max(0, (trackersPage - 1) * trackersPageSize)
     const companiesQuery = useBackofficeCompaniesQuery({
         fetchPolicy: 'cache-and-network',
         errorPolicy: 'all',
@@ -43,6 +64,20 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
         errorPolicy: 'all',
         skip: !enableUsersQuery,
         variables: { offset, limit: pageSize },
+        onError: (err) => toast.error(err.message)
+    })
+    const trackersQuery = useBackofficeTrackersQuery({
+        fetchPolicy: 'cache-and-network',
+        errorPolicy: 'all',
+        skip: !enableTrackersQuery,
+        variables: { offset: trackersOffset, limit: trackersPageSize },
+        onError: (err) => toast.error(err.message)
+    })
+    const trackerDetailQuery = useBackofficeTrackerQuery({
+        fetchPolicy: 'cache-and-network',
+        errorPolicy: 'all',
+        skip: !trackerId,
+        variables: { id: trackerId || '' },
         onError: (err) => toast.error(err.message)
     })
 
@@ -70,6 +105,9 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
         onError: (err) => toast.error(err.message),
         refetchQueries: [{ query: BackofficeUsersDocument }]
     })
+    const [updateTrackerAliasMutation] = useBackofficeUpdateTrackerAliasMutation({
+        onError: (err) => toast.error(err.message)
+    })
 
     const companies = useMemo<BackofficeCompany[]>(
         () => (companiesQuery.data?.backofficeCompanies ?? []).map(c => ({
@@ -95,6 +133,25 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
         })),
         [usersQuery.data]
     )
+    const trackers = useMemo<BackofficeTracker[]>(
+        () => (trackersQuery.data?.backofficeTrackers?.items ?? []).map(t => ({
+            id: t.id,
+            serialNumber: t.serialNumber,
+            alias: t.alias ?? null,
+            emoji: t.emoji ?? '🚚'
+        })),
+        [trackersQuery.data]
+    )
+    const trackerDetail = useMemo<BackofficeTracker | null>(() => {
+        const t = trackerDetailQuery.data?.backofficeTracker
+        if (!t) return null
+        return {
+            id: t.id,
+            serialNumber: t.serialNumber,
+            alias: t.alias ?? null,
+            emoji: t.emoji ?? '🚚'
+        }
+    }, [trackerDetailQuery.data])
 
     const createCompany = async (name: string, active: boolean, featureKeys?: string[]) => {
         const res = await createCompanyMutation({ variables: { input: { name, active, featureKeys } } })
@@ -123,6 +180,7 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
     const createTracker = async (input: {
         serialNumber: string
         alias?: string
+        emoji?: string
         companyId: string
     }) => {
         const res = await createTrackerMutation({ variables: { input } })
@@ -141,16 +199,30 @@ export function useBackoffice(usersPage = 1, pageSize = 20, enableUsersQuery = t
         const res = await updateUserMutation({ variables: { id, input } })
         if (res.data?.backofficeUpdateUser.success) toast.success(res.data.backofficeUpdateUser.message)
     }
+    const updateTrackerAlias = async (id: string, alias: string) => {
+        const res = await updateTrackerAliasMutation({
+            variables: { id, alias },
+            refetchQueries: [
+                { query: BackofficeTrackersDocument },
+                { query: BackofficeTrackerDocument, variables: { id } }
+            ]
+        })
+        if (res.data?.backofficeUpdateTrackerAlias.success) toast.success(res.data.backofficeUpdateTrackerAlias.message)
+    }
 
     return {
         companies,
         users,
+        trackers,
+        trackerDetail,
         usersTotalCount: enableUsersQuery ? (usersQuery.data?.backofficeUsers?.totalCount ?? 0) : 0,
-        loading: companiesQuery.loading || usersQuery.loading,
+        trackersTotalCount: enableTrackersQuery ? (trackersQuery.data?.backofficeTrackers?.totalCount ?? 0) : 0,
+        loading: companiesQuery.loading || usersQuery.loading || trackersQuery.loading || trackerDetailQuery.loading,
         createCompany,
         updateCompany,
         createUser,
         createTracker,
-        updateUser
+        updateUser,
+        updateTrackerAlias
     }
 }

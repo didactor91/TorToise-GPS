@@ -2,6 +2,7 @@ import React from 'react'
 import PageShell from '../shared/PageShell'
 import { useAddTracker } from '../../hooks/useAddTracker'
 import { useTranslation } from 'react-i18next'
+import { TRACKER_EMOJIS } from '../../common/emoji-options'
 
 function TrackingsNew() {
   const { t } = useTranslation()
@@ -14,7 +15,8 @@ function TrackingsNew() {
     const form = e.currentTarget
     const serialNumber = (form.elements.namedItem('serialNumber') as HTMLInputElement).value
     const alias = (form.elements.namedItem('alias') as HTMLInputElement).value
-    addTracker({ serialNumber, alias: alias || null })
+    const emoji = (form.elements.namedItem('emoji') as HTMLSelectElement).value
+    addTracker({ serialNumber, alias: alias || null, emoji })
     form.reset()
   }
 
@@ -31,6 +33,15 @@ function TrackingsNew() {
             autoFocus
             required
           />
+        </div>
+
+        <div>
+          <label className={labelClass}>{t('ui.emoji')}</label>
+          <select name="emoji" defaultValue="🚚" className={inputClass}>
+            {TRACKER_EMOJIS.map((option) => (
+              <option key={option.value} value={option.value}>{option.value} {option.label}</option>
+            ))}
+          </select>
         </div>
 
         <div>

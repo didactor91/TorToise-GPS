@@ -1,11 +1,17 @@
 query GetPOIs($offset: Int = 0, $limit: Int = 20) {
   pois(offset: $offset, limit: $limit) {
     totalCount
-    items { id title color latitude longitude }
+    items { id title color emoji latitude longitude }
   }
+}
+query GetPOI($id: ID!) {
+  poi(id: $id) { id title color emoji latitude longitude }
 }
 mutation AddPOI($input: AddPOIInput!) {
   addPOI(input: $input) { success message }
+}
+mutation UpdatePOI($id: ID!, $input: UpdatePOIInput!) {
+  updatePOI(id: $id, input: $input) { success message }
 }
 mutation DeletePOI($id: ID!) {
   deletePOI(id: $id) { success message }

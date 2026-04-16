@@ -54,6 +54,20 @@ describe('fleetService', () => {
             const pos = resp.trackers.length - 1
             expect(resp.trackers[pos].serialNumber).toBe('1234567890')
             expect(resp.trackers[pos].alias).toBeDefined()
+            expect(resp.trackers[pos].emoji).toBe('🚚')
+        })
+
+        it('should succeed on allowed tracker emoji', async () => {
+            const trackerData = { serialNumber: '1234567890', alias: '1234-ABC', emoji: '🚲' }
+            await service.addTracker(user.id, trackerData)
+            const resp = await User.findById(user.id)
+            const pos = resp.trackers.length - 1
+            expect(resp.trackers[pos].emoji).toBe('🚲')
+        })
+
+        it('should fail on invalid tracker emoji', async () => {
+            const trackerData = { serialNumber: '1234567890', alias: '1234-ABC', emoji: '🛸' }
+            await expectServiceError(() => service.addTracker(user.id, trackerData), InputError, 'invalid tracker emoji 🛸')
         })
 
         it('should fail on incorrect id user', async () => {
@@ -258,6 +272,18 @@ describe('fleetService', () => {
             const data = await User.findById(user.id)
             expect(data.trackers[0].serialNumber).toBe('1234567890')
             expect(data.trackers[0].alias).toBe('0909-UPDATE')
+        })
+
+        it('should succeed on valid tracker emoji update', async () => {
+            const _trackerData = { emoji: '🚌' }
+            await service.updateTracker(user.id, user.trackers[0].id, _trackerData)
+            const data = await User.findById(user.id)
+            expect(data.trackers[0].emoji).toBe('🚌')
+        })
+
+        it('should fail on invalid tracker emoji update', async () => {
+            const _trackerData = { emoji: '🛸' }
+            await expectServiceError(() => service.updateTracker(user.id, user.trackers[0].id, _trackerData), InputError, 'invalid tracker emoji 🛸')
         })
 
         it('should fail on incorrect user id', async () => {

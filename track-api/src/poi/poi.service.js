@@ -2,6 +2,7 @@ const { errors: { LogicError, InputError } } = require('track-utils')
 const { validate } = require('track-utils')
 const repo = require('./poi.repository')
 const { ensureUserCompany } = require('../shared/company-context')
+const { normalizePoiEmoji } = require('../shared/emoji-catalog')
 
 const poiService = {
     normalizePagination(offset = 0, limit = 20) {
@@ -13,18 +14,20 @@ const poiService = {
     addPOI(id, poiData) {
         if (!poiData) throw new InputError('incorrect poi info')
 
-        let { title, color, latitude, longitude } = poiData
+        let { title, color, emoji, latitude, longitude } = poiData
 
         validate.arguments([
             { name: 'id', value: id, type: String, notEmpty: true },
             { name: 'title', value: title, type: String, notEmpty: true, optional: true },
             { name: 'color', value: color, type: String, notEmpty: true, optional: true },
+            { name: 'emoji', value: emoji, type: String, notEmpty: true, optional: true },
             { name: 'latitude', value: latitude, type: Number, notEmpty: true },
             { name: 'longitude', value: longitude, type: Number, notEmpty: true }
         ])
 
         title ? title = title : title = 'Kripton-' + ((Math.random() * 1000).toFixed(0)).toString()
         color ? color = color : color = '#89c800'
+        emoji = normalizePoiEmoji(emoji)
 
         return (async () => {
             const user = await repo.findUserById(id)
@@ -32,8 +35,8 @@ const poiService = {
             const companyId = await ensureUserCompany(user)
             await repo.syncLegacyPois(companyId, user.pois || [])
 
-            await repo.createPOI({ companyId, title, color, latitude, longitude })
-            user.pois.push({ title, color, latitude, longitude })
+            await repo.createPOI({ companyId, title, color, emoji, latitude, longitude })
+            user.pois.push({ title, color, emoji, latitude, longitude })
             await repo.saveUser(user)
         })()
     },
@@ -116,12 +119,14 @@ const poiService = {
             await repo.updateByIdAndCompany(poi._id || poiID, companyId, {
                 title: poiData.title || poi.title,
                 color: poiData.color || poi.color,
+                emoji: normalizePoiEmoji(poiData.emoji || poi.emoji || '📍'),
                 latitude: poiData.latitude || poi.latitude,
                 longitude: poiData.longitude || poi.longitude
             })
             if (legacyPoi) {
                 legacyPoi.title = poiData.title || legacyPoi.title
                 legacyPoi.color = poiData.color || legacyPoi.color
+                legacyPoi.emoji = normalizePoiEmoji(poiData.emoji || legacyPoi.emoji || '📍')
                 legacyPoi.latitude = poiData.latitude || legacyPoi.latitude
                 legacyPoi.longitude = poiData.longitude || legacyPoi.longitude
                 await repo.saveUser(user)

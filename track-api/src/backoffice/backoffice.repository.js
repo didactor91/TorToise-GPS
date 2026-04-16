@@ -62,5 +62,27 @@ module.exports = {
 
     async createTracker(data) {
         return Tracker.create(data)
+    },
+
+    async findTrackerById(id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) return null
+        return Tracker.findById(id)
+    },
+
+    async listTrackers(companyId, { offset = 0, limit } = {}) {
+        const query = companyId ? { companyId } : {}
+        const result = Tracker.find(query).sort({ createdAt: -1 }).skip(offset)
+        if (typeof limit === 'number') result.limit(limit)
+        return result.lean()
+    },
+
+    async countTrackers(companyId) {
+        const query = companyId ? { companyId } : {}
+        return Tracker.countDocuments(query)
+    },
+
+    async updateTrackerById(id, patch) {
+        if (!mongoose.Types.ObjectId.isValid(id)) return null
+        return Tracker.findByIdAndUpdate(id, { $set: patch }, { new: true })
     }
 }
