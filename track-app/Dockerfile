@@ -9,7 +9,7 @@ COPY track-utils/package.json ./track-utils/
 COPY track-app/package.json ./track-app/
 
 # Install dependencies
-RUN npm ci --workspace=track-app --include-workspace-root
+RUN npm ci --workspace=track-app --include-workspace-root --include=dev --include=optional
 
 # Copy source code
 COPY track-data/ ./track-data/

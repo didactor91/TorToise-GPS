@@ -5,8 +5,11 @@ const {
     encodeFeatureKeys,
     decodeFeatureKeys,
     effectivePermissionKeysForUser,
-    effectiveFeatureKeysForCompany
+    effectiveFeatureKeysForCompany,
+    hasPermission,
+    isFeatureEnabled
 } = require('./access-control')
+const { errors: { InputError } } = require('track-utils')
 
 describe('access-control', () => {
     it('encodes and decodes permission keys', () => {
@@ -39,5 +42,40 @@ describe('access-control', () => {
         expect(set.has('tracking')).toBeTruthy()
         expect(set.has('fleet')).toBeTruthy()
         expect(set.has('poi')).toBeTruthy()
+    })
+
+    it('returns empty set when version does not match ACCESS_VERSION', () => {
+        const packed = encodePermissionKeys(['fleet.read'])
+        const decoded = decodePermissionKeys(packed, ACCESS_VERSION + 1)
+        expect(decoded.size).toBe(0)
+    })
+
+    it('throws InputError when encoding unknown permission key', () => {
+        expect(() => encodePermissionKeys(['fleet.read', 'unknown.permission']))
+            .toThrow(InputError)
+    })
+
+    it('throws InputError when decoding invalid packed value', () => {
+        expect(() => decodeFeatureKeys('not-hex', ACCESS_VERSION))
+            .toThrow(InputError)
+    })
+
+    it('uses explicit packed permissions over role defaults when present', () => {
+        const packed = encodePermissionKeys(['users.read'])
+        const set = effectivePermissionKeysForUser({
+            role: 'viewer',
+            permissionsPacked: packed,
+            permissionsVersion: ACCESS_VERSION
+        })
+
+        expect(set.has('users.read')).toBeTruthy()
+        expect(set.has('tracking.read')).toBeFalsy()
+    })
+
+    it('hasPermission and isFeatureEnabled validate unknown keys', () => {
+        expect(() => hasPermission({ role: 'viewer' }, 'bad.permission'))
+            .toThrow(InputError)
+        expect(() => isFeatureEnabled({}, 'bad.feature'))
+            .toThrow(InputError)
     })
 })
