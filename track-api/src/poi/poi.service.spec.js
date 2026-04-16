@@ -3,6 +3,22 @@ const { errors: { LogicError, RequirementError, InputError } } = require('track-
 const argon2 = require('argon2')
 const service = require('./poi.service')
 
+async function expectServiceError(run, ErrorType, message, matcher = 'toBe') {
+    let caught
+    try {
+        await run()
+    } catch (error) {
+        caught = error
+    }
+
+    expect(caught).toBeInstanceOf(ErrorType)
+    if (matcher === 'toContain') {
+        expect(caught.message).toContain(message)
+        return
+    }
+    expect(caught.message).toBe(message)
+}
+
 describe('poiService', () => {
     let name, surname, email, password
 
@@ -71,84 +87,39 @@ describe('poiService', () => {
         it('should fail on incorrect id user', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
             const poiData = { title: 'My Fav', color: '#ff0000', latitude: 10, longitude: 2 }
-            try {
-                await service.addPOI(wrongId, poiData)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.addPOI(wrongId, poiData), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on undefined id user', async () => {
-            try {
-                await service.addPOI(undefined, { title: 'X', color: '#fff', latitude: 1, longitude: 2 })
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => service.addPOI(undefined, { title: 'X', color: '#fff', latitude: 1, longitude: 2 }), RequirementError, `id is not optional`)
         })
 
         it('should fail on null id user', async () => {
-            try {
-                await service.addPOI(null, { title: 'X', color: '#fff', latitude: 1, longitude: 2 })
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => service.addPOI(null, { title: 'X', color: '#fff', latitude: 1, longitude: 2 }), RequirementError, `id is not optional`)
         })
 
         it('should fail on undefined data poi', async () => {
-            try {
-                await service.addPOI(user.id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(InputError)
-                expect(error.message).toBe('incorrect poi info')
-            }
+            await expectServiceError(() => service.addPOI(user.id, undefined), InputError, 'incorrect poi info')
         })
 
         it('should fail on null data poi', async () => {
-            try {
-                await service.addPOI(user.id, null)
-            } catch (error) {
-                expect(error).toBeInstanceOf(InputError)
-                expect(error.message).toBe('incorrect poi info')
-            }
+            await expectServiceError(() => service.addPOI(user.id, null), InputError, 'incorrect poi info')
         })
 
         it('should fail on null data latitude', async () => {
-            try {
-                await service.addPOI(user.id, { title: 'X', color: '#fff', latitude: null, longitude: 2 })
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`latitude is not optional`)
-            }
+            await expectServiceError(() => service.addPOI(user.id, { title: 'X', color: '#fff', latitude: null, longitude: 2 }), RequirementError, `latitude is not optional`)
         })
 
         it('should fail on undefined data latitude', async () => {
-            try {
-                await service.addPOI(user.id, { title: 'X', color: '#fff', latitude: undefined, longitude: 2 })
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`latitude is not optional`)
-            }
+            await expectServiceError(() => service.addPOI(user.id, { title: 'X', color: '#fff', latitude: undefined, longitude: 2 }), RequirementError, `latitude is not optional`)
         })
 
         it('should fail on null data longitude', async () => {
-            try {
-                await service.addPOI(user.id, { title: 'X', color: '#fff', latitude: 1, longitude: null })
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`longitude is not optional`)
-            }
+            await expectServiceError(() => service.addPOI(user.id, { title: 'X', color: '#fff', latitude: 1, longitude: null }), RequirementError, `longitude is not optional`)
         })
 
         it('should fail on undefined data longitude', async () => {
-            try {
-                await service.addPOI(user.id, { title: 'X', color: '#fff', latitude: 1, longitude: undefined })
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`longitude is not optional`)
-            }
+            await expectServiceError(() => service.addPOI(user.id, { title: 'X', color: '#fff', latitude: 1, longitude: undefined }), RequirementError, `longitude is not optional`)
         })
     })
 
@@ -170,12 +141,7 @@ describe('poiService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.retrieveAllPOI(wrongId)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.retrieveAllPOI(wrongId), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should return empty array for user without POIs', async () => {
@@ -206,31 +172,16 @@ describe('poiService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.retrieveOnePOI(wrongId, user.pois[0].id)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.retrieveOnePOI(wrongId, user.pois[0].id), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on user with wrong POI id', async () => {
             const poiId = '1234132412'
-            try {
-                await service.retrieveOnePOI(user.id, poiId)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`POI with id ${poiId} doesn't exists`)
-            }
+            await expectServiceError(() => service.retrieveOnePOI(user.id, poiId), LogicError, `POI with id ${poiId} doesn't exists`)
         })
 
         it('should fail on undefined POI id', async () => {
-            try {
-                await service.retrieveOnePOI(user.id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`poiID is not optional`)
-            }
+            await expectServiceError(() => service.retrieveOnePOI(user.id, undefined), RequirementError, `poiID is not optional`)
         })
     })
 
@@ -265,40 +216,20 @@ describe('poiService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.updatePOI(wrongId, user.pois[0].id, poiData)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.updatePOI(wrongId, user.pois[0].id, poiData), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on user with wrong POI id', async () => {
             const poiId = '1234132412'
-            try {
-                await service.updatePOI(user.id, poiId, poiData)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`POI with id ${poiId} doesn't exists`)
-            }
+            await expectServiceError(() => service.updatePOI(user.id, poiId, poiData), LogicError, `POI with id ${poiId} doesn't exists`)
         })
 
         it('should fail on undefined POI id', async () => {
-            try {
-                await service.updatePOI(user.id, undefined, poiData)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`poiID is not optional`)
-            }
+            await expectServiceError(() => service.updatePOI(user.id, undefined, poiData), RequirementError, `poiID is not optional`)
         })
 
         it('should fail on undefined poiData', async () => {
-            try {
-                await service.updatePOI(user.id, user.pois[0].id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`poiData is not optional`)
-            }
+            await expectServiceError(() => service.updatePOI(user.id, user.pois[0].id, undefined), RequirementError, `poiData is not optional`)
         })
     })
 
@@ -325,31 +256,16 @@ describe('poiService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.deletePOI(wrongId, user.pois[0].id)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.deletePOI(wrongId, user.pois[0].id), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on user with wrong POI id', async () => {
             const poiId = '1234132412'
-            try {
-                await service.deletePOI(user.id, poiId)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`POI with id ${poiId} doesn't exists`)
-            }
+            await expectServiceError(() => service.deletePOI(user.id, poiId), LogicError, `POI with id ${poiId} doesn't exists`)
         })
 
         it('should fail on undefined POI id', async () => {
-            try {
-                await service.deletePOI(user.id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`poiID is not optional`)
-            }
+            await expectServiceError(() => service.deletePOI(user.id, undefined), RequirementError, `poiID is not optional`)
         })
     })
 })

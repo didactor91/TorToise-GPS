@@ -3,6 +3,22 @@ const { errors: { LogicError, RequirementError, InputError } } = require('track-
 const argon2 = require('argon2')
 const service = require('./fleet.service')
 
+async function expectServiceError(run, ErrorType, message, matcher = 'toBe') {
+    let caught
+    try {
+        await run()
+    } catch (error) {
+        caught = error
+    }
+
+    expect(caught).toBeInstanceOf(ErrorType)
+    if (matcher === 'toContain') {
+        expect(caught.message).toContain(message)
+        return
+    }
+    expect(caught.message).toBe(message)
+}
+
 describe('fleetService', () => {
     let name, surname, email, password
 
@@ -42,72 +58,43 @@ describe('fleetService', () => {
 
         it('should fail on incorrect id user', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.addTracker(wrongId, { serialNumber: '1234567890' })
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.addTracker(wrongId, { serialNumber: '1234567890' }), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on undefined id user', async () => {
-            try {
-                await service.addTracker(undefined, { serialNumber: '1234567890' })
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => service.addTracker(undefined, { serialNumber: '1234567890' }), RequirementError, `id is not optional`)
         })
 
         it('should fail on null id user', async () => {
-            try {
-                await service.addTracker(null, { serialNumber: '1234567890' })
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => service.addTracker(null, { serialNumber: '1234567890' }), RequirementError, `id is not optional`)
         })
 
         it('should fail on undefined data tracker', async () => {
-            try {
-                await service.addTracker(user.id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(InputError)
-                expect(error.message).toBe('incorrect tracker info')
-            }
+            await expectServiceError(() => service.addTracker(user.id, undefined), InputError, 'incorrect tracker info')
         })
 
         it('should fail on null data tracker', async () => {
-            try {
-                await service.addTracker(user.id, null)
-            } catch (error) {
-                expect(error).toBeInstanceOf(InputError)
-                expect(error.message).toBe('incorrect tracker info')
-            }
+            await expectServiceError(() => service.addTracker(user.id, null), InputError, 'incorrect tracker info')
         })
 
         it('should fail on add existing tracker serial number', async () => {
             const _serialNumber = '123123123'
-            try {
-                await service.addTracker(user.id, { serialNumber: _serialNumber })
-                await service.addTracker(user.id, { serialNumber: _serialNumber })
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`Serial Number ${_serialNumber} already registered`)
-            }
+            await service.addTracker(user.id, { serialNumber: _serialNumber })
+            await expectServiceError(() => 
+                service.addTracker(user.id, { serialNumber: _serialNumber }), LogicError,
+                `Serial Number ${_serialNumber} already registered`
+            )
         })
 
         it('should fail on add existing tracker license plate', async () => {
             const _serialNumber = '1234500000'
             const _alias = '1234-SKY'
             const __serialNumber = '1231456456'
-            try {
-                await service.addTracker(user.id, { serialNumber: _serialNumber, alias: _alias })
-                await service.addTracker(user.id, { serialNumber: __serialNumber, alias: _alias })
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`Alias ${_alias} already registered`)
-            }
+            await service.addTracker(user.id, { serialNumber: _serialNumber, alias: _alias })
+            await expectServiceError(() => 
+                service.addTracker(user.id, { serialNumber: __serialNumber, alias: _alias }), LogicError,
+                `Alias ${_alias} already registered`
+            )
         })
     })
 
@@ -129,12 +116,7 @@ describe('fleetService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.retrieveAllTrackers(wrongId)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.retrieveAllTrackers(wrongId), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should return empty array for user without Trackers', async () => {
@@ -163,31 +145,16 @@ describe('fleetService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.retrieveTracker(wrongId, user.trackers[0].id)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.retrieveTracker(wrongId, user.trackers[0].id), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on user with wrong Tracker id', async () => {
             const trackerId = '1234132412'
-            try {
-                await service.retrieveTracker(user.id, trackerId)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`Tracker with id ${trackerId} doesn't exists`)
-            }
+            await expectServiceError(() => service.retrieveTracker(user.id, trackerId), LogicError, `Tracker with id ${trackerId} doesn't exists`)
         })
 
         it('should fail on undefined Tracker id', async () => {
-            try {
-                await service.retrieveTracker(user.id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`trackerID is not optional`)
-            }
+            await expectServiceError(() => service.retrieveTracker(user.id, undefined), RequirementError, `trackerID is not optional`)
         })
     })
 
@@ -211,31 +178,16 @@ describe('fleetService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.retrieveTrackerBySN(wrongId, '1234567890')
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.retrieveTrackerBySN(wrongId, '1234567890'), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on user with wrong Tracker SN', async () => {
             const trackerSN = 'FAKE_FAKE'
-            try {
-                await service.retrieveTrackerBySN(user.id, trackerSN)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`Tracker with SN ${trackerSN} doesn't exists`)
-            }
+            await expectServiceError(() => service.retrieveTrackerBySN(user.id, trackerSN), LogicError, `Tracker with SN ${trackerSN} doesn't exists`)
         })
 
         it('should fail on undefined Serial Number', async () => {
-            try {
-                await service.retrieveTrackerBySN(user.id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`serialNumber is not optional`)
-            }
+            await expectServiceError(() => service.retrieveTrackerBySN(user.id, undefined), RequirementError, `serialNumber is not optional`)
         })
     })
 
@@ -259,31 +211,16 @@ describe('fleetService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.retrieveTrackerByAlias(wrongId, '1234-ABC')
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.retrieveTrackerByAlias(wrongId, '1234-ABC'), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on user with wrong Tracker alias', async () => {
             const trackerLicense = 'FAKE_FAKE'
-            try {
-                await service.retrieveTrackerByAlias(user.id, trackerLicense)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`Tracker with alias ${trackerLicense} doesn't exists`)
-            }
+            await expectServiceError(() => service.retrieveTrackerByAlias(user.id, trackerLicense), LogicError, `Tracker with alias ${trackerLicense} doesn't exists`)
         })
 
         it('should fail on undefined alias', async () => {
-            try {
-                await service.retrieveTrackerByAlias(user.id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`alias is not optional`)
-            }
+            await expectServiceError(() => service.retrieveTrackerByAlias(user.id, undefined), RequirementError, `alias is not optional`)
         })
     })
 
@@ -325,40 +262,20 @@ describe('fleetService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.updateTracker(wrongId, user.trackers[0].id, { serialNumber: 'X' })
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.updateTracker(wrongId, user.trackers[0].id, { serialNumber: 'X' }), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on user with wrong Tracker id', async () => {
             const trackerId = '1234132412'
-            try {
-                await service.updateTracker(user.id, trackerId, { serialNumber: 'X' })
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`Tracker with id ${trackerId} doesn't exists`)
-            }
+            await expectServiceError(() => service.updateTracker(user.id, trackerId, { serialNumber: 'X' }), LogicError, `Tracker with id ${trackerId} doesn't exists`)
         })
 
         it('should fail on undefined tracker id', async () => {
-            try {
-                await service.updateTracker(user.id, undefined, { serialNumber: 'X' })
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`trackerID is not optional`)
-            }
+            await expectServiceError(() => service.updateTracker(user.id, undefined, { serialNumber: 'X' }), RequirementError, `trackerID is not optional`)
         })
 
         it('should fail on undefined trackerData', async () => {
-            try {
-                await service.updateTracker(user.id, user.trackers[0].id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`trackerData is not optional`)
-            }
+            await expectServiceError(() => service.updateTracker(user.id, user.trackers[0].id, undefined), RequirementError, `trackerData is not optional`)
         })
     })
 
@@ -383,31 +300,16 @@ describe('fleetService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await service.deleteTracker(wrongId, user.trackers[0].id)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => service.deleteTracker(wrongId, user.trackers[0].id), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on user with wrong tracker id', async () => {
             const trackerId = '1234132412'
-            try {
-                await service.deleteTracker(user.id, trackerId)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`Tracker with id ${trackerId} doesn't exists`)
-            }
+            await expectServiceError(() => service.deleteTracker(user.id, trackerId), LogicError, `Tracker with id ${trackerId} doesn't exists`)
         })
 
         it('should fail on undefined tracker id', async () => {
-            try {
-                await service.deleteTracker(user.id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`trackerID is not optional`)
-            }
+            await expectServiceError(() => service.deleteTracker(user.id, undefined), RequirementError, `trackerID is not optional`)
         })
     })
 })

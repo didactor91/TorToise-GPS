@@ -3,6 +3,22 @@ const { errors: { LogicError, RequirementError, InputError } } = require('track-
 const argon2 = require('argon2')
 const trackingService = require('./tracking.service')
 
+async function expectServiceError(run, ErrorType, message, matcher = 'toBe') {
+    let caught
+    try {
+        await run()
+    } catch (error) {
+        caught = error
+    }
+
+    expect(caught).toBeInstanceOf(ErrorType)
+    if (matcher === 'toContain') {
+        expect(caught.message).toContain(message)
+        return
+    }
+    expect(caught.message).toBe(message)
+}
+
 describe('trackingService', () => {
     let name, surname, email, password
 
@@ -64,60 +80,30 @@ describe('trackingService', () => {
         it('should fail on incorrect id user', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
             const trackData = { serialNumber: '1234567890', latitude: lat, longitude: lon, speed: 1, status: 1, date: new Date().toISOString() }
-            try {
-                await trackingService.addTrack(wrongId, trackData)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => trackingService.addTrack(wrongId, trackData), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on undefined id user', async () => {
             const trackData = { serialNumber: '1234567890', latitude: lat, longitude: lon, speed: 1, status: 1, date: new Date().toISOString() }
-            try {
-                await trackingService.addTrack(undefined, trackData)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => trackingService.addTrack(undefined, trackData), RequirementError, `id is not optional`)
         })
 
         it('should fail on null id user', async () => {
             const trackData = { serialNumber: '1234567890', latitude: lat, longitude: lon, speed: 1, status: 1, date: new Date().toISOString() }
-            try {
-                await trackingService.addTrack(null, trackData)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => trackingService.addTrack(null, trackData), RequirementError, `id is not optional`)
         })
 
         it('should fail on unexisting serial number tracker', async () => {
             const trackData = { serialNumber: '000_NO_EXIST', latitude: lat, longitude: lon, speed: 1, status: 1, date: new Date().toISOString() }
-            try {
-                await trackingService.addTrack(user.id, trackData)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`Tracker with SN 000_NO_EXIST doesn't exists`)
-            }
+            await expectServiceError(() => trackingService.addTrack(user.id, trackData), LogicError, `Tracker with SN 000_NO_EXIST doesn't exists`)
         })
 
         it('should fail on undefined data track', async () => {
-            try {
-                await trackingService.addTrack(user.id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(InputError)
-                expect(error.message).toBe('incorrect track info')
-            }
+            await expectServiceError(() => trackingService.addTrack(user.id, undefined), InputError, 'incorrect track info')
         })
 
         it('should fail on null data track', async () => {
-            try {
-                await trackingService.addTrack(user.id, null)
-            } catch (error) {
-                expect(error).toBeInstanceOf(InputError)
-                expect(error.message).toBe('incorrect track info')
-            }
+            await expectServiceError(() => trackingService.addTrack(user.id, null), InputError, 'incorrect track info')
         })
     })
 
@@ -228,21 +214,11 @@ describe('trackingService', () => {
         })
 
         it('should fail on undefined data track', async () => {
-            try {
-                await trackingService.addTrackTCP(undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(InputError)
-                expect(error.message).toBe('incorrect track info')
-            }
+            await expectServiceError(() => trackingService.addTrackTCP(undefined), InputError, 'incorrect track info')
         })
 
         it('should fail on null data track', async () => {
-            try {
-                await trackingService.addTrackTCP(null)
-            } catch (error) {
-                expect(error).toBeInstanceOf(InputError)
-                expect(error.message).toBe('incorrect track info')
-            }
+            await expectServiceError(() => trackingService.addTrackTCP(null), InputError, 'incorrect track info')
         })
 
         it('should fail on out-of-range latitude', async () => {
@@ -255,12 +231,7 @@ describe('trackingService', () => {
                 date: new Date().toISOString()
             }
 
-            try {
-                await trackingService.addTrackTCP(trackData)
-            } catch (error) {
-                expect(error).toBeInstanceOf(InputError)
-                expect(error.message).toBe('latitude out of range')
-            }
+            await expectServiceError(() => trackingService.addTrackTCP(trackData), InputError, 'latitude out of range')
         })
     })
 
@@ -291,58 +262,28 @@ describe('trackingService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await trackingService.retrieveLastTrack(wrongId, user.trackers[0].id)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => trackingService.retrieveLastTrack(wrongId, user.trackers[0].id), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on undefined id user', async () => {
-            try {
-                await trackingService.retrieveLastTrack(undefined, user.trackers[0].id)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => trackingService.retrieveLastTrack(undefined, user.trackers[0].id), RequirementError, `id is not optional`)
         })
 
         it('should fail on null id user', async () => {
-            try {
-                await trackingService.retrieveLastTrack(null, user.trackers[0].id)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => trackingService.retrieveLastTrack(null, user.trackers[0].id), RequirementError, `id is not optional`)
         })
 
         it('should fail on unexisting tracker id', async () => {
             const badId = 'Bad_Tracker_Id'
-            try {
-                await trackingService.retrieveLastTrack(user.id, badId)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`Tracker with id ${badId} doesn't exists`)
-            }
+            await expectServiceError(() => trackingService.retrieveLastTrack(user.id, badId), LogicError, `Tracker with id ${badId} doesn't exists`)
         })
 
         it('should fail on undefined tracker id', async () => {
-            try {
-                await trackingService.retrieveLastTrack(user.id, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe('trackerID is not optional')
-            }
+            await expectServiceError(() => trackingService.retrieveLastTrack(user.id, undefined), RequirementError, 'trackerID is not optional')
         })
 
         it('should fail on null tracker id', async () => {
-            try {
-                await trackingService.retrieveLastTrack(user.id, null)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe('trackerID is not optional')
-            }
+            await expectServiceError(() => trackingService.retrieveLastTrack(user.id, null), RequirementError, 'trackerID is not optional')
         })
     })
 
@@ -383,30 +324,15 @@ describe('trackingService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await trackingService.retrieveAllLastTracks(wrongId)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => trackingService.retrieveAllLastTracks(wrongId), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail on undefined id user', async () => {
-            try {
-                await trackingService.retrieveAllLastTracks(undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => trackingService.retrieveAllLastTracks(undefined), RequirementError, `id is not optional`)
         })
 
         it('should fail on null id user', async () => {
-            try {
-                await trackingService.retrieveAllLastTracks(null)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => trackingService.retrieveAllLastTracks(null), RequirementError, `id is not optional`)
         })
 
         it('should return empty array for user with no trackers', async () => {
@@ -451,77 +377,37 @@ describe('trackingService', () => {
 
         it('should fail on incorrect user id', async () => {
             const wrongId = '5cb9998f2e59ee0009eac02c'
-            try {
-                await trackingService.retrieveRangeOfTracks(wrongId, user.trackers[0].id, startTime, endTime)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toBe(`user with id ${wrongId} doesn't exists`)
-            }
+            await expectServiceError(() => trackingService.retrieveRangeOfTracks(wrongId, user.trackers[0].id, startTime, endTime), LogicError, `user with id ${wrongId} doesn't exists`)
         })
 
         it('should fail when no tracks exist in range', async () => {
             const past = '2000-01-01T00:00:00.000Z'
             const pastEnd = '2000-01-02T00:00:00.000Z'
-            try {
-                await trackingService.retrieveRangeOfTracks(user.id, user.trackers[0].id, past, pastEnd)
-            } catch (error) {
-                expect(error).toBeInstanceOf(LogicError)
-                expect(error.message).toContain('Tracker without tracks between')
-            }
+            await expectServiceError(() => trackingService.retrieveRangeOfTracks(user.id, user.trackers[0].id, past, pastEnd), LogicError, 'Tracker without tracks between', 'toContain')
         })
 
         it('should fail on undefined id user', async () => {
-            try {
-                await trackingService.retrieveRangeOfTracks(undefined, user.trackers[0].id, startTime, endTime)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => trackingService.retrieveRangeOfTracks(undefined, user.trackers[0].id, startTime, endTime), RequirementError, `id is not optional`)
         })
 
         it('should fail on null id user', async () => {
-            try {
-                await trackingService.retrieveRangeOfTracks(null, user.trackers[0].id, startTime, endTime)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe(`id is not optional`)
-            }
+            await expectServiceError(() => trackingService.retrieveRangeOfTracks(null, user.trackers[0].id, startTime, endTime), RequirementError, `id is not optional`)
         })
 
         it('should fail on undefined tracker id', async () => {
-            try {
-                await trackingService.retrieveRangeOfTracks(user.id, undefined, startTime, endTime)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe('trackerID is not optional')
-            }
+            await expectServiceError(() => trackingService.retrieveRangeOfTracks(user.id, undefined, startTime, endTime), RequirementError, 'trackerID is not optional')
         })
 
         it('should fail on null tracker id', async () => {
-            try {
-                await trackingService.retrieveRangeOfTracks(user.id, null, startTime, endTime)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe('trackerID is not optional')
-            }
+            await expectServiceError(() => trackingService.retrieveRangeOfTracks(user.id, null, startTime, endTime), RequirementError, 'trackerID is not optional')
         })
 
         it('should fail on undefined start time', async () => {
-            try {
-                await trackingService.retrieveRangeOfTracks(user.id, user.trackers[0].id, undefined, endTime)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe('startTime is not optional')
-            }
+            await expectServiceError(() => trackingService.retrieveRangeOfTracks(user.id, user.trackers[0].id, undefined, endTime), RequirementError, 'startTime is not optional')
         })
 
         it('should fail on undefined end time', async () => {
-            try {
-                await trackingService.retrieveRangeOfTracks(user.id, user.trackers[0].id, startTime, undefined)
-            } catch (error) {
-                expect(error).toBeInstanceOf(RequirementError)
-                expect(error.message).toBe('endTime is not optional')
-            }
+            await expectServiceError(() => trackingService.retrieveRangeOfTracks(user.id, user.trackers[0].id, startTime, undefined), RequirementError, 'endTime is not optional')
         })
     })
 })

@@ -12,6 +12,7 @@ const net = require('net')
 
 const VALID_FRAME = '*HQ,9900110011,V1,120000,A,41.3902,N,002.1540,E,090.80,208,080426,FFFF9FFF,214,03,2126,1860#'
 const INVALID_FRAME = '*HQ,9900110011,V1,120000,V,41.3902,N,002.1540,E,090.80,208,080426,FFFF9FFF,214,03,2126,1860#'
+const VALID_FRAME_2 = '*HQ,9900110022,V1,120100,A,41.3902,N,002.1540,E,070.20,208,080426,FFFF9FFF,214,03,2126,1860#'
 
 /**
  * Connect a raw TCP socket to the server, send a payload, then wait for the
@@ -28,6 +29,30 @@ function sendPayload(port, payload) {
             client.destroy()
             resolve()
         }, 150)
+    })
+}
+
+/**
+ * Connect a raw TCP socket, send multiple chunks in sequence and allow server
+ * buffering logic to assemble complete frames.
+ */
+function sendPayloadInChunks(port, chunks) {
+    return new Promise((resolve, reject) => {
+        const client = net.createConnection({ port }, async () => {
+            try {
+                for (const chunk of chunks) {
+                    client.write(chunk)
+                    await new Promise((r) => setTimeout(r, 20))
+                }
+            } catch (err) {
+                reject(err)
+            }
+        })
+        client.on('error', reject)
+        setTimeout(() => {
+            client.destroy()
+            resolve()
+        }, 180)
     })
 }
 
@@ -111,6 +136,46 @@ describe('track-tcp server — real TCP socket wiring', () => {
         await sendPayload(port, INVALID_FRAME)
 
         expect(mockCall).not.toHaveBeenCalled()
+    })
+
+    it('processes multiple complete frames received in a single TCP chunk', async () => {
+        mockCall.mockResolvedValue({})
+
+        await sendPayload(port, `${VALID_FRAME}${VALID_FRAME_2}`)
+
+        expect(mockCall).toHaveBeenCalledTimes(2)
+        expect(mockCall).toHaveBeenNthCalledWith(
+            1,
+            expect.any(String),
+            expect.objectContaining({
+                data: expect.objectContaining({ serialNumber: '9900110011' })
+            })
+        )
+        expect(mockCall).toHaveBeenNthCalledWith(
+            2,
+            expect.any(String),
+            expect.objectContaining({
+                data: expect.objectContaining({ serialNumber: '9900110022' })
+            })
+        )
+    })
+
+    it('buffers a partial frame and only ingests when delimiter # arrives', async () => {
+        mockCall.mockResolvedValue({})
+
+        const cut = Math.floor(VALID_FRAME.length / 2)
+        const firstChunk = VALID_FRAME.slice(0, cut)
+        const secondChunk = VALID_FRAME.slice(cut)
+
+        await sendPayloadInChunks(port, [firstChunk, secondChunk])
+
+        expect(mockCall).toHaveBeenCalledTimes(1)
+        expect(mockCall).toHaveBeenCalledWith(
+            expect.any(String),
+            expect.objectContaining({
+                data: expect.objectContaining({ serialNumber: '9900110011' })
+            })
+        )
     })
 
     it('server exports a net.Server instance', () => {
