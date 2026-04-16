@@ -4,12 +4,15 @@ WORKDIR /app
 
 # Copy workspace files
 COPY package.json package-lock.json ./
+COPY track-api/package.json ./track-api/
 COPY track-data/package.json ./track-data/
+COPY track-tcp/package.json ./track-tcp/
 COPY track-utils/package.json ./track-utils/
 COPY track-app/package.json ./track-app/
+COPY tracker-simulator/package.json ./tracker-simulator/
 
 # Install dependencies
-RUN npm ci --workspace=track-app --include-workspace-root --include=dev --include=optional
+RUN npm ci --include=dev --include=optional
 
 # Copy source code
 COPY track-data/ ./track-data/
