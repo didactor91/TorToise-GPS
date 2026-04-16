@@ -12,8 +12,7 @@
     "themeLight": "Claro",
     "themeDark": "Oscuro",
     "minimize": "Minimizar barra",
-    "expand": "Expandir barra",
-    "language": "Idioma"
+    "expand": "Expandir barra"
   },
   "landing": {
     "tagline": "Seguimiento de flotas en tiempo real",
@@ -53,7 +52,6 @@
     "longitude": "Longitud",
     "color": "Color",
     "role": "Rol",
-    "company": "Compañía",
     "languageEnglish": "Inglés",
     "languageSpanish": "Español",
     "languageCatalan": "Catalán",

@@ -120,13 +120,8 @@ function DataTable<T extends object>({
       </div>
       {totalRows > resolvedPageSize && (
         <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            borderTop: '1px solid var(--color-border)'
-          }}
+          className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"
+          style={{ borderTop: '1px solid var(--color-border)' }}
         >
           <small style={{ color: 'var(--color-text-muted)' }}>
             {t('table.showing', { start: startIndex, end: endIndex, total: totalRows })}
