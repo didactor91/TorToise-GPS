@@ -67,6 +67,21 @@ const backofficeResolver = {
 
     /**
      * @param {unknown} _
+     * @param {{ id: string }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeCompany(_, { id }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        const company = await service.retrieveCompany(userId, id)
+        return mapCompany(company)
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
+    },
+
+    /**
+     * @param {unknown} _
      * @param {{ companyId?: string|null, offset?: number, limit?: number }} args
      * @param {{ userId: string|null }} ctx
      */
@@ -84,6 +99,21 @@ const backofficeResolver = {
           items: rows.map(mapUser),
           totalCount: Number(totalCount || 0)
         }
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
+    },
+
+    /**
+     * @param {unknown} _
+     * @param {{ id: string }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeUser(_, { id }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        const user = await service.retrieveUser(userId, id)
+        return mapUser(user)
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }
@@ -228,6 +258,51 @@ const backofficeResolver = {
       try {
         await service.updateTracker(userId, id, input)
         return { success: true, message: 'Ok, tracker updated.' }
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
+    },
+
+    /**
+     * @param {unknown} _
+     * @param {{ id: string }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeDeleteCompany(_, { id }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        await service.deleteCompany(userId, id)
+        return { success: true, message: 'Ok, company deleted.' }
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
+    },
+
+    /**
+     * @param {unknown} _
+     * @param {{ id: string }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeDeleteUser(_, { id }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        await service.deleteUser(userId, id)
+        return { success: true, message: 'Ok, user deleted.' }
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
+    },
+
+    /**
+     * @param {unknown} _
+     * @param {{ id: string }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeDeleteTracker(_, { id }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        await service.deleteTracker(userId, id)
+        return { success: true, message: 'Ok, tracker deleted.' }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }

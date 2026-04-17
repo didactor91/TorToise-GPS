@@ -66,6 +66,14 @@ const backofficeService = {
         return repo.listCompanies()
     },
 
+    async retrieveCompany(requesterId, companyId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
+        validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
+        const company = await repo.findCompanyById(companyId)
+        if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
+        return company
+    },
+
     async createCompany(requesterId, { name, active = true, featureKeys } = {}) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.create' })
         validate.arguments([
@@ -135,6 +143,14 @@ const backofficeService = {
             if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
         }
         return repo.countUsers(companyId)
+    },
+
+    async retrieveUser(requesterId, userId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.read' })
+        validate.arguments([{ name: 'userId', value: userId, type: String, notEmpty: true }])
+        const user = await repo.findUserById(userId)
+        if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
+        return user
     },
 
     async listTrackers(requesterId, companyId = null, pagination) {
@@ -291,6 +307,45 @@ const backofficeService = {
         }
 
         return repo.updateTrackerById(trackerId, patch)
+    },
+
+    async deleteCompany(requesterId, companyId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.update' })
+        validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
+
+        const company = await repo.findCompanyById(companyId)
+        if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
+
+        const requester = await repo.findUserById(requesterId)
+        if (requester?.companyId && requester.companyId.toString() === companyId) {
+            throw new LogicError('cannot delete your own company')
+        }
+
+        await Promise.all([
+            repo.deleteUsersByCompanyId(companyId),
+            repo.deleteTrackersByCompanyId(companyId),
+            repo.deletePoisByCompanyId(companyId)
+        ])
+        await repo.deleteCompanyById(companyId)
+    },
+
+    async deleteUser(requesterId, userId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.delete' })
+        validate.arguments([{ name: 'userId', value: userId, type: String, notEmpty: true }])
+        if (requesterId === userId) throw new LogicError('cannot delete current user')
+
+        const user = await repo.findUserById(userId)
+        if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
+        await repo.deleteUserById(userId)
+    },
+
+    async deleteTracker(requesterId, trackerId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'fleet.delete' })
+        validate.arguments([{ name: 'trackerId', value: trackerId, type: String, notEmpty: true }])
+
+        const tracker = await repo.findTrackerById(trackerId)
+        if (!tracker) throw new LogicError(`tracker with id ${trackerId} doesn't exists`)
+        await repo.deleteTrackerById(trackerId)
     },
 
     async updateUser(requesterId, userId, { name, surname, email, language, role, companyId, permissionKeys } = {}) {
