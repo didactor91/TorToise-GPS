@@ -261,6 +261,38 @@ const backofficeService = {
         return repo.updateTrackerById(trackerId, { alias })
     },
 
+    async updateTracker(requesterId, trackerId, { alias, emoji } = {}) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.update' })
+        validate.arguments([
+            { name: 'trackerId', value: trackerId, type: String, notEmpty: true }
+        ])
+
+        const tracker = await repo.findTrackerById(trackerId)
+        if (!tracker) throw new LogicError(`tracker with id ${trackerId} doesn't exists`)
+
+        const patch = {}
+        if (typeof alias === 'string') {
+            const trimmedAlias = alias.trim()
+            if (!trimmedAlias) throw new InputError('alias should not be empty')
+
+            if (trimmedAlias[0] !== '#') {
+                const aliasTracker = await repo.findTrackerByAlias(trimmedAlias)
+                if (aliasTracker && aliasTracker._id.toString() !== trackerId) {
+                    throw new LogicError(`Alias ${trimmedAlias} already registered`)
+                }
+            }
+            patch.alias = trimmedAlias
+        }
+
+        if (typeof emoji === 'string') {
+            patch.emoji = normalizeTrackerEmoji(emoji)
+        } else if (!patch.alias) {
+            throw new InputError('nothing to update')
+        }
+
+        return repo.updateTrackerById(trackerId, patch)
+    },
+
     async updateUser(requesterId, userId, { name, surname, email, language, role, companyId, permissionKeys } = {}) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.update' })
         validate.arguments([{ name: 'userId', value: userId, type: String, notEmpty: true }])

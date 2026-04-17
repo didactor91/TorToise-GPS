@@ -7,6 +7,7 @@
     "trackers": "Trackers",
     "backoffice": "Backoffice",
     "logout": "Tancar sessió",
+    "exitBackoffice": "Sortir del backoffice",
     "toggleMenu": "Obrir/tancar el menú de navegació",
     "toggleTheme": "Canviar tema",
     "themeLight": "Clar",
@@ -162,7 +163,7 @@
     "editCompany": "Editar companyia",
     "createUser": "Crear usuari",
     "createTracker": "Crear tracker",
-    "editTrackerAlias": "Editar àlies del tracker",
+    "editTrackerAlias": "Editar tracker",
     "editUser": "Editar usuari",
     "users": "Usuaris",
     "active": "Actiu",
@@ -182,7 +183,7 @@
     "noUsers": "Encara no hi ha usuaris.",
     "updateCompany": "Actualitzar companyia",
     "updateUser": "Actualitzar usuari",
-    "updateTrackerAlias": "Actualitzar àlies"
+    "updateTrackerAlias": "Actualitzar tracker"
   },
   "app": {
     "brandName": "TorToise GPS",
