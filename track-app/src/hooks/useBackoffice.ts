@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { gql, useMutation } from '@apollo/client'
 import { toast } from 'react-toastify'
 import {
     BackofficeTrackerDocument,
@@ -16,6 +17,15 @@ import {
     useBackofficeUpdateUserMutation,
     useBackofficeUsersQuery
 } from '../generated/graphql'
+
+const BACKOFFICE_UPDATE_TRACKER_MUTATION = gql`
+    mutation BackofficeUpdateTracker($id: ID!, $input: BackofficeUpdateTrackerInput!) {
+        backofficeUpdateTracker(id: $id, input: $input) {
+            success
+            message
+        }
+    }
+`
 
 export type BackofficeCompany = {
     id: string
@@ -106,6 +116,9 @@ export function useBackoffice(
         refetchQueries: [{ query: BackofficeUsersDocument }]
     })
     const [updateTrackerAliasMutation] = useBackofficeUpdateTrackerAliasMutation({
+        onError: (err) => toast.error(err.message)
+    })
+    const [updateTrackerMutation] = useMutation(BACKOFFICE_UPDATE_TRACKER_MUTATION, {
         onError: (err) => toast.error(err.message)
     })
 
@@ -209,6 +222,16 @@ export function useBackoffice(
         })
         if (res.data?.backofficeUpdateTrackerAlias.success) toast.success(res.data.backofficeUpdateTrackerAlias.message)
     }
+    const updateTracker = async (id: string, input: { alias?: string, emoji?: string }) => {
+        const res = await updateTrackerMutation({
+            variables: { id, input },
+            refetchQueries: [
+                { query: BackofficeTrackersDocument },
+                { query: BackofficeTrackerDocument, variables: { id } }
+            ]
+        })
+        if (res.data?.backofficeUpdateTracker?.success) toast.success(res.data.backofficeUpdateTracker.message)
+    }
 
     return {
         companies,
@@ -223,6 +246,7 @@ export function useBackoffice(
         createUser,
         createTracker,
         updateUser,
-        updateTrackerAlias
+        updateTrackerAlias,
+        updateTracker
     }
 }

@@ -216,6 +216,21 @@ const backofficeResolver = {
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }
+    },
+
+    /**
+     * @param {unknown} _
+     * @param {{ id: string, input: { alias?: string, emoji?: string } }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeUpdateTracker(_, { id, input }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        await service.updateTracker(userId, id, input)
+        return { success: true, message: 'Ok, tracker updated.' }
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
     }
   }
 }

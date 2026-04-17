@@ -167,6 +167,7 @@ function App() {
   const handleBackofficeCompanies = () => navigate('/backoffice/companies')
   const handleBackofficeUsers = () => navigate('/backoffice/users')
   const handleBackofficeTrackers = () => navigate('/backoffice/trackers')
+  const handleExitBackoffice = () => navigate('/home')
   const handleDarkMode  = () => setDarkmode(prev => !prev)
 
   // ── shorthand for protected routes ───────────────────────────────────────
@@ -197,6 +198,7 @@ function App() {
           onBackofficeTrackers={handleBackofficeTrackers}
           showBackofficeUsers={canReadUsers || canCreateUsers || canUpdateUsers}
           showBackofficeTrackers={canReadTrackers || canUpdateTrackers || canCreateTrackers}
+          onExitBackoffice={handleExitBackoffice}
           onLogout={handleLogout}
         />
       )}

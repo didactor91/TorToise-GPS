@@ -19,6 +19,7 @@ interface NavbarProps {
   onBackofficeTrackers?: () => void
   showBackofficeUsers?: boolean
   showBackofficeTrackers?: boolean
+  onExitBackoffice?: () => void
   onLogout: () => void
 }
 
@@ -36,6 +37,7 @@ function Navbar({
   onBackofficeTrackers,
   showBackofficeUsers = false,
   showBackofficeTrackers = false,
+  onExitBackoffice,
   onLogout
 }: NavbarProps) {
   const { t } = useTranslation()
@@ -80,7 +82,7 @@ function Navbar({
 
   return (
     <nav
-      className={`nav-home flex items-center px-3 ${desktopMinimized && !isMobile ? 'nav-home--minimized' : ''} ${!canMinimize ? 'nav-home--no-collapse' : ''}`}
+      className={`nav-home flex items-center px-3 ${desktopMinimized && !isMobile ? 'nav-home--minimized' : ''} ${!canMinimize ? 'nav-home--no-collapse' : ''} ${isBackofficeMode ? 'nav-home--backoffice' : ''}`}
     >
       <button className="nav-home__brand inline-flex items-center rounded-lg px-3 py-2" type="button" onClick={() => { onHome(); close() }}>
         <img src={logo} alt={t('app.brandName')} width="100" height="40" />
@@ -127,8 +129,15 @@ function Navbar({
               {showBackofficeTrackers && onBackofficeTrackers && (
                 <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onBackofficeTrackers(); close() }} type="button">{t('trackers.title')}</button>
               )}
-              <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onHome(); close() }} type="button">{t('nav.home')}</button>
-              <button className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold" onClick={() => { onProfile(); close() }} type="button">{t('nav.profile')}</button>
+              {onExitBackoffice && (
+                <button
+                  className="inline-flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-semibold"
+                  onClick={() => { onExitBackoffice(); close() }}
+                  type="button"
+                >
+                  {t('nav.exitBackoffice')}
+                </button>
+              )}
             </>
           )}
         </div>

@@ -7,6 +7,7 @@
     "trackers": "Trackers",
     "backoffice": "Backoffice",
     "logout": "Log Out",
+    "exitBackoffice": "Exit Backoffice",
     "toggleMenu": "Toggle navigation menu",
     "toggleTheme": "Toggle theme",
     "themeLight": "Light",
@@ -159,7 +160,7 @@
     "usersTab": "Users",
     "createCompany": "Create Company",
     "createTracker": "Create Tracker",
-    "editTrackerAlias": "Edit Tracker Alias",
+    "editTrackerAlias": "Edit Tracker",
     "companies": "Companies",
     "editCompany": "Edit Company",
     "createUser": "Create User",
@@ -182,7 +183,7 @@
     "noUsers": "No users yet.",
     "updateCompany": "Update Company",
     "updateUser": "Update User",
-    "updateTrackerAlias": "Update Alias"
+    "updateTrackerAlias": "Update Tracker"
   },
   "app": {
     "brandName": "TorToise GPS",
