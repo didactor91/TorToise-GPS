@@ -183,7 +183,10 @@
     "noUsers": "Aún no hay usuarios.",
     "updateCompany": "Actualizar compañía",
     "updateUser": "Actualizar usuario",
-    "updateTrackerAlias": "Actualizar tracker"
+    "updateTrackerAlias": "Actualizar tracker",
+    "confirmDeleteTitle": "Confirmar eliminación",
+    "confirmDeleteMessage": "¿Seguro que quieres eliminar \"{{entity}}\"?",
+    "savingPermissions": "Guardando permisos..."
   },
   "app": {
     "brandName": "TorToise GPS",

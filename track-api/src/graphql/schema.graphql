@@ -233,6 +233,11 @@ type Mutation {
   backofficeDeleteCompany(id: ID!): MutationResult!
   backofficeDeleteUser(id: ID!): MutationResult!
   backofficeDeleteTracker(id: ID!): MutationResult!
+  backofficeSetUserPermission(
+    id: ID!
+    permissionKey: String!
+    enabled: Boolean!
+  ): MutationResult!
   backofficeUpdateUser(
     id: ID!
     input: BackofficeUpdateUserInput!

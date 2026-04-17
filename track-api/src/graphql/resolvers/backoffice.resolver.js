@@ -306,6 +306,21 @@ const backofficeResolver = {
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }
+    },
+
+    /**
+     * @param {unknown} _
+     * @param {{ id: string, permissionKey: string, enabled: boolean }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeSetUserPermission(_, { id, permissionKey, enabled }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        await service.setUserPermission(userId, id, permissionKey, enabled)
+        return { success: true, message: 'Ok, user permission updated.' }
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
     }
   }
 }

@@ -11,6 +11,13 @@ function toggleInArray(list: string[], value: string): string[] {
   return list.includes(value) ? list.filter(item => item !== value) : [...list, value]
 }
 
+type ConfirmModalState = {
+  title: string
+  description: string
+  confirmLabel: string
+  onConfirm: () => Promise<void>
+}
+
 interface BackofficeProps {
   section: 'companies' | 'users' | 'trackers'
   mode: 'index' | 'create' | 'edit'
@@ -49,9 +56,9 @@ function Backoffice({
   const labelClass = 'mb-2 block text-sm font-semibold'
   const inputClass = 'glass-input-base w-full rounded-xl border px-3 py-2 text-sm outline-none transition'
   const primaryButtonClass = 'inline-flex items-center justify-center rounded-full border border-amber-500 bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:brightness-105'
-  const checkboxClass = 'inline-flex items-center gap-2 text-sm text-[var(--text-primary)]'
   const sectionClass = 'pb-8 border-b space-y-4'
-  const checkboxesWrapClass = 'flex flex-wrap gap-x-4 gap-y-2'
+  const switchGridClass = 'grid grid-cols-1 md:grid-cols-2 gap-2'
+  const permissionsGridClass = 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2'
 
   const isCompaniesSection = section === 'companies'
   const isUsersSection = section === 'users'
@@ -84,7 +91,8 @@ function Backoffice({
     updateTracker,
     deleteCompany,
     deleteUser,
-    deleteTracker
+    deleteTracker,
+    setUserPermission
   } = useBackoffice(
     usersPage,
     20,
@@ -122,6 +130,9 @@ function Backoffice({
   })
   const [trackerAliasEdit, setTrackerAliasEdit] = useState('')
   const [trackerEmojiEdit, setTrackerEmojiEdit] = useState('🚚')
+  const [permissionSaving, setPermissionSaving] = useState(false)
+  const [confirmState, setConfirmState] = useState<ConfirmModalState | null>(null)
+  const [confirmLoading, setConfirmLoading] = useState(false)
 
   const companyOptions = useMemo(
     () => companies.map((company) => ({ id: company.id, label: `${company.name} (${company.slug})` })),
@@ -231,7 +242,47 @@ function Backoffice({
     await updateTracker(trackerDetail.id, { alias: trackerAliasEdit.trim(), emoji: trackerEmojiEdit })
   }
 
-  const askDelete = (label: string) => window.confirm(`${t('ui.delete')} "${label}"?`)
+  const onToggleEditPermission = async (permissionKey: string, enabled: boolean) => {
+    if (!userDetail?.id || permissionSaving) return
+    const previous = [...userEdit.permissionKeys]
+    const next = enabled
+      ? (previous.includes(permissionKey) ? previous : [...previous, permissionKey])
+      : previous.filter((item) => item !== permissionKey)
+    setUserEdit((prev) => ({ ...prev, permissionKeys: next }))
+    setPermissionSaving(true)
+    try {
+      await setUserPermission(userDetail.id, permissionKey, enabled)
+    } catch {
+      setUserEdit((prev) => ({ ...prev, permissionKeys: previous }))
+    } finally {
+      setPermissionSaving(false)
+    }
+  }
+
+  const openDeleteModal = (title: string, description: string, onConfirm: () => Promise<void>) => {
+    setConfirmState({
+      title,
+      description,
+      confirmLabel: t('ui.delete'),
+      onConfirm
+    })
+  }
+
+  const closeConfirmModal = () => {
+    if (confirmLoading) return
+    setConfirmState(null)
+  }
+
+  const submitConfirm = async () => {
+    if (!confirmState) return
+    setConfirmLoading(true)
+    try {
+      await confirmState.onConfirm()
+      setConfirmState(null)
+    } finally {
+      setConfirmLoading(false)
+    }
+  }
 
   const renderSectionTabs = () => (
     <div className="mb-6 flex flex-wrap gap-2">
@@ -275,6 +326,29 @@ function Backoffice({
     </div>
   )
 
+  const renderSwitch = (
+    label: string,
+    checked: boolean,
+    onChange: (next: boolean) => void,
+    disabled = false
+  ) => (
+    <label className={`inline-flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-sm ${disabled ? 'opacity-60' : ''}`}>
+      <span className="text-[var(--text-primary)]">{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${checked ? 'bg-amber-400' : 'bg-slate-400/50'} ${disabled ? 'cursor-not-allowed' : ''}`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${checked ? 'translate-x-5' : 'translate-x-1'}`}
+        />
+      </button>
+    </label>
+  )
+
   const renderIndexActions = () => (
     <div className="mb-6 flex justify-end">
       {isCompaniesSection && canCreateCompanies && (
@@ -298,7 +372,13 @@ function Backoffice({
           emptyMessage={t('backoffice.noCompanies')}
           variant="flat"
           onEdit={canUpdateCompanies ? (company) => navigate(`/backoffice/companies/${company.id}`) : undefined}
-          onDelete={canUpdateCompanies ? async (company) => { if (askDelete(company.name)) await deleteCompany(company.id) } : undefined}
+          onDelete={canUpdateCompanies ? (company) => {
+            openDeleteModal(
+              t('backoffice.confirmDeleteTitle'),
+              t('backoffice.confirmDeleteMessage', { entity: company.name }),
+              () => deleteCompany(company.id)
+            )
+          } : undefined}
         />
       )}
       {isUsersSection && (
@@ -308,7 +388,13 @@ function Backoffice({
           emptyMessage={t('backoffice.noUsers')}
           variant="flat"
           onEdit={canUpdateUsers ? (user) => navigate(`/backoffice/users/${user.id}`) : undefined}
-          onDelete={canDeleteUsers ? async (user) => { if (askDelete(user.email)) await deleteUser(user.id) } : undefined}
+          onDelete={canDeleteUsers ? (user) => {
+            openDeleteModal(
+              t('backoffice.confirmDeleteTitle'),
+              t('backoffice.confirmDeleteMessage', { entity: user.email }),
+              () => deleteUser(user.id)
+            )
+          } : undefined}
           pageSize={20}
           serverPagination={{
             enabled: true,
@@ -325,7 +411,14 @@ function Backoffice({
           emptyMessage={t('trackers.empty')}
           variant="flat"
           onEdit={canUpdateTrackers ? (tracker) => navigate(`/backoffice/trackers/${tracker.id}`) : undefined}
-          onDelete={canDeleteTrackers ? async (tracker) => { if (askDelete(tracker.alias || tracker.serialNumber)) await deleteTracker(tracker.id) } : undefined}
+          onDelete={canDeleteTrackers ? (tracker) => {
+            const entity = tracker.alias || tracker.serialNumber
+            openDeleteModal(
+              t('backoffice.confirmDeleteTitle'),
+              t('backoffice.confirmDeleteMessage', { entity }),
+              () => deleteTracker(tracker.id)
+            )
+          } : undefined}
           pageSize={20}
           serverPagination={{
             enabled: true,
@@ -348,19 +441,23 @@ function Backoffice({
             <input className={inputClass} value={companyForm.name} onChange={(e) => setCompanyForm(prev => ({ ...prev, name: e.target.value }))} required />
           </div>
           <div className="mb-4">
-            <label className="inline-flex items-center gap-2 text-sm text-[var(--text-primary)]">
-              <input type="checkbox" checked={companyForm.active} onChange={(e) => setCompanyForm(prev => ({ ...prev, active: e.target.checked }))} />
-              {t('backoffice.active')}
-            </label>
+            {renderSwitch(
+              t('backoffice.active'),
+              companyForm.active,
+              (next) => setCompanyForm(prev => ({ ...prev, active: next }))
+            )}
           </div>
           <div className="mb-4">
             <label className={labelClass}>{t('backoffice.features')}</label>
-            <div className={checkboxesWrapClass}>
+            <div className={switchGridClass}>
               {FEATURE_KEYS.map((feature) => (
-                <label key={feature} className={checkboxClass}>
-                  <input type="checkbox" checked={companyForm.featureKeys.includes(feature)} onChange={() => setCompanyForm(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))} />
-                  {feature}
-                </label>
+                <React.Fragment key={feature}>
+                  {renderSwitch(
+                    feature,
+                    companyForm.featureKeys.includes(feature),
+                    () => setCompanyForm(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))
+                  )}
+                </React.Fragment>
               ))}
             </div>
           </div>
@@ -419,12 +516,15 @@ function Backoffice({
             </div>
             <div className="md:col-span-2">
               <label className={labelClass}>{t('backoffice.permissions')}</label>
-              <div className={checkboxesWrapClass}>
+              <div className={permissionsGridClass}>
                 {PERMISSION_KEYS.map((permission) => (
-                  <label key={permission} className={checkboxClass}>
-                    <input type="checkbox" checked={userForm.permissionKeys.includes(permission)} onChange={() => setUserForm(prev => ({ ...prev, permissionKeys: toggleInArray(prev.permissionKeys, permission) }))} />
-                    {permission}
-                  </label>
+                  <React.Fragment key={permission}>
+                    {renderSwitch(
+                      permission,
+                      userForm.permissionKeys.includes(permission),
+                      () => setUserForm(prev => ({ ...prev, permissionKeys: toggleInArray(prev.permissionKeys, permission) }))
+                    )}
+                  </React.Fragment>
                 ))}
               </div>
             </div>
@@ -484,19 +584,23 @@ function Backoffice({
                 <input className={inputClass} value={companyEdit.slug} readOnly />
               </div>
               <div className="mb-4">
-                <label className="inline-flex items-center gap-2 text-sm text-[var(--text-primary)]">
-                  <input type="checkbox" checked={companyEdit.active} onChange={(e) => setCompanyEdit(prev => ({ ...prev, active: e.target.checked }))} />
-                  {t('backoffice.active')}
-                </label>
+                {renderSwitch(
+                  t('backoffice.active'),
+                  companyEdit.active,
+                  (next) => setCompanyEdit(prev => ({ ...prev, active: next }))
+                )}
               </div>
               <div className="mb-4">
                 <label className={labelClass}>{t('backoffice.features')}</label>
-                <div className={checkboxesWrapClass}>
+                <div className={switchGridClass}>
                   {FEATURE_KEYS.map((feature) => (
-                    <label key={feature} className={checkboxClass}>
-                      <input type="checkbox" checked={companyEdit.featureKeys.includes(feature)} onChange={() => setCompanyEdit(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))} />
-                      {feature}
-                    </label>
+                    <React.Fragment key={feature}>
+                      {renderSwitch(
+                        feature,
+                        companyEdit.featureKeys.includes(feature),
+                        () => setCompanyEdit(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))
+                      )}
+                    </React.Fragment>
                   ))}
                 </div>
               </div>
@@ -555,14 +659,21 @@ function Backoffice({
                 </div>
                 <div className="md:col-span-2">
                   <label className={labelClass}>{t('backoffice.permissions')}</label>
-                  <div className={checkboxesWrapClass}>
+                  <div className={permissionsGridClass}>
                     {PERMISSION_KEYS.map((permission) => (
-                      <label key={permission} className={checkboxClass}>
-                        <input type="checkbox" checked={userEdit.permissionKeys.includes(permission)} onChange={() => setUserEdit(prev => ({ ...prev, permissionKeys: toggleInArray(prev.permissionKeys, permission) }))} />
-                        {permission}
-                      </label>
+                      <React.Fragment key={permission}>
+                        {renderSwitch(
+                          permission,
+                          userEdit.permissionKeys.includes(permission),
+                          (next) => onToggleEditPermission(permission, next),
+                          permissionSaving
+                        )}
+                      </React.Fragment>
                     ))}
                   </div>
+                  {permissionSaving && (
+                    <p className="mt-2 text-xs text-[var(--text-muted)]">{t('backoffice.savingPermissions')}</p>
+                  )}
                 </div>
               </div>
               <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.updateUser')}</button>
@@ -612,6 +723,32 @@ function Backoffice({
         {isCreateView && renderCreate()}
         {isEditView && renderEdit()}
       </div>
+      {confirmState && (
+        <div className="fixed inset-0 z-[1400] flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-md rounded-2xl border bg-[var(--bg-surface)] p-5 shadow-2xl">
+            <h4 className="text-lg font-bold text-[var(--text-primary)]">{confirmState.title}</h4>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">{confirmState.description}</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-full border px-4 py-2 text-sm font-semibold"
+                onClick={closeConfirmModal}
+                disabled={confirmLoading}
+              >
+                {t('ui.cancel')}
+              </button>
+              <button
+                type="button"
+                className="rounded-full border border-red-700 bg-red-700 px-4 py-2 text-sm font-semibold text-white"
+                onClick={submitConfirm}
+                disabled={confirmLoading}
+              >
+                {confirmLoading ? t('ui.loading') : confirmState.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageShell>
   )
 }

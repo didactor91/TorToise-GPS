@@ -133,3 +133,10 @@ mutation BackofficeDeleteTracker($id: ID!) {
     message
   }
 }
+
+mutation BackofficeSetUserPermission($id: ID!, $permissionKey: String!, $enabled: Boolean!) {
+  backofficeSetUserPermission(id: $id, permissionKey: $permissionKey, enabled: $enabled) {
+    success
+    message
+  }
+}

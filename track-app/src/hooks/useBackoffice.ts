@@ -81,6 +81,15 @@ const BACKOFFICE_DELETE_TRACKER_MUTATION = gql`
     }
 `
 
+const BACKOFFICE_SET_USER_PERMISSION_MUTATION = gql`
+    mutation BackofficeSetUserPermission($id: ID!, $permissionKey: String!, $enabled: Boolean!) {
+        backofficeSetUserPermission(id: $id, permissionKey: $permissionKey, enabled: $enabled) {
+            success
+            message
+        }
+    }
+`
+
 export type BackofficeCompany = {
     id: string
     name: string
@@ -198,6 +207,9 @@ export function useBackoffice(
         onError: (err) => toast.error(err.message)
     })
     const [deleteTrackerMutation] = useMutation(BACKOFFICE_DELETE_TRACKER_MUTATION, {
+        onError: (err) => toast.error(err.message)
+    })
+    const [setUserPermissionMutation] = useMutation(BACKOFFICE_SET_USER_PERMISSION_MUTATION, {
         onError: (err) => toast.error(err.message)
     })
 
@@ -357,6 +369,13 @@ export function useBackoffice(
         })
         if (res.data?.backofficeDeleteTracker?.success) toast.success(res.data.backofficeDeleteTracker.message)
     }
+    const setUserPermission = async (id: string, permissionKey: string, enabled: boolean) => {
+        const res = await setUserPermissionMutation({
+            variables: { id, permissionKey, enabled },
+            refetchQueries: [{ query: BackofficeUsersDocument }]
+        })
+        if (res.data?.backofficeSetUserPermission?.success) toast.success(res.data.backofficeSetUserPermission.message)
+    }
 
     return {
         companies,
@@ -377,6 +396,7 @@ export function useBackoffice(
         updateTracker,
         deleteCompany,
         deleteUser,
-        deleteTracker
+        deleteTracker,
+        setUserPermission
     }
 }

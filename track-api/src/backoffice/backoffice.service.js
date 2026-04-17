@@ -2,7 +2,7 @@ const argon2 = require('argon2')
 const { validate, errors: { InputError, LogicError } } = require('track-utils')
 const repo = require('./backoffice.repository')
 const { requireAccess } = require('../shared/authorization.service')
-const { ACCESS_VERSION, encodePermissionKeys, encodeFeatureKeys, PERMISSION_KEYS, FEATURE_KEYS } = require('../shared/access-control')
+const { ACCESS_VERSION, encodePermissionKeys, encodeFeatureKeys, PERMISSION_KEYS, FEATURE_KEYS, effectivePermissionKeysForUser } = require('../shared/access-control')
 const { normalizeTrackerEmoji } = require('../shared/emoji-catalog')
 
 const VALID_ROLES = new Set(['staff', 'owner', 'admin', 'dispatcher', 'viewer'])
@@ -346,6 +346,28 @@ const backofficeService = {
         const tracker = await repo.findTrackerById(trackerId)
         if (!tracker) throw new LogicError(`tracker with id ${trackerId} doesn't exists`)
         await repo.deleteTrackerById(trackerId)
+    },
+
+    async setUserPermission(requesterId, userId, permissionKey, enabled) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.update' })
+        validate.arguments([
+            { name: 'userId', value: userId, type: String, notEmpty: true },
+            { name: 'permissionKey', value: permissionKey, type: String, notEmpty: true }
+        ])
+        if (typeof enabled !== 'boolean') throw new InputError('enabled should be a boolean')
+        if (!PERMISSION_KEYS.includes(permissionKey)) throw new InputError(`unknown permission key ${permissionKey}`)
+
+        const user = await repo.findUserById(userId)
+        if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
+
+        const next = new Set(effectivePermissionKeysForUser(user))
+        if (enabled) next.add(permissionKey)
+        else next.delete(permissionKey)
+
+        await repo.updateUserById(userId, {
+            permissionsVersion: ACCESS_VERSION,
+            permissionsPacked: encodePermissionKeys([...next])
+        })
     },
 
     async updateUser(requesterId, userId, { name, surname, email, language, role, companyId, permissionKeys } = {}) {
