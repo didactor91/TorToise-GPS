@@ -13,6 +13,17 @@ echo "════════════════════════�
 echo "  TorToise GPS — Deploy"
 echo "══════════════════════════════════════════"
 
+print_runtime_diagnostics() {
+    echo "▶ Runtime diagnostics"
+    echo "  Host: $(hostname)"
+    echo "  Date: $(date -Iseconds)"
+    echo "  Git:  $(git rev-parse --short HEAD 2>/dev/null || echo 'n/a')"
+    echo "  Docker: $(docker --version)"
+    echo "  Compose: $(docker compose version)"
+    echo "  Disk usage:"
+    df -h /
+}
+
 wait_for_http() {
     local url="$1"
     local label="$2"
@@ -111,10 +122,19 @@ cd "$APP_DIR"
 git fetch origin master
 git reset --hard origin/master
 echo "  ✅ $(git log -1 --format='%h %s')"
+print_runtime_diagnostics
 
 # ── 2. Build images ─────────────────────────────────────────────────
 echo "▶ Building Docker images..."
-$COMPOSE build --no-cache track-api track-tcp track-app tracker-simulator
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+export BUILDKIT_PROGRESS=plain
+BUILD_LOG="/tmp/tortoise-build.log"
+if ! $COMPOSE build --no-cache track-api track-tcp track-app tracker-simulator 2>&1 | tee "$BUILD_LOG"; then
+    echo "  ❌ Docker build failed. Last 150 lines:"
+    tail -n 150 "$BUILD_LOG" || true
+    exit 1
+fi
 
 # ── 3. Rolling restart ──────────────────────────────────────────────
 echo "▶ Starting services..."
