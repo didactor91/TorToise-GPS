@@ -18,8 +18,8 @@ query BackofficeCompany($id: ID!) {
   }
 }
 
-query BackofficeUsers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
-  backofficeUsers(companyId: $companyId, offset: $offset, limit: $limit) {
+query BackofficeUsers($companyId: ID, $search: String, $offset: Int = 0, $limit: Int = 20) {
+  backofficeUsers(companyId: $companyId, search: $search, offset: $offset, limit: $limit) {
     totalCount
     items {
       id
@@ -78,8 +78,8 @@ mutation BackofficeCreateTracker($input: BackofficeCreateTrackerInput!) {
   }
 }
 
-query BackofficeTrackers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
-  backofficeTrackers(companyId: $companyId, offset: $offset, limit: $limit) {
+query BackofficeTrackers($companyId: ID, $search: String, $offset: Int = 0, $limit: Int = 20) {
+  backofficeTrackers(companyId: $companyId, search: $search, offset: $offset, limit: $limit) {
     totalCount
     items {
       id

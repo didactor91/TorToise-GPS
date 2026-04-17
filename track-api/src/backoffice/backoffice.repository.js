@@ -1,6 +1,44 @@
 const { models: { Company, User, Tracker, POI }, mongoose } = require('track-data')
 
 module.exports = {
+    _buildSearchRegex(search) {
+        const value = String(search || '').trim()
+        if (!value) return null
+        const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        return new RegExp(escaped, 'i')
+    },
+
+    _buildUserQuery({ companyId = null, search = '' } = {}) {
+        const query = {}
+        if (companyId) query.companyId = companyId
+
+        const searchRegex = this._buildSearchRegex(search)
+        if (searchRegex) {
+            query.$or = [
+                { name: searchRegex },
+                { surname: searchRegex },
+                { email: searchRegex },
+                { role: searchRegex },
+                { language: searchRegex }
+            ]
+        }
+        return query
+    },
+
+    _buildTrackerQuery({ companyId = null, search = '' } = {}) {
+        const query = {}
+        if (companyId) query.companyId = companyId
+
+        const searchRegex = this._buildSearchRegex(search)
+        if (searchRegex) {
+            query.$or = [
+                { serialNumber: searchRegex },
+                { alias: searchRegex }
+            ]
+        }
+        return query
+    },
+
     async findUserById(id) {
         return User.findById(id)
     },
@@ -31,15 +69,15 @@ module.exports = {
         return Company.findByIdAndUpdate(id, { $set: patch }, { new: true })
     },
 
-    async listUsers(companyId, { offset = 0, limit } = {}) {
-        const query = companyId ? { companyId } : {}
+    async listUsers(filters = {}, { offset = 0, limit } = {}) {
+        const query = this._buildUserQuery(filters)
         const result = User.find(query).sort({ createdAt: -1 }).skip(offset)
         if (typeof limit === 'number') result.limit(limit)
         return result.lean()
     },
 
-    async countUsers(companyId) {
-        const query = companyId ? { companyId } : {}
+    async countUsers(filters = {}) {
+        const query = this._buildUserQuery(filters)
         return User.countDocuments(query)
     },
 
@@ -69,15 +107,15 @@ module.exports = {
         return Tracker.findById(id)
     },
 
-    async listTrackers(companyId, { offset = 0, limit } = {}) {
-        const query = companyId ? { companyId } : {}
+    async listTrackers(filters = {}, { offset = 0, limit } = {}) {
+        const query = this._buildTrackerQuery(filters)
         const result = Tracker.find(query).sort({ createdAt: -1 }).skip(offset)
         if (typeof limit === 'number') result.limit(limit)
         return result.lean()
     },
 
-    async countTrackers(companyId) {
-        const query = companyId ? { companyId } : {}
+    async countTrackers(filters = {}) {
+        const query = this._buildTrackerQuery(filters)
         return Tracker.countDocuments(query)
     },
 

@@ -74,6 +74,11 @@ export type BackofficeUpdateCompanyInput = {
   slug?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type BackofficeUpdateTrackerInput = {
+  alias?: InputMaybe<Scalars['String']['input']>;
+  emoji?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type BackofficeUpdateUserInput = {
   companyId?: InputMaybe<Scalars['ID']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
@@ -123,7 +128,12 @@ export type Mutation = {
   backofficeCreateCompany: MutationResult;
   backofficeCreateTracker: MutationResult;
   backofficeCreateUser: MutationResult;
+  backofficeDeleteCompany: MutationResult;
+  backofficeDeleteTracker: MutationResult;
+  backofficeDeleteUser: MutationResult;
+  backofficeSetUserPermission: MutationResult;
   backofficeUpdateCompany: MutationResult;
+  backofficeUpdateTracker: MutationResult;
   backofficeUpdateTrackerAlias: MutationResult;
   backofficeUpdateUser: MutationResult;
   deletePOI: MutationResult;
@@ -162,9 +172,37 @@ export type MutationBackofficeCreateUserArgs = {
 };
 
 
+export type MutationBackofficeDeleteCompanyArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationBackofficeDeleteTrackerArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationBackofficeDeleteUserArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationBackofficeSetUserPermissionArgs = {
+  enabled: Scalars['Boolean']['input'];
+  id: Scalars['ID']['input'];
+  permissionKey: Scalars['String']['input'];
+};
+
+
 export type MutationBackofficeUpdateCompanyArgs = {
   id: Scalars['ID']['input'];
   input: BackofficeUpdateCompanyInput;
+};
+
+
+export type MutationBackofficeUpdateTrackerArgs = {
+  id: Scalars['ID']['input'];
+  input: BackofficeUpdateTrackerInput;
 };
 
 
@@ -254,8 +292,10 @@ export type PagedTrackers = {
 export type Query = {
   __typename?: 'Query';
   backofficeCompanies: Array<Company>;
+  backofficeCompany: Company;
   backofficeTracker: Tracker;
   backofficeTrackers: PagedTrackers;
+  backofficeUser: BackofficeUser;
   backofficeUsers: PagedBackofficeUsers;
   lastTrack?: Maybe<Track>;
   lastTracks: Array<LiveTrack>;
@@ -270,6 +310,11 @@ export type Query = {
 };
 
 
+export type QueryBackofficeCompanyArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryBackofficeTrackerArgs = {
   id: Scalars['ID']['input'];
 };
@@ -279,6 +324,12 @@ export type QueryBackofficeTrackersArgs = {
   companyId?: InputMaybe<Scalars['ID']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryBackofficeUserArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -286,6 +337,7 @@ export type QueryBackofficeUsersArgs = {
   companyId?: InputMaybe<Scalars['ID']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -405,14 +457,29 @@ export type BackofficeCompaniesQueryVariables = Exact<{ [key: string]: never; }>
 
 export type BackofficeCompaniesQuery = { __typename?: 'Query', backofficeCompanies: Array<{ __typename?: 'Company', id: string, name: string, slug: string, active: boolean, featureKeys: Array<string> }> };
 
+export type BackofficeCompanyQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type BackofficeCompanyQuery = { __typename?: 'Query', backofficeCompany: { __typename?: 'Company', id: string, name: string, slug: string, active: boolean, featureKeys: Array<string> } };
+
 export type BackofficeUsersQueryVariables = Exact<{
   companyId?: InputMaybe<Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
 export type BackofficeUsersQuery = { __typename?: 'Query', backofficeUsers: { __typename?: 'PagedBackofficeUsers', totalCount: number, items: Array<{ __typename?: 'BackofficeUser', id: string, name: string, surname: string, email: string, language: string, role: string, companyId?: string | null, permissionKeys: Array<string> }> } };
+
+export type BackofficeUserQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type BackofficeUserQuery = { __typename?: 'Query', backofficeUser: { __typename?: 'BackofficeUser', id: string, name: string, surname: string, email: string, language: string, role: string, companyId?: string | null, permissionKeys: Array<string> } };
 
 export type BackofficeCreateCompanyMutationVariables = Exact<{
   input: BackofficeCreateCompanyInput;
@@ -445,6 +512,7 @@ export type BackofficeCreateTrackerMutation = { __typename?: 'Mutation', backoff
 
 export type BackofficeTrackersQueryVariables = Exact<{
   companyId?: InputMaybe<Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
 }>;
@@ -474,6 +542,36 @@ export type BackofficeUpdateUserMutationVariables = Exact<{
 
 
 export type BackofficeUpdateUserMutation = { __typename?: 'Mutation', backofficeUpdateUser: { __typename?: 'MutationResult', success: boolean, message: string } };
+
+export type BackofficeDeleteCompanyMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type BackofficeDeleteCompanyMutation = { __typename?: 'Mutation', backofficeDeleteCompany: { __typename?: 'MutationResult', success: boolean, message: string } };
+
+export type BackofficeDeleteUserMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type BackofficeDeleteUserMutation = { __typename?: 'Mutation', backofficeDeleteUser: { __typename?: 'MutationResult', success: boolean, message: string } };
+
+export type BackofficeDeleteTrackerMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type BackofficeDeleteTrackerMutation = { __typename?: 'Mutation', backofficeDeleteTracker: { __typename?: 'MutationResult', success: boolean, message: string } };
+
+export type BackofficeSetUserPermissionMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  permissionKey: Scalars['String']['input'];
+  enabled: Scalars['Boolean']['input'];
+}>;
+
+
+export type BackofficeSetUserPermissionMutation = { __typename?: 'Mutation', backofficeSetUserPermission: { __typename?: 'MutationResult', success: boolean, message: string } };
 
 export type GetTrackersQueryVariables = Exact<{
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -654,9 +752,61 @@ export type BackofficeCompaniesQueryHookResult = ReturnType<typeof useBackoffice
 export type BackofficeCompaniesLazyQueryHookResult = ReturnType<typeof useBackofficeCompaniesLazyQuery>;
 export type BackofficeCompaniesSuspenseQueryHookResult = ReturnType<typeof useBackofficeCompaniesSuspenseQuery>;
 export type BackofficeCompaniesQueryResult = Apollo.QueryResult<BackofficeCompaniesQuery, BackofficeCompaniesQueryVariables>;
+export const BackofficeCompanyDocument = gql`
+    query BackofficeCompany($id: ID!) {
+  backofficeCompany(id: $id) {
+    id
+    name
+    slug
+    active
+    featureKeys
+  }
+}
+    `;
+
+/**
+ * __useBackofficeCompanyQuery__
+ *
+ * To run a query within a React component, call `useBackofficeCompanyQuery` and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeCompanyQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBackofficeCompanyQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useBackofficeCompanyQuery(baseOptions: Apollo.QueryHookOptions<BackofficeCompanyQuery, BackofficeCompanyQueryVariables> & ({ variables: BackofficeCompanyQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<BackofficeCompanyQuery, BackofficeCompanyQueryVariables>(BackofficeCompanyDocument, options);
+      }
+export function useBackofficeCompanyLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<BackofficeCompanyQuery, BackofficeCompanyQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<BackofficeCompanyQuery, BackofficeCompanyQueryVariables>(BackofficeCompanyDocument, options);
+        }
+// @ts-ignore
+export function useBackofficeCompanySuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<BackofficeCompanyQuery, BackofficeCompanyQueryVariables>): Apollo.UseSuspenseQueryResult<BackofficeCompanyQuery, BackofficeCompanyQueryVariables>;
+export function useBackofficeCompanySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BackofficeCompanyQuery, BackofficeCompanyQueryVariables>): Apollo.UseSuspenseQueryResult<BackofficeCompanyQuery | undefined, BackofficeCompanyQueryVariables>;
+export function useBackofficeCompanySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BackofficeCompanyQuery, BackofficeCompanyQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<BackofficeCompanyQuery, BackofficeCompanyQueryVariables>(BackofficeCompanyDocument, options);
+        }
+export type BackofficeCompanyQueryHookResult = ReturnType<typeof useBackofficeCompanyQuery>;
+export type BackofficeCompanyLazyQueryHookResult = ReturnType<typeof useBackofficeCompanyLazyQuery>;
+export type BackofficeCompanySuspenseQueryHookResult = ReturnType<typeof useBackofficeCompanySuspenseQuery>;
+export type BackofficeCompanyQueryResult = Apollo.QueryResult<BackofficeCompanyQuery, BackofficeCompanyQueryVariables>;
 export const BackofficeUsersDocument = gql`
-    query BackofficeUsers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
-  backofficeUsers(companyId: $companyId, offset: $offset, limit: $limit) {
+    query BackofficeUsers($companyId: ID, $search: String, $offset: Int = 0, $limit: Int = 20) {
+  backofficeUsers(
+    companyId: $companyId
+    search: $search
+    offset: $offset
+    limit: $limit
+  ) {
     totalCount
     items {
       id
@@ -685,6 +835,7 @@ export const BackofficeUsersDocument = gql`
  * const { data, loading, error } = useBackofficeUsersQuery({
  *   variables: {
  *      companyId: // value for 'companyId'
+ *      search: // value for 'search'
  *      offset: // value for 'offset'
  *      limit: // value for 'limit'
  *   },
@@ -709,6 +860,56 @@ export type BackofficeUsersQueryHookResult = ReturnType<typeof useBackofficeUser
 export type BackofficeUsersLazyQueryHookResult = ReturnType<typeof useBackofficeUsersLazyQuery>;
 export type BackofficeUsersSuspenseQueryHookResult = ReturnType<typeof useBackofficeUsersSuspenseQuery>;
 export type BackofficeUsersQueryResult = Apollo.QueryResult<BackofficeUsersQuery, BackofficeUsersQueryVariables>;
+export const BackofficeUserDocument = gql`
+    query BackofficeUser($id: ID!) {
+  backofficeUser(id: $id) {
+    id
+    name
+    surname
+    email
+    language
+    role
+    companyId
+    permissionKeys
+  }
+}
+    `;
+
+/**
+ * __useBackofficeUserQuery__
+ *
+ * To run a query within a React component, call `useBackofficeUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBackofficeUserQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useBackofficeUserQuery(baseOptions: Apollo.QueryHookOptions<BackofficeUserQuery, BackofficeUserQueryVariables> & ({ variables: BackofficeUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<BackofficeUserQuery, BackofficeUserQueryVariables>(BackofficeUserDocument, options);
+      }
+export function useBackofficeUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<BackofficeUserQuery, BackofficeUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<BackofficeUserQuery, BackofficeUserQueryVariables>(BackofficeUserDocument, options);
+        }
+// @ts-ignore
+export function useBackofficeUserSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<BackofficeUserQuery, BackofficeUserQueryVariables>): Apollo.UseSuspenseQueryResult<BackofficeUserQuery, BackofficeUserQueryVariables>;
+export function useBackofficeUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BackofficeUserQuery, BackofficeUserQueryVariables>): Apollo.UseSuspenseQueryResult<BackofficeUserQuery | undefined, BackofficeUserQueryVariables>;
+export function useBackofficeUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BackofficeUserQuery, BackofficeUserQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<BackofficeUserQuery, BackofficeUserQueryVariables>(BackofficeUserDocument, options);
+        }
+export type BackofficeUserQueryHookResult = ReturnType<typeof useBackofficeUserQuery>;
+export type BackofficeUserLazyQueryHookResult = ReturnType<typeof useBackofficeUserLazyQuery>;
+export type BackofficeUserSuspenseQueryHookResult = ReturnType<typeof useBackofficeUserSuspenseQuery>;
+export type BackofficeUserQueryResult = Apollo.QueryResult<BackofficeUserQuery, BackofficeUserQueryVariables>;
 export const BackofficeCreateCompanyDocument = gql`
     mutation BackofficeCreateCompany($input: BackofficeCreateCompanyInput!) {
   backofficeCreateCompany(input: $input) {
@@ -847,8 +1048,13 @@ export type BackofficeCreateTrackerMutationHookResult = ReturnType<typeof useBac
 export type BackofficeCreateTrackerMutationResult = Apollo.MutationResult<BackofficeCreateTrackerMutation>;
 export type BackofficeCreateTrackerMutationOptions = Apollo.BaseMutationOptions<BackofficeCreateTrackerMutation, BackofficeCreateTrackerMutationVariables>;
 export const BackofficeTrackersDocument = gql`
-    query BackofficeTrackers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
-  backofficeTrackers(companyId: $companyId, offset: $offset, limit: $limit) {
+    query BackofficeTrackers($companyId: ID, $search: String, $offset: Int = 0, $limit: Int = 20) {
+  backofficeTrackers(
+    companyId: $companyId
+    search: $search
+    offset: $offset
+    limit: $limit
+  ) {
     totalCount
     items {
       id
@@ -873,6 +1079,7 @@ export const BackofficeTrackersDocument = gql`
  * const { data, loading, error } = useBackofficeTrackersQuery({
  *   variables: {
  *      companyId: // value for 'companyId'
+ *      search: // value for 'search'
  *      offset: // value for 'offset'
  *      limit: // value for 'limit'
  *   },
@@ -1013,6 +1220,148 @@ export function useBackofficeUpdateUserMutation(baseOptions?: Apollo.MutationHoo
 export type BackofficeUpdateUserMutationHookResult = ReturnType<typeof useBackofficeUpdateUserMutation>;
 export type BackofficeUpdateUserMutationResult = Apollo.MutationResult<BackofficeUpdateUserMutation>;
 export type BackofficeUpdateUserMutationOptions = Apollo.BaseMutationOptions<BackofficeUpdateUserMutation, BackofficeUpdateUserMutationVariables>;
+export const BackofficeDeleteCompanyDocument = gql`
+    mutation BackofficeDeleteCompany($id: ID!) {
+  backofficeDeleteCompany(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type BackofficeDeleteCompanyMutationFn = Apollo.MutationFunction<BackofficeDeleteCompanyMutation, BackofficeDeleteCompanyMutationVariables>;
+
+/**
+ * __useBackofficeDeleteCompanyMutation__
+ *
+ * To run a mutation, you first call `useBackofficeDeleteCompanyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeDeleteCompanyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [backofficeDeleteCompanyMutation, { data, loading, error }] = useBackofficeDeleteCompanyMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useBackofficeDeleteCompanyMutation(baseOptions?: Apollo.MutationHookOptions<BackofficeDeleteCompanyMutation, BackofficeDeleteCompanyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BackofficeDeleteCompanyMutation, BackofficeDeleteCompanyMutationVariables>(BackofficeDeleteCompanyDocument, options);
+      }
+export type BackofficeDeleteCompanyMutationHookResult = ReturnType<typeof useBackofficeDeleteCompanyMutation>;
+export type BackofficeDeleteCompanyMutationResult = Apollo.MutationResult<BackofficeDeleteCompanyMutation>;
+export type BackofficeDeleteCompanyMutationOptions = Apollo.BaseMutationOptions<BackofficeDeleteCompanyMutation, BackofficeDeleteCompanyMutationVariables>;
+export const BackofficeDeleteUserDocument = gql`
+    mutation BackofficeDeleteUser($id: ID!) {
+  backofficeDeleteUser(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type BackofficeDeleteUserMutationFn = Apollo.MutationFunction<BackofficeDeleteUserMutation, BackofficeDeleteUserMutationVariables>;
+
+/**
+ * __useBackofficeDeleteUserMutation__
+ *
+ * To run a mutation, you first call `useBackofficeDeleteUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeDeleteUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [backofficeDeleteUserMutation, { data, loading, error }] = useBackofficeDeleteUserMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useBackofficeDeleteUserMutation(baseOptions?: Apollo.MutationHookOptions<BackofficeDeleteUserMutation, BackofficeDeleteUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BackofficeDeleteUserMutation, BackofficeDeleteUserMutationVariables>(BackofficeDeleteUserDocument, options);
+      }
+export type BackofficeDeleteUserMutationHookResult = ReturnType<typeof useBackofficeDeleteUserMutation>;
+export type BackofficeDeleteUserMutationResult = Apollo.MutationResult<BackofficeDeleteUserMutation>;
+export type BackofficeDeleteUserMutationOptions = Apollo.BaseMutationOptions<BackofficeDeleteUserMutation, BackofficeDeleteUserMutationVariables>;
+export const BackofficeDeleteTrackerDocument = gql`
+    mutation BackofficeDeleteTracker($id: ID!) {
+  backofficeDeleteTracker(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type BackofficeDeleteTrackerMutationFn = Apollo.MutationFunction<BackofficeDeleteTrackerMutation, BackofficeDeleteTrackerMutationVariables>;
+
+/**
+ * __useBackofficeDeleteTrackerMutation__
+ *
+ * To run a mutation, you first call `useBackofficeDeleteTrackerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeDeleteTrackerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [backofficeDeleteTrackerMutation, { data, loading, error }] = useBackofficeDeleteTrackerMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useBackofficeDeleteTrackerMutation(baseOptions?: Apollo.MutationHookOptions<BackofficeDeleteTrackerMutation, BackofficeDeleteTrackerMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BackofficeDeleteTrackerMutation, BackofficeDeleteTrackerMutationVariables>(BackofficeDeleteTrackerDocument, options);
+      }
+export type BackofficeDeleteTrackerMutationHookResult = ReturnType<typeof useBackofficeDeleteTrackerMutation>;
+export type BackofficeDeleteTrackerMutationResult = Apollo.MutationResult<BackofficeDeleteTrackerMutation>;
+export type BackofficeDeleteTrackerMutationOptions = Apollo.BaseMutationOptions<BackofficeDeleteTrackerMutation, BackofficeDeleteTrackerMutationVariables>;
+export const BackofficeSetUserPermissionDocument = gql`
+    mutation BackofficeSetUserPermission($id: ID!, $permissionKey: String!, $enabled: Boolean!) {
+  backofficeSetUserPermission(
+    id: $id
+    permissionKey: $permissionKey
+    enabled: $enabled
+  ) {
+    success
+    message
+  }
+}
+    `;
+export type BackofficeSetUserPermissionMutationFn = Apollo.MutationFunction<BackofficeSetUserPermissionMutation, BackofficeSetUserPermissionMutationVariables>;
+
+/**
+ * __useBackofficeSetUserPermissionMutation__
+ *
+ * To run a mutation, you first call `useBackofficeSetUserPermissionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeSetUserPermissionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [backofficeSetUserPermissionMutation, { data, loading, error }] = useBackofficeSetUserPermissionMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      permissionKey: // value for 'permissionKey'
+ *      enabled: // value for 'enabled'
+ *   },
+ * });
+ */
+export function useBackofficeSetUserPermissionMutation(baseOptions?: Apollo.MutationHookOptions<BackofficeSetUserPermissionMutation, BackofficeSetUserPermissionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BackofficeSetUserPermissionMutation, BackofficeSetUserPermissionMutationVariables>(BackofficeSetUserPermissionDocument, options);
+      }
+export type BackofficeSetUserPermissionMutationHookResult = ReturnType<typeof useBackofficeSetUserPermissionMutation>;
+export type BackofficeSetUserPermissionMutationResult = Apollo.MutationResult<BackofficeSetUserPermissionMutation>;
+export type BackofficeSetUserPermissionMutationOptions = Apollo.BaseMutationOptions<BackofficeSetUserPermissionMutation, BackofficeSetUserPermissionMutationVariables>;
 export const GetTrackersDocument = gql`
     query GetTrackers($offset: Int = 0, $limit: Int = 20) {
   trackers(offset: $offset, limit: $limit) {

@@ -82,18 +82,23 @@ const backofficeResolver = {
 
     /**
      * @param {unknown} _
-     * @param {{ companyId?: string|null, offset?: number, limit?: number }} args
+     * @param {{ companyId?: string|null, search?: string|null, offset?: number, limit?: number }} args
      * @param {{ userId: string|null }} ctx
      */
-    async backofficeUsers(_, { companyId, offset, limit }, ctx) {
+    async backofficeUsers(_, { companyId, search, offset, limit }, ctx) {
       const userId = requireAuth(ctx)
       try {
         const result = await service.listUsers(
           userId,
           /** @type {any} */ (companyId),
+          /** @type {any} */ (search),
           { offset, limit }
         )
-        const totalCount = await service.countUsers(userId, /** @type {any} */ (companyId))
+        const totalCount = await service.countUsers(
+          userId,
+          /** @type {any} */ (companyId),
+          /** @type {any} */ (search)
+        )
         const rows = /** @type {any[]} */ (Array.isArray(result) ? result : [])
         return {
           items: rows.map(mapUser),
@@ -121,15 +126,15 @@ const backofficeResolver = {
 
     /**
      * @param {unknown} _
-     * @param {{ companyId?: string|null, offset?: number, limit?: number }} args
+     * @param {{ companyId?: string|null, search?: string|null, offset?: number, limit?: number }} args
      * @param {{ userId: string|null }} ctx
      */
-    async backofficeTrackers(_, { companyId, offset, limit }, ctx) {
+    async backofficeTrackers(_, { companyId, search, offset, limit }, ctx) {
       const userId = requireAuth(ctx)
       try {
         const [result, totalCount] = await Promise.all([
-          service.listTrackers(userId, /** @type {any} */ (companyId), { offset, limit }),
-          service.countTrackers(userId, /** @type {any} */ (companyId))
+          service.listTrackers(userId, /** @type {any} */ (companyId), /** @type {any} */ (search), { offset, limit }),
+          service.countTrackers(userId, /** @type {any} */ (companyId), /** @type {any} */ (search))
         ])
         const rows = /** @type {any[]} */ (Array.isArray(result) ? result : [])
         return {
