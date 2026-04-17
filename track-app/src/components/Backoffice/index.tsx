@@ -74,6 +74,13 @@ function Backoffice({
 
   const [usersPage, setUsersPage] = useState(1)
   const [trackersPage, setTrackersPage] = useState(1)
+  const [companiesSearch, setCompaniesSearch] = useState('')
+  const [usersCompanyFilter, setUsersCompanyFilter] = useState('')
+  const [trackersCompanyFilter, setTrackersCompanyFilter] = useState('')
+  const [usersSearchInput, setUsersSearchInput] = useState('')
+  const [trackersSearchInput, setTrackersSearchInput] = useState('')
+  const [usersSearch, setUsersSearch] = useState('')
+  const [trackersSearch, setTrackersSearch] = useState('')
   const {
     companies,
     users,
@@ -98,9 +105,13 @@ function Backoffice({
     usersPage,
     20,
     shouldLoadUsers,
+    usersCompanyFilter || undefined,
+    usersSearch,
     trackersPage,
     20,
     shouldLoadTrackers,
+    trackersCompanyFilter || undefined,
+    trackersSearch,
     isTrackersSection && isEditView ? entityId : undefined,
     isCompaniesSection && isEditView ? entityId : undefined,
     isUsersSection && isEditView ? entityId : undefined
@@ -139,6 +150,35 @@ function Backoffice({
     () => companies.map((company) => ({ id: company.id, label: `${company.name} (${company.slug})` })),
     [companies]
   )
+  const companyLabelById = useMemo(
+    () => new Map(companyOptions.map((company) => [company.id, company.label])),
+    [companyOptions]
+  )
+  const normalizedCompaniesSearch = companiesSearch.trim().toLowerCase()
+  const filteredCompanies = useMemo(() => {
+    if (!normalizedCompaniesSearch) return companies
+    return companies.filter((company) =>
+      `${company.name} ${company.slug}`.toLowerCase().includes(normalizedCompaniesSearch)
+    )
+  }, [companies, normalizedCompaniesSearch])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setUsersSearch(usersSearchInput.trim()), 300)
+    return () => window.clearTimeout(timer)
+  }, [usersSearchInput])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setTrackersSearch(trackersSearchInput.trim()), 300)
+    return () => window.clearTimeout(timer)
+  }, [trackersSearchInput])
+
+  useEffect(() => {
+    setUsersPage(1)
+  }, [usersCompanyFilter, usersSearch])
+
+  useEffect(() => {
+    setTrackersPage(1)
+  }, [trackersCompanyFilter, trackersSearch])
 
   useEffect(() => {
     if (!companyDetail) return
@@ -181,7 +221,11 @@ function Backoffice({
     { key: 'email', label: t('auth.email') },
     { key: 'language', label: t('backoffice.language') },
     { key: 'role', label: t('backoffice.role') },
-    { key: 'companyId', label: t('backoffice.companyId') }
+    {
+      key: 'companyId',
+      label: t('backoffice.company'),
+      render: (row) => row.companyId ? (companyLabelById.get(row.companyId) || row.companyId) : '-'
+    }
   ]
   const TRACKER_COLUMNS: Column<BackofficeTracker>[] = [
     { key: 'emoji', label: t('ui.emoji'), render: (row) => row.emoji || '🚚' },
@@ -370,12 +414,52 @@ function Backoffice({
     </div>
   )
 
+  const renderIndexFilters = () => (
+    <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div>
+        <label className={labelClass}>{t('ui.search')}</label>
+        <input
+          className={inputClass}
+          type="search"
+          value={isCompaniesSection ? companiesSearch : isUsersSection ? usersSearchInput : trackersSearchInput}
+          onChange={(e) => {
+            const value = e.target.value
+            if (isCompaniesSection) setCompaniesSearch(value)
+            else if (isUsersSection) setUsersSearchInput(value)
+            else setTrackersSearchInput(value)
+          }}
+          placeholder={t('backoffice.searchPlaceholder')}
+        />
+      </div>
+      {(isUsersSection || isTrackersSection) && (
+        <div>
+          <label className={labelClass}>{t('backoffice.company')}</label>
+          <select
+            className={inputClass}
+            value={isUsersSection ? usersCompanyFilter : trackersCompanyFilter}
+            onChange={(e) => {
+              const value = e.target.value
+              if (isUsersSection) setUsersCompanyFilter(value)
+              else setTrackersCompanyFilter(value)
+            }}
+          >
+            <option value="">{t('backoffice.allCompanies')}</option>
+            {companyOptions.map((company) => (
+              <option key={company.id} value={company.id}>{company.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
+    </div>
+  )
+
   const renderIndex = () => (
     <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+      {renderIndexFilters()}
       {isCompaniesSection && (
         <DataTable
           columns={COMPANY_COLUMNS}
-          rows={companies}
+          rows={filteredCompanies}
           emptyMessage={t('backoffice.noCompanies')}
           variant="flat"
           onEdit={canUpdateCompanies ? (company) => navigate(`/backoffice/companies/${company.id}`) : undefined}

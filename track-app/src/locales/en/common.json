@@ -177,6 +177,8 @@
     "slug": "Slug",
     "selectCompany": "Select a company",
     "selectCompanyShort": "Select company",
+    "allCompanies": "All companies",
+    "searchPlaceholder": "Search text...",
     "selectUser": "Select user",
     "language": "Language",
     "noCompanies": "No companies yet.",

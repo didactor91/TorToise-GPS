@@ -123,26 +123,27 @@ const backofficeService = {
         return repo.updateCompanyById(companyId, patch)
     },
 
-    async listUsers(requesterId, companyId = null, pagination) {
+    async listUsers(requesterId, companyId = null, search = '', pagination) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.read' })
         if (companyId) {
             validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
             const company = await repo.findCompanyById(companyId)
             if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
         }
-        if (!pagination) return repo.listUsers(companyId)
+        const filters = { companyId, search }
+        if (!pagination) return repo.listUsers(filters)
         const _pagination = this.normalizePagination(pagination.offset, pagination.limit)
-        return repo.listUsers(companyId, _pagination)
+        return repo.listUsers(filters, _pagination)
     },
 
-    async countUsers(requesterId, companyId = null) {
+    async countUsers(requesterId, companyId = null, search = '') {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.read' })
         if (companyId) {
             validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
             const company = await repo.findCompanyById(companyId)
             if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
         }
-        return repo.countUsers(companyId)
+        return repo.countUsers({ companyId, search })
     },
 
     async retrieveUser(requesterId, userId) {
@@ -153,26 +154,27 @@ const backofficeService = {
         return user
     },
 
-    async listTrackers(requesterId, companyId = null, pagination) {
+    async listTrackers(requesterId, companyId = null, search = '', pagination) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
         if (companyId) {
             validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
             const company = await repo.findCompanyById(companyId)
             if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
         }
-        if (!pagination) return repo.listTrackers(companyId)
+        const filters = { companyId, search }
+        if (!pagination) return repo.listTrackers(filters)
         const _pagination = this.normalizePagination(pagination.offset, pagination.limit)
-        return repo.listTrackers(companyId, _pagination)
+        return repo.listTrackers(filters, _pagination)
     },
 
-    async countTrackers(requesterId, companyId = null) {
+    async countTrackers(requesterId, companyId = null, search = '') {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
         if (companyId) {
             validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
             const company = await repo.findCompanyById(companyId)
             if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
         }
-        return repo.countTrackers(companyId)
+        return repo.countTrackers({ companyId, search })
     },
 
     async retrieveTracker(requesterId, trackerId) {

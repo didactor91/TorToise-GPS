@@ -198,12 +198,14 @@ type Query {
   backofficeCompany(id: ID!): Company!
   backofficeUsers(
     companyId: ID
+    search: String
     offset: Int = 0
     limit: Int = 20
   ): PagedBackofficeUsers!
   backofficeUser(id: ID!): BackofficeUser!
   backofficeTrackers(
     companyId: ID
+    search: String
     offset: Int = 0
     limit: Int = 20
   ): PagedTrackers!

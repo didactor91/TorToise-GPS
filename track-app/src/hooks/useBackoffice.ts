@@ -120,9 +120,13 @@ export function useBackoffice(
     usersPage = 1,
     pageSize = 20,
     enableUsersQuery = true,
+    usersCompanyId?: string,
+    usersSearch = '',
     trackersPage = 1,
     trackersPageSize = 20,
     enableTrackersQuery = false,
+    trackersCompanyId?: string,
+    trackersSearch = '',
     trackerId?: string,
     companyId?: string,
     userId?: string
@@ -138,14 +142,19 @@ export function useBackoffice(
         fetchPolicy: 'cache-and-network',
         errorPolicy: 'all',
         skip: !enableUsersQuery,
-        variables: { offset, limit: pageSize },
+        variables: { offset, limit: pageSize, companyId: usersCompanyId || undefined, search: usersSearch || undefined },
         onError: (err) => toast.error(err.message)
     })
     const trackersQuery = useBackofficeTrackersQuery({
         fetchPolicy: 'cache-and-network',
         errorPolicy: 'all',
         skip: !enableTrackersQuery,
-        variables: { offset: trackersOffset, limit: trackersPageSize },
+        variables: {
+            offset: trackersOffset,
+            limit: trackersPageSize,
+            companyId: trackersCompanyId || undefined,
+            search: trackersSearch || undefined
+        },
         onError: (err) => toast.error(err.message)
     })
     const trackerDetailQuery = useBackofficeTrackerQuery({

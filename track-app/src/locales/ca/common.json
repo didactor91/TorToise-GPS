@@ -177,6 +177,8 @@
     "slug": "Slug",
     "selectCompany": "Selecciona una companyia",
     "selectCompanyShort": "Selecciona companyia",
+    "allCompanies": "Totes les companyies",
+    "searchPlaceholder": "Cercar text...",
     "selectUser": "Selecciona usuari",
     "language": "Idioma",
     "noCompanies": "Encara no hi ha companyies.",
