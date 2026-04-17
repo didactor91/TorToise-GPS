@@ -8,49 +8,69 @@ import { useNavigate } from 'react-router-dom'
 import { TRACKER_EMOJIS } from '../../common/emoji-options'
 
 function toggleInArray(list: string[], value: string): string[] {
-  return list.includes(value)
-    ? list.filter(item => item !== value)
-    : [...list, value]
+  return list.includes(value) ? list.filter(item => item !== value) : [...list, value]
+}
+
+type ConfirmModalState = {
+  entityType: 'company' | 'user' | 'tracker'
+  title: string
+  description: string
+  confirmLabel: string
+  onConfirm: () => Promise<void>
 }
 
 interface BackofficeProps {
   section: 'companies' | 'users' | 'trackers'
+  mode: 'index' | 'create' | 'edit'
   entityId?: string
+  canReadCompanies?: boolean
+  canCreateCompanies?: boolean
+  canUpdateCompanies?: boolean
   canReadUsers?: boolean
   canCreateUsers?: boolean
   canUpdateUsers?: boolean
+  canDeleteUsers?: boolean
   canReadTrackers?: boolean
   canUpdateTrackers?: boolean
   canCreateTrackers?: boolean
+  canDeleteTrackers?: boolean
 }
 
 function Backoffice({
   section,
+  mode,
   entityId,
+  canReadCompanies = true,
+  canCreateCompanies = true,
+  canUpdateCompanies = true,
   canReadUsers = true,
   canCreateUsers = true,
   canUpdateUsers = true,
+  canDeleteUsers = true,
   canReadTrackers = true,
   canUpdateTrackers = true,
-  canCreateTrackers = true
+  canCreateTrackers = true,
+  canDeleteTrackers = true
 }: BackofficeProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const labelClass = 'mb-2 block text-sm font-semibold'
   const inputClass = 'glass-input-base w-full rounded-xl border px-3 py-2 text-sm outline-none transition'
   const primaryButtonClass = 'inline-flex items-center justify-center rounded-full border border-amber-500 bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:brightness-105'
-  const checkboxClass = 'inline-flex items-center gap-2 text-sm text-[var(--text-primary)]'
   const sectionClass = 'pb-8 border-b space-y-4'
-  const checkboxesWrapClass = 'flex flex-wrap gap-x-4 gap-y-2'
+  const switchGridClass = 'grid grid-cols-1 md:grid-cols-2 gap-2'
+  const permissionsGridClass = 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2'
 
   const isCompaniesSection = section === 'companies'
   const isUsersSection = section === 'users'
   const isTrackersSection = section === 'trackers'
-  const isDetailView = Boolean(entityId)
-  const canSeeUsersSection = canReadUsers || canCreateUsers || canUpdateUsers
-  const canSeeTrackersSection = canReadTrackers || canUpdateTrackers || canCreateTrackers
-  const shouldLoadUsers = isUsersSection && canReadUsers
-  const shouldLoadTrackers = isTrackersSection && canReadTrackers
+  const isIndexView = mode === 'index'
+  const isCreateView = mode === 'create'
+  const isEditView = mode === 'edit'
+  const canSeeUsersSection = canReadUsers || canCreateUsers || canUpdateUsers || canDeleteUsers
+  const canSeeTrackersSection = canReadTrackers || canCreateTrackers || canUpdateTrackers || canDeleteTrackers
+  const shouldLoadUsers = isUsersSection && canReadUsers && isIndexView
+  const shouldLoadTrackers = isTrackersSection && canReadTrackers && isIndexView
 
   const [usersPage, setUsersPage] = useState(1)
   const [trackersPage, setTrackersPage] = useState(1)
@@ -58,6 +78,8 @@ function Backoffice({
     companies,
     users,
     trackers,
+    companyDetail,
+    userDetail,
     trackerDetail,
     usersTotalCount,
     trackersTotalCount,
@@ -67,13 +89,24 @@ function Backoffice({
     createTracker,
     updateCompany,
     updateUser,
-    updateTracker
-  } = useBackoffice(usersPage, 20, shouldLoadUsers, trackersPage, 20, shouldLoadTrackers, isTrackersSection ? entityId : undefined)
-  const [companyForm, setCompanyForm] = useState({
-    name: '',
-    active: true,
-    featureKeys: [...FEATURE_KEYS]
-  })
+    updateTracker,
+    deleteCompany,
+    deleteUser,
+    deleteTracker,
+    setUserPermission
+  } = useBackoffice(
+    usersPage,
+    20,
+    shouldLoadUsers,
+    trackersPage,
+    20,
+    shouldLoadTrackers,
+    isTrackersSection && isEditView ? entityId : undefined,
+    isCompaniesSection && isEditView ? entityId : undefined,
+    isUsersSection && isEditView ? entityId : undefined
+  )
+
+  const [companyForm, setCompanyForm] = useState({ name: '', active: true, featureKeys: [...FEATURE_KEYS] })
   const [userForm, setUserForm] = useState({
     name: '',
     surname: '',
@@ -84,29 +117,63 @@ function Backoffice({
     companyId: '',
     permissionKeys: permissionTemplateForRole('admin')
   })
-  const [trackerForm, setTrackerForm] = useState({
-    serialNumber: '',
-    alias: '',
-    emoji: '🚚',
-    companyId: ''
+  const [trackerForm, setTrackerForm] = useState({ serialNumber: '', alias: '', emoji: '🚚', companyId: '' })
+
+  const [companyEdit, setCompanyEdit] = useState({ name: '', slug: '', active: true, featureKeys: [] as string[] })
+  const [userEdit, setUserEdit] = useState({
+    name: '',
+    surname: '',
+    email: '',
+    language: 'en',
+    role: 'viewer',
+    companyId: '',
+    permissionKeys: [] as string[]
   })
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
-  const [selectedUserId, setSelectedUserId] = useState<string>('')
   const [trackerAliasEdit, setTrackerAliasEdit] = useState('')
   const [trackerEmojiEdit, setTrackerEmojiEdit] = useState('🚚')
+  const [permissionSaving, setPermissionSaving] = useState(false)
+  const [confirmState, setConfirmState] = useState<ConfirmModalState | null>(null)
+  const [confirmLoading, setConfirmLoading] = useState(false)
+
+  const companyOptions = useMemo(
+    () => companies.map((company) => ({ id: company.id, label: `${company.name} (${company.slug})` })),
+    [companies]
+  )
+
+  useEffect(() => {
+    if (!companyDetail) return
+    setCompanyEdit({
+      name: companyDetail.name,
+      slug: companyDetail.slug,
+      active: companyDetail.active,
+      featureKeys: [...companyDetail.featureKeys]
+    })
+  }, [companyDetail?.id, companyDetail?.name, companyDetail?.slug, companyDetail?.active, companyDetail?.featureKeys])
+
+  useEffect(() => {
+    if (!userDetail) return
+    setUserEdit({
+      name: userDetail.name,
+      surname: userDetail.surname,
+      email: userDetail.email,
+      language: userDetail.language || 'en',
+      role: userDetail.role,
+      companyId: userDetail.companyId || '',
+      permissionKeys: [...userDetail.permissionKeys]
+    })
+  }, [userDetail?.id, userDetail?.name, userDetail?.surname, userDetail?.email, userDetail?.language, userDetail?.role, userDetail?.companyId, userDetail?.permissionKeys])
+
+  useEffect(() => {
+    if (!trackerDetail) return
+    setTrackerAliasEdit(trackerDetail.alias || '')
+    setTrackerEmojiEdit(trackerDetail.emoji || '🚚')
+  }, [trackerDetail?.id, trackerDetail?.alias, trackerDetail?.emoji])
+
   const COMPANY_COLUMNS: Column<BackofficeCompany>[] = [
     { key: 'name', label: t('auth.name') },
     { key: 'slug', label: t('backoffice.slug') },
-    {
-      key: 'active',
-      label: t('backoffice.active'),
-      render: (row) => (row.active ? t('backoffice.yes') : t('backoffice.no'))
-    },
-    {
-      key: 'featureKeys',
-      label: t('backoffice.features'),
-      render: (row) => row.featureKeys.join(', ')
-    }
+    { key: 'active', label: t('backoffice.active'), render: (row) => (row.active ? t('backoffice.yes') : t('backoffice.no')) },
+    { key: 'featureKeys', label: t('backoffice.features'), render: (row) => row.featureKeys.join(', ') }
   ]
   const USER_COLUMNS: Column<BackofficeUser>[] = [
     { key: 'name', label: t('auth.name') },
@@ -114,38 +181,19 @@ function Backoffice({
     { key: 'email', label: t('auth.email') },
     { key: 'language', label: t('backoffice.language') },
     { key: 'role', label: t('backoffice.role') },
-    { key: 'companyId', label: t('backoffice.companyId') },
-    {
-      key: 'permissionKeys',
-      label: t('backoffice.permissions'),
-      render: (row) => row.permissionKeys.join(', ')
-    }
+    { key: 'companyId', label: t('backoffice.companyId') }
   ]
   const TRACKER_COLUMNS: Column<BackofficeTracker>[] = [
-    {
-      key: 'emoji',
-      label: t('ui.emoji'),
-      render: (row) => row.emoji || '🚚'
-    },
+    { key: 'emoji', label: t('ui.emoji'), render: (row) => row.emoji || '🚚' },
     { key: 'serialNumber', label: t('trackers.serialNumber') },
     { key: 'alias', label: t('ui.alias') }
   ]
 
-  const companyOptions = useMemo(
-    () => companies.map((company) => ({ id: company.id, label: `${company.name} (${company.slug})` })),
-    [companies]
-  )
-
   const onCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault()
     await createCompany(companyForm.name, companyForm.active, companyForm.featureKeys)
-    setCompanyForm({
-      name: '',
-      active: true,
-      featureKeys: [...FEATURE_KEYS]
-    })
+    navigate('/backoffice/companies')
   }
-
   const onCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
     await createUser({
@@ -158,18 +206,8 @@ function Backoffice({
       companyId: userForm.companyId,
       permissionKeys: userForm.permissionKeys
     })
-    setUserForm({
-      name: '',
-      surname: '',
-      email: '',
-      password: '',
-      language: 'en',
-      role: 'admin',
-      companyId: '',
-      permissionKeys: permissionTemplateForRole('admin')
-    })
+    navigate('/backoffice/users')
   }
-
   const onCreateTracker = async (e: React.FormEvent) => {
     e.preventDefault()
     await createTracker({
@@ -178,92 +216,18 @@ function Backoffice({
       emoji: trackerForm.emoji,
       companyId: trackerForm.companyId
     })
-    setTrackerForm({
-      serialNumber: '',
-      alias: '',
-      emoji: '🚚',
-      companyId: ''
-    })
-  }
-
-  const selectedCompany = useMemo(
-    () => companies.find(company => company.id === selectedCompanyId) || null,
-    [companies, selectedCompanyId]
-  )
-
-  const selectedUser = useMemo(
-    () => users.find(user => user.id === selectedUserId) || null,
-    [users, selectedUserId]
-  )
-
-  const [companyEdit, setCompanyEdit] = useState({
-    name: '',
-    slug: '',
-    active: true,
-    featureKeys: [] as string[]
-  })
-
-  const [userEdit, setUserEdit] = useState({
-    name: '',
-    surname: '',
-    email: '',
-    language: 'en',
-    role: 'viewer',
-    companyId: '',
-    permissionKeys: [] as string[]
-  })
-
-  const fillCompanyEdit = (companyId: string) => {
-    const company = companies.find(item => item.id === companyId)
-    if (!company) return
-    setCompanyEdit({
-      name: company.name,
-      slug: company.slug,
-      active: company.active,
-      featureKeys: [...company.featureKeys]
-    })
-  }
-
-  const fillUserEdit = (userId: string) => {
-    const user = users.find(item => item.id === userId)
-    if (!user) return
-    setUserEdit({
-      name: user.name,
-      surname: user.surname,
-      email: user.email,
-      language: user.language || 'en',
-      role: user.role,
-      companyId: user.companyId || '',
-      permissionKeys: [...user.permissionKeys]
-    })
-  }
-
-  const onPickCompany = (companyId: string) => {
-    if (!companyId) {
-      navigate('/backoffice/companies')
-      return
-    }
-    navigate(`/backoffice/companies/${companyId}`)
-  }
-
-  const onPickUser = (userId: string) => {
-    if (!userId) {
-      navigate('/backoffice/users')
-      return
-    }
-    navigate(`/backoffice/users/${userId}`)
+    navigate('/backoffice/trackers')
   }
 
   const onUpdateCompany = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedCompany) return
-    await updateCompany(selectedCompany.id, companyEdit.name, companyEdit.slug, companyEdit.active, companyEdit.featureKeys)
+    if (!companyDetail?.id) return
+    await updateCompany(companyDetail.id, companyEdit.name, companyEdit.slug, companyEdit.active, companyEdit.featureKeys)
   }
-
   const onUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedUser) return
-    await updateUser(selectedUser.id, {
+    if (!userDetail?.id) return
+    await updateUser(userDetail.id, {
       name: userEdit.name,
       surname: userEdit.surname,
       email: userEdit.email,
@@ -276,127 +240,243 @@ function Backoffice({
   const onUpdateTracker = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!trackerDetail?.id || !trackerAliasEdit.trim()) return
-    await updateTracker(trackerDetail.id, {
-      alias: trackerAliasEdit.trim(),
-      emoji: trackerEmojiEdit
+    await updateTracker(trackerDetail.id, { alias: trackerAliasEdit.trim(), emoji: trackerEmojiEdit })
+  }
+
+  const onToggleEditPermission = async (permissionKey: string, enabled: boolean) => {
+    if (!userDetail?.id || permissionSaving) return
+    const previous = [...userEdit.permissionKeys]
+    const next = enabled
+      ? (previous.includes(permissionKey) ? previous : [...previous, permissionKey])
+      : previous.filter((item) => item !== permissionKey)
+    setUserEdit((prev) => ({ ...prev, permissionKeys: next }))
+    setPermissionSaving(true)
+    try {
+      await setUserPermission(userDetail.id, permissionKey, enabled)
+    } catch {
+      setUserEdit((prev) => ({ ...prev, permissionKeys: previous }))
+    } finally {
+      setPermissionSaving(false)
+    }
+  }
+
+  const openDeleteModal = (
+    entityType: 'company' | 'user' | 'tracker',
+    title: string,
+    description: string,
+    onConfirm: () => Promise<void>
+  ) => {
+    setConfirmState({
+      entityType,
+      title,
+      description,
+      confirmLabel: t('ui.delete'),
+      onConfirm
     })
   }
 
-  useEffect(() => {
-    if (!isCompaniesSection) return
-    const nextCompanyId = entityId || ''
-    if (nextCompanyId !== selectedCompanyId) setSelectedCompanyId(nextCompanyId)
-    if (nextCompanyId) fillCompanyEdit(nextCompanyId)
-  }, [isCompaniesSection, entityId, selectedCompanyId, companies])
+  const closeConfirmModal = () => {
+    if (confirmLoading) return
+    setConfirmState(null)
+  }
 
-  useEffect(() => {
-    if (!isUsersSection) return
-    const nextUserId = entityId || ''
-    if (nextUserId !== selectedUserId) setSelectedUserId(nextUserId)
-    if (nextUserId) fillUserEdit(nextUserId)
-  }, [isUsersSection, entityId, selectedUserId, users])
+  const submitConfirm = async () => {
+    if (!confirmState) return
+    setConfirmLoading(true)
+    try {
+      await confirmState.onConfirm()
+      setConfirmState(null)
+    } finally {
+      setConfirmLoading(false)
+    }
+  }
 
-  useEffect(() => {
-    if (!isTrackersSection) return
-    setTrackerAliasEdit(trackerDetail?.alias || '')
-    setTrackerEmojiEdit(trackerDetail?.emoji || '🚚')
-  }, [isTrackersSection, trackerDetail?.id, trackerDetail?.alias, trackerDetail?.emoji])
-
-  return (
-    <PageShell title={t('backoffice.title')}>
-      {loading && <p className="text-center text-[var(--text-muted)]">{t('backoffice.loading')}</p>}
-
-      <div className="mb-6 flex flex-wrap gap-2">
+  const renderSectionTabs = () => (
+    <div className="mb-6 flex flex-wrap gap-2">
+      <button
+        className={`rounded-full border px-3 py-1.5 text-sm font-medium ${isCompaniesSection ? 'bg-[var(--bg-glass-strong)] text-[var(--text-primary)]' : 'bg-[var(--bg-glass)] text-[var(--text-secondary)]'}`}
+        onClick={() => navigate('/backoffice/companies')}
+        type="button"
+      >
+        {t('backoffice.companies')}
+      </button>
+      {canSeeUsersSection && (
         <button
-          className={`rounded-full border px-3 py-1.5 text-sm font-medium ${isCompaniesSection ? 'bg-[var(--bg-glass-strong)] text-[var(--text-primary)]' : 'bg-[var(--bg-glass)] text-[var(--text-secondary)]'}`}
-          onClick={() => navigate('/backoffice/companies')}
+          className={`rounded-full border px-3 py-1.5 text-sm font-medium ${isUsersSection ? 'bg-[var(--bg-glass-strong)] text-[var(--text-primary)]' : 'bg-[var(--bg-glass)] text-[var(--text-secondary)]'}`}
+          onClick={() => navigate('/backoffice/users')}
           type="button"
         >
-          {t('backoffice.companies')}
+          {t('backoffice.users')}
         </button>
-        {canSeeUsersSection && (
-          <button
-            className={`rounded-full border px-3 py-1.5 text-sm font-medium ${isUsersSection ? 'bg-[var(--bg-glass-strong)] text-[var(--text-primary)]' : 'bg-[var(--bg-glass)] text-[var(--text-secondary)]'}`}
-            onClick={() => navigate('/backoffice/users')}
-            type="button"
-          >
-            {t('backoffice.users')}
-          </button>
-        )}
-        {canSeeTrackersSection && (
-          <button
-            className={`rounded-full border px-3 py-1.5 text-sm font-medium ${isTrackersSection ? 'bg-[var(--bg-glass-strong)] text-[var(--text-primary)]' : 'bg-[var(--bg-glass)] text-[var(--text-secondary)]'}`}
-            onClick={() => navigate('/backoffice/trackers')}
-            type="button"
-          >
-            {t('trackers.title')}
-          </button>
-        )}
-      </div>
-      {isDetailView && (
-        <div className="mb-6">
-          <button
-            className="rounded-full border px-3 py-1.5 text-sm font-medium bg-[var(--bg-glass)] text-[var(--text-primary)]"
-            onClick={() => navigate(`/backoffice/${section}`)}
-            type="button"
-          >
-            {t('ui.back')}
-          </button>
-        </div>
       )}
-      <div className="space-y-8">
+      {canSeeTrackersSection && (
+        <button
+          className={`rounded-full border px-3 py-1.5 text-sm font-medium ${isTrackersSection ? 'bg-[var(--bg-glass-strong)] text-[var(--text-primary)]' : 'bg-[var(--bg-glass)] text-[var(--text-secondary)]'}`}
+          onClick={() => navigate('/backoffice/trackers')}
+          type="button"
+        >
+          {t('trackers.title')}
+        </button>
+      )}
+    </div>
+  )
 
-      {isCompaniesSection && !isDetailView && (
-      <>
-      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createCompany')}</h3>
-        <form onSubmit={onCreateCompany}>
-          <div className="mb-4">
-            <label className={labelClass}>{t('auth.name')}</label>
-            <input className={inputClass} value={companyForm.name} onChange={(e) => setCompanyForm(prev => ({ ...prev, name: e.target.value }))} required />
-          </div>
-          <div className="mb-4">
-            <label className="inline-flex items-center gap-2 text-sm text-[var(--text-primary)]">
-              <input type="checkbox" checked={companyForm.active} onChange={(e) => setCompanyForm(prev => ({ ...prev, active: e.target.checked }))} />
-              {t('backoffice.active')}
-            </label>
-          </div>
-          <div className="mb-4">
-            <label className={labelClass}>{t('backoffice.features')}</label>
-            <div className={checkboxesWrapClass}>
-              {FEATURE_KEYS.map((feature) => (
-                <label key={feature} className={checkboxClass}>
-                  <input
-                    type="checkbox"
-                    checked={companyForm.featureKeys.includes(feature)}
-                    onChange={() => setCompanyForm(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))}
-                  />
-                  {feature}
-                </label>
-              ))}
-            </div>
-          </div>
-          <button className={`${primaryButtonClass} mt-2`} type="submit">{t('backoffice.createCompany')}</button>
-        </form>
-      </section>
+  const renderBack = () => (
+    <div className="mb-6">
+      <button
+        className="rounded-full border px-3 py-1.5 text-sm font-medium bg-[var(--bg-glass)] text-[var(--text-primary)]"
+        onClick={() => navigate(`/backoffice/${section}`)}
+        type="button"
+      >
+        {t('ui.back')}
+      </button>
+    </div>
+  )
 
-      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.companies')}</h3>
+  const renderSwitch = (
+    label: string,
+    checked: boolean,
+    onChange: (next: boolean) => void,
+    disabled = false
+  ) => (
+    <label className={`inline-flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-sm ${disabled ? 'opacity-60' : ''}`}>
+      <span className="text-[var(--text-primary)]">{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${checked ? 'bg-amber-400' : 'bg-slate-400/50'} ${disabled ? 'cursor-not-allowed' : ''}`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${checked ? 'translate-x-5' : 'translate-x-1'}`}
+        />
+      </button>
+    </label>
+  )
+
+  const renderIndexActions = () => (
+    <div className="mb-6 flex justify-end">
+      {isCompaniesSection && canCreateCompanies && (
+        <button className={primaryButtonClass} type="button" onClick={() => navigate('/backoffice/companies/new')}>{t('backoffice.createCompany')}</button>
+      )}
+      {isUsersSection && canCreateUsers && (
+        <button className={primaryButtonClass} type="button" onClick={() => navigate('/backoffice/users/new')}>{t('backoffice.createUser')}</button>
+      )}
+      {isTrackersSection && canCreateTrackers && (
+        <button className={primaryButtonClass} type="button" onClick={() => navigate('/backoffice/trackers/new')}>{t('backoffice.createTracker')}</button>
+      )}
+    </div>
+  )
+
+  const renderIndex = () => (
+    <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+      {isCompaniesSection && (
         <DataTable
           columns={COMPANY_COLUMNS}
           rows={companies}
           emptyMessage={t('backoffice.noCompanies')}
           variant="flat"
-          onEdit={(company) => navigate(`/backoffice/companies/${company.id}`)}
+          onEdit={canUpdateCompanies ? (company) => navigate(`/backoffice/companies/${company.id}`) : undefined}
+          onDelete={canUpdateCompanies ? (company) => {
+            openDeleteModal(
+              'company',
+              t('backoffice.confirmDeleteTitle'),
+              t('backoffice.confirmDeleteMessage', { entity: company.name }),
+              () => deleteCompany(company.id)
+            )
+          } : undefined}
         />
-      </section>
-      </>
       )}
+      {isUsersSection && (
+        <DataTable
+          columns={USER_COLUMNS}
+          rows={users}
+          emptyMessage={t('backoffice.noUsers')}
+          variant="flat"
+          onEdit={canUpdateUsers ? (user) => navigate(`/backoffice/users/${user.id}`) : undefined}
+          onDelete={canDeleteUsers ? (user) => {
+            openDeleteModal(
+              'user',
+              t('backoffice.confirmDeleteTitle'),
+              t('backoffice.confirmDeleteMessage', { entity: user.email }),
+              () => deleteUser(user.id)
+            )
+          } : undefined}
+          pageSize={20}
+          serverPagination={{
+            enabled: true,
+            currentPage: usersPage,
+            totalCount: usersTotalCount,
+            onPageChange: setUsersPage
+          }}
+        />
+      )}
+      {isTrackersSection && (
+        <DataTable
+          columns={TRACKER_COLUMNS}
+          rows={trackers}
+          emptyMessage={t('trackers.empty')}
+          variant="flat"
+          onEdit={canUpdateTrackers ? (tracker) => navigate(`/backoffice/trackers/${tracker.id}`) : undefined}
+          onDelete={canDeleteTrackers ? (tracker) => {
+            const entity = tracker.alias || tracker.serialNumber
+            openDeleteModal(
+              'tracker',
+              t('backoffice.confirmDeleteTitle'),
+              t('backoffice.confirmDeleteMessage', { entity }),
+              () => deleteTracker(tracker.id)
+            )
+          } : undefined}
+          pageSize={20}
+          serverPagination={{
+            enabled: true,
+            currentPage: trackersPage,
+            totalCount: trackersTotalCount,
+            onPageChange: setTrackersPage
+          }}
+        />
+      )}
+    </section>
+  )
 
-      {isUsersSection && !isDetailView && canCreateUsers && (
-      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createUser')}</h3>
+  const renderCreate = () => (
+    <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+      {isCompaniesSection && canCreateCompanies && (
+        <form onSubmit={onCreateCompany}>
+          <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createCompany')}</h3>
+          <div className="mb-4">
+            <label className={labelClass}>{t('auth.name')}</label>
+            <input className={inputClass} value={companyForm.name} onChange={(e) => setCompanyForm(prev => ({ ...prev, name: e.target.value }))} required />
+          </div>
+          <div className="mb-4">
+            {renderSwitch(
+              t('backoffice.active'),
+              companyForm.active,
+              (next) => setCompanyForm(prev => ({ ...prev, active: next }))
+            )}
+          </div>
+          <div className="mb-4">
+            <label className={labelClass}>{t('backoffice.features')}</label>
+            <div className={switchGridClass}>
+              {FEATURE_KEYS.map((feature) => (
+                <React.Fragment key={feature}>
+                  {renderSwitch(
+                    feature,
+                    companyForm.featureKeys.includes(feature),
+                    () => setCompanyForm(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+          <button className={`${primaryButtonClass} mt-2`} type="submit">{t('backoffice.createCompany')}</button>
+        </form>
+      )}
+      {isUsersSection && canCreateUsers && (
         <form onSubmit={onCreateUser}>
+          <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createUser')}</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass}>{t('auth.name')}</label>
@@ -416,11 +496,7 @@ function Backoffice({
             </div>
             <div>
               <label className={labelClass}>{t('backoffice.language')}</label>
-              <select
-                className={inputClass}
-                value={userForm.language}
-                onChange={(e) => setUserForm(prev => ({ ...prev, language: e.target.value }))}
-              >
+              <select className={inputClass} value={userForm.language} onChange={(e) => setUserForm(prev => ({ ...prev, language: e.target.value }))}>
                 <option value="en">{t('ui.languageEnglish')}</option>
                 <option value="es">{t('ui.languageSpanish')}</option>
                 <option value="ca">{t('ui.languageCatalan')}</option>
@@ -428,14 +504,10 @@ function Backoffice({
             </div>
             <div>
               <label className={labelClass}>{t('backoffice.role')}</label>
-              <select
-                className={inputClass}
-                value={userForm.role}
-                onChange={(e) => {
-                  const role = e.target.value
-                  setUserForm(prev => ({ ...prev, role, permissionKeys: permissionTemplateForRole(role) }))
-                }}
-              >
+              <select className={inputClass} value={userForm.role} onChange={(e) => {
+                const role = e.target.value
+                setUserForm(prev => ({ ...prev, role, permissionKeys: permissionTemplateForRole(role) }))
+              }}>
                 <option value="staff">{t('roles.staff')}</option>
                 <option value="owner">{t('roles.owner')}</option>
                 <option value="admin">{t('roles.admin')}</option>
@@ -454,333 +526,37 @@ function Backoffice({
             </div>
             <div className="md:col-span-2">
               <label className={labelClass}>{t('backoffice.permissions')}</label>
-              <div className={checkboxesWrapClass}>
+              <div className={permissionsGridClass}>
                 {PERMISSION_KEYS.map((permission) => (
-                  <label key={permission} className={checkboxClass}>
-                    <input
-                      type="checkbox"
-                      checked={userForm.permissionKeys.includes(permission)}
-                      onChange={() => setUserForm(prev => ({ ...prev, permissionKeys: toggleInArray(prev.permissionKeys, permission) }))}
-                    />
-                    {permission}
-                  </label>
+                  <React.Fragment key={permission}>
+                    {renderSwitch(
+                      permission,
+                      userForm.permissionKeys.includes(permission),
+                      () => setUserForm(prev => ({ ...prev, permissionKeys: toggleInArray(prev.permissionKeys, permission) }))
+                    )}
+                  </React.Fragment>
                 ))}
               </div>
             </div>
           </div>
           <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.createUser')}</button>
         </form>
-      </section>
       )}
-
-      {isCompaniesSection && !isDetailView && (
-      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editCompany')}</h3>
-        <div className="mb-4">
-          <label className={labelClass}>{t('backoffice.company')}</label>
-          <select className={inputClass} value={selectedCompanyId} onChange={(e) => onPickCompany(e.target.value)}>
-            <option value="">{t('backoffice.selectCompanyShort')}</option>
-            {companyOptions.map((company) => (
-              <option key={company.id} value={company.id}>{company.label}</option>
-            ))}
-          </select>
-        </div>
-        {selectedCompany && (
-          <form onSubmit={onUpdateCompany}>
-            <div className="mb-4">
-              <label className={labelClass}>{t('auth.name')}</label>
-              <input className={inputClass} value={companyEdit.name} onChange={(e) => setCompanyEdit(prev => ({ ...prev, name: e.target.value }))} required />
-            </div>
-            <div className="mb-4">
-              <label className={labelClass}>{t('backoffice.slug')}</label>
-              <input className={inputClass} value={companyEdit.slug} readOnly />
-            </div>
-            <div className="mb-4">
-              <label className="inline-flex items-center gap-2 text-sm text-[var(--text-primary)]">
-                <input type="checkbox" checked={companyEdit.active} onChange={(e) => setCompanyEdit(prev => ({ ...prev, active: e.target.checked }))} />
-                {t('backoffice.active')}
-              </label>
-            </div>
-            <div className="mb-4">
-              <label className={labelClass}>{t('backoffice.features')}</label>
-              <div className={checkboxesWrapClass}>
-                {FEATURE_KEYS.map((feature) => (
-                  <label key={feature} className={checkboxClass}>
-                    <input
-                      type="checkbox"
-                      checked={companyEdit.featureKeys.includes(feature)}
-                      onChange={() => setCompanyEdit(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))}
-                    />
-                    {feature}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <button className={`${primaryButtonClass} mt-2`} type="submit">{t('backoffice.updateCompany')}</button>
-          </form>
-        )}
-      </section>
-      )}
-
-      {isUsersSection && !isDetailView && canReadUsers && canUpdateUsers && (
-      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editUser')}</h3>
-        <div className="mb-4">
-          <label className={labelClass}>{t('backoffice.users')}</label>
-          <select className={inputClass} value={selectedUserId} onChange={(e) => onPickUser(e.target.value)}>
-            <option value="">{t('backoffice.selectUser')}</option>
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>{user.email}</option>
-            ))}
-          </select>
-        </div>
-        {selectedUser && (
-          <form onSubmit={onUpdateUser}>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className={labelClass}>{t('auth.name')}</label>
-                <input className={inputClass} value={userEdit.name} onChange={(e) => setUserEdit(prev => ({ ...prev, name: e.target.value }))} required />
-              </div>
-              <div>
-                <label className={labelClass}>{t('auth.surname')}</label>
-                <input className={inputClass} value={userEdit.surname} onChange={(e) => setUserEdit(prev => ({ ...prev, surname: e.target.value }))} required />
-              </div>
-              <div>
-                <label className={labelClass}>{t('auth.email')}</label>
-                <input className={inputClass} type="email" value={userEdit.email} onChange={(e) => setUserEdit(prev => ({ ...prev, email: e.target.value }))} required />
-              </div>
-              <div>
-                <label className={labelClass}>{t('backoffice.language')}</label>
-                <select
-                  className={inputClass}
-                  value={userEdit.language}
-                  onChange={(e) => setUserEdit(prev => ({ ...prev, language: e.target.value }))}
-                >
-                  <option value="en">{t('ui.languageEnglish')}</option>
-                  <option value="es">{t('ui.languageSpanish')}</option>
-                  <option value="ca">{t('ui.languageCatalan')}</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>{t('backoffice.role')}</label>
-                <select
-                  className={inputClass}
-                  value={userEdit.role}
-                  onChange={(e) => {
-                    const role = e.target.value
-                    setUserEdit(prev => ({ ...prev, role, permissionKeys: permissionTemplateForRole(role) }))
-                  }}
-                >
-                  <option value="staff">{t('roles.staff')}</option>
-                  <option value="owner">{t('roles.owner')}</option>
-                  <option value="admin">{t('roles.admin')}</option>
-                  <option value="dispatcher">{t('roles.dispatcher')}</option>
-                  <option value="viewer">{t('roles.viewer')}</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>{t('backoffice.company')}</label>
-                <select className={inputClass} value={userEdit.companyId} onChange={(e) => setUserEdit(prev => ({ ...prev, companyId: e.target.value }))}>
-                  <option value="">{t('backoffice.selectCompanyShort')}</option>
-                  {companyOptions.map((company) => (
-                    <option key={company.id} value={company.id}>{company.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>{t('backoffice.permissions')}</label>
-                <div className={checkboxesWrapClass}>
-                  {PERMISSION_KEYS.map((permission) => (
-                    <label key={permission} className={checkboxClass}>
-                      <input
-                        type="checkbox"
-                        checked={userEdit.permissionKeys.includes(permission)}
-                        onChange={() => setUserEdit(prev => ({ ...prev, permissionKeys: toggleInArray(prev.permissionKeys, permission) }))}
-                      />
-                      {permission}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.updateUser')}</button>
-          </form>
-        )}
-      </section>
-      )}
-
-      {isUsersSection && !isDetailView && canReadUsers && (
-      <section>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.users')}</h3>
-        <DataTable
-          columns={USER_COLUMNS}
-          rows={users}
-          emptyMessage={t('backoffice.noUsers')}
-          variant="flat"
-          onEdit={(user) => navigate(`/backoffice/users/${user.id}`)}
-          pageSize={20}
-          serverPagination={{
-            enabled: true,
-            currentPage: usersPage,
-            totalCount: usersTotalCount,
-            onPageChange: setUsersPage
-          }}
-        />
-      </section>
-      )}
-
-      {isCompaniesSection && isDetailView && (
-      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editCompany')}</h3>
-        {selectedCompany ? (
-          <form onSubmit={onUpdateCompany}>
-            <div className="mb-4">
-              <label className={labelClass}>{t('auth.name')}</label>
-              <input className={inputClass} value={companyEdit.name} onChange={(e) => setCompanyEdit(prev => ({ ...prev, name: e.target.value }))} required />
-            </div>
-            <div className="mb-4">
-              <label className={labelClass}>{t('backoffice.slug')}</label>
-              <input className={inputClass} value={companyEdit.slug} readOnly />
-            </div>
-            <div className="mb-4">
-              <label className="inline-flex items-center gap-2 text-sm text-[var(--text-primary)]">
-                <input type="checkbox" checked={companyEdit.active} onChange={(e) => setCompanyEdit(prev => ({ ...prev, active: e.target.checked }))} />
-                {t('backoffice.active')}
-              </label>
-            </div>
-            <div className="mb-4">
-              <label className={labelClass}>{t('backoffice.features')}</label>
-              <div className={checkboxesWrapClass}>
-                {FEATURE_KEYS.map((feature) => (
-                  <label key={feature} className={checkboxClass}>
-                    <input
-                      type="checkbox"
-                      checked={companyEdit.featureKeys.includes(feature)}
-                      onChange={() => setCompanyEdit(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))}
-                    />
-                    {feature}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <button className={`${primaryButtonClass} mt-2`} type="submit">{t('backoffice.updateCompany')}</button>
-          </form>
-        ) : (
-          <p className="text-sm text-[var(--text-muted)]">{t('ui.loading')}</p>
-        )}
-      </section>
-      )}
-
-      {isUsersSection && isDetailView && canReadUsers && canUpdateUsers && (
-      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editUser')}</h3>
-        {selectedUser ? (
-          <form onSubmit={onUpdateUser}>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className={labelClass}>{t('auth.name')}</label>
-                <input className={inputClass} value={userEdit.name} onChange={(e) => setUserEdit(prev => ({ ...prev, name: e.target.value }))} required />
-              </div>
-              <div>
-                <label className={labelClass}>{t('auth.surname')}</label>
-                <input className={inputClass} value={userEdit.surname} onChange={(e) => setUserEdit(prev => ({ ...prev, surname: e.target.value }))} required />
-              </div>
-              <div>
-                <label className={labelClass}>{t('auth.email')}</label>
-                <input className={inputClass} type="email" value={userEdit.email} onChange={(e) => setUserEdit(prev => ({ ...prev, email: e.target.value }))} required />
-              </div>
-              <div>
-                <label className={labelClass}>{t('backoffice.language')}</label>
-                <select
-                  className={inputClass}
-                  value={userEdit.language}
-                  onChange={(e) => setUserEdit(prev => ({ ...prev, language: e.target.value }))}
-                >
-                  <option value="en">{t('ui.languageEnglish')}</option>
-                  <option value="es">{t('ui.languageSpanish')}</option>
-                  <option value="ca">{t('ui.languageCatalan')}</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>{t('backoffice.role')}</label>
-                <select
-                  className={inputClass}
-                  value={userEdit.role}
-                  onChange={(e) => {
-                    const role = e.target.value
-                    setUserEdit(prev => ({ ...prev, role, permissionKeys: permissionTemplateForRole(role) }))
-                  }}
-                >
-                  <option value="staff">{t('roles.staff')}</option>
-                  <option value="owner">{t('roles.owner')}</option>
-                  <option value="admin">{t('roles.admin')}</option>
-                  <option value="dispatcher">{t('roles.dispatcher')}</option>
-                  <option value="viewer">{t('roles.viewer')}</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>{t('backoffice.company')}</label>
-                <select className={inputClass} value={userEdit.companyId} onChange={(e) => setUserEdit(prev => ({ ...prev, companyId: e.target.value }))}>
-                  <option value="">{t('backoffice.selectCompanyShort')}</option>
-                  {companyOptions.map((company) => (
-                    <option key={company.id} value={company.id}>{company.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>{t('backoffice.permissions')}</label>
-                <div className={checkboxesWrapClass}>
-                  {PERMISSION_KEYS.map((permission) => (
-                    <label key={permission} className={checkboxClass}>
-                      <input
-                        type="checkbox"
-                        checked={userEdit.permissionKeys.includes(permission)}
-                        onChange={() => setUserEdit(prev => ({ ...prev, permissionKeys: toggleInArray(prev.permissionKeys, permission) }))}
-                      />
-                      {permission}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.updateUser')}</button>
-          </form>
-        ) : (
-          <p className="text-sm text-[var(--text-muted)]">{t('ui.loading')}</p>
-        )}
-      </section>
-      )}
-
-      {isTrackersSection && !isDetailView && canCreateTrackers && (
-      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createTracker')}</h3>
+      {isTrackersSection && canCreateTrackers && (
         <form onSubmit={onCreateTracker}>
+          <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.createTracker')}</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass}>{t('trackers.serialNumber')}</label>
-              <input
-                className={inputClass}
-                value={trackerForm.serialNumber}
-                onChange={(e) => setTrackerForm(prev => ({ ...prev, serialNumber: e.target.value }))}
-                required
-              />
+              <input className={inputClass} value={trackerForm.serialNumber} onChange={(e) => setTrackerForm(prev => ({ ...prev, serialNumber: e.target.value }))} required />
             </div>
             <div>
               <label className={labelClass}>{t('ui.alias')}</label>
-              <input
-                className={inputClass}
-                value={trackerForm.alias}
-                onChange={(e) => setTrackerForm(prev => ({ ...prev, alias: e.target.value }))}
-                placeholder={t('ui.optional')}
-              />
+              <input className={inputClass} value={trackerForm.alias} onChange={(e) => setTrackerForm(prev => ({ ...prev, alias: e.target.value }))} placeholder={t('ui.optional')} />
             </div>
             <div>
               <label className={labelClass}>{t('ui.emoji')}</label>
-              <select
-                className={inputClass}
-                value={trackerForm.emoji}
-                onChange={(e) => setTrackerForm(prev => ({ ...prev, emoji: e.target.value }))}
-              >
+              <select className={inputClass} value={trackerForm.emoji} onChange={(e) => setTrackerForm(prev => ({ ...prev, emoji: e.target.value }))}>
                 {TRACKER_EMOJIS.map((option) => (
                   <option key={option.value} value={option.value}>{option.value} {option.label}</option>
                 ))}
@@ -788,12 +564,7 @@ function Backoffice({
             </div>
             <div>
               <label className={labelClass}>{t('backoffice.company')}</label>
-              <select
-                className={inputClass}
-                value={trackerForm.companyId}
-                onChange={(e) => setTrackerForm(prev => ({ ...prev, companyId: e.target.value }))}
-                required
-              >
+              <select className={inputClass} value={trackerForm.companyId} onChange={(e) => setTrackerForm(prev => ({ ...prev, companyId: e.target.value }))} required>
                 <option value="">{t('backoffice.selectCompany')}</option>
                 {companyOptions.map((company) => (
                   <option key={company.id} value={company.id}>{company.label}</option>
@@ -803,69 +574,215 @@ function Backoffice({
           </div>
           <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.createTracker')}</button>
         </form>
-      </section>
       )}
+    </section>
+  )
 
-      {isTrackersSection && !isDetailView && canReadTrackers && (
-      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('trackers.title')}</h3>
-        <DataTable
-          columns={TRACKER_COLUMNS}
-          rows={trackers}
-          emptyMessage={t('trackers.empty')}
-          variant="flat"
-          onEdit={(tracker) => navigate(`/backoffice/trackers/${tracker.id}`)}
-          pageSize={20}
-          serverPagination={{
-            enabled: true,
-            currentPage: trackersPage,
-            totalCount: trackersTotalCount,
-            onPageChange: setTrackersPage
-          }}
-        />
-      </section>
+  const renderEdit = () => (
+    <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
+      {isCompaniesSection && canUpdateCompanies && (
+        <>
+          <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editCompany')}</h3>
+          {companyDetail ? (
+            <form onSubmit={onUpdateCompany}>
+              <div className="mb-4">
+                <label className={labelClass}>{t('auth.name')}</label>
+                <input className={inputClass} value={companyEdit.name} onChange={(e) => setCompanyEdit(prev => ({ ...prev, name: e.target.value }))} required />
+              </div>
+              <div className="mb-4">
+                <label className={labelClass}>{t('backoffice.slug')}</label>
+                <input className={inputClass} value={companyEdit.slug} readOnly />
+              </div>
+              <div className="mb-4">
+                {renderSwitch(
+                  t('backoffice.active'),
+                  companyEdit.active,
+                  (next) => setCompanyEdit(prev => ({ ...prev, active: next }))
+                )}
+              </div>
+              <div className="mb-4">
+                <label className={labelClass}>{t('backoffice.features')}</label>
+                <div className={switchGridClass}>
+                  {FEATURE_KEYS.map((feature) => (
+                    <React.Fragment key={feature}>
+                      {renderSwitch(
+                        feature,
+                        companyEdit.featureKeys.includes(feature),
+                        () => setCompanyEdit(prev => ({ ...prev, featureKeys: toggleInArray(prev.featureKeys, feature) }))
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+              <button className={`${primaryButtonClass} mt-2`} type="submit">{t('backoffice.updateCompany')}</button>
+            </form>
+          ) : <p className="text-sm text-[var(--text-muted)]">{t('ui.loading')}</p>}
+        </>
       )}
+      {isUsersSection && canUpdateUsers && (
+        <>
+          <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editUser')}</h3>
+          {userDetail ? (
+            <form onSubmit={onUpdateUser}>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className={labelClass}>{t('auth.name')}</label>
+                  <input className={inputClass} value={userEdit.name} onChange={(e) => setUserEdit(prev => ({ ...prev, name: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className={labelClass}>{t('auth.surname')}</label>
+                  <input className={inputClass} value={userEdit.surname} onChange={(e) => setUserEdit(prev => ({ ...prev, surname: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className={labelClass}>{t('auth.email')}</label>
+                  <input className={inputClass} type="email" value={userEdit.email} onChange={(e) => setUserEdit(prev => ({ ...prev, email: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className={labelClass}>{t('backoffice.language')}</label>
+                  <select className={inputClass} value={userEdit.language} onChange={(e) => setUserEdit(prev => ({ ...prev, language: e.target.value }))}>
+                    <option value="en">{t('ui.languageEnglish')}</option>
+                    <option value="es">{t('ui.languageSpanish')}</option>
+                    <option value="ca">{t('ui.languageCatalan')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>{t('backoffice.role')}</label>
+                  <select className={inputClass} value={userEdit.role} onChange={(e) => {
+                    const role = e.target.value
+                    setUserEdit(prev => ({ ...prev, role, permissionKeys: permissionTemplateForRole(role) }))
+                  }}>
+                    <option value="staff">{t('roles.staff')}</option>
+                    <option value="owner">{t('roles.owner')}</option>
+                    <option value="admin">{t('roles.admin')}</option>
+                    <option value="dispatcher">{t('roles.dispatcher')}</option>
+                    <option value="viewer">{t('roles.viewer')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>{t('backoffice.company')}</label>
+                  <select className={inputClass} value={userEdit.companyId} onChange={(e) => setUserEdit(prev => ({ ...prev, companyId: e.target.value }))}>
+                    <option value="">{t('backoffice.selectCompanyShort')}</option>
+                    {companyOptions.map((company) => (
+                      <option key={company.id} value={company.id}>{company.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className={labelClass}>{t('backoffice.permissions')}</label>
+                  <div className={permissionsGridClass}>
+                    {PERMISSION_KEYS.map((permission) => (
+                      <React.Fragment key={permission}>
+                        {renderSwitch(
+                          permission,
+                          userEdit.permissionKeys.includes(permission),
+                          (next) => onToggleEditPermission(permission, next),
+                          permissionSaving
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                  {permissionSaving && (
+                    <p className="mt-2 text-xs text-[var(--text-muted)]">{t('backoffice.savingPermissions')}</p>
+                  )}
+                </div>
+              </div>
+              <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.updateUser')}</button>
+            </form>
+          ) : <p className="text-sm text-[var(--text-muted)]">{t('ui.loading')}</p>}
+        </>
+      )}
+      {isTrackersSection && canUpdateTrackers && (
+        <>
+          <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editTrackerAlias')}</h3>
+          {trackerDetail ? (
+            <form onSubmit={onUpdateTracker}>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className={labelClass}>{t('trackers.serialNumber')}</label>
+                  <input className={inputClass} value={trackerDetail.serialNumber} readOnly />
+                </div>
+                <div>
+                  <label className={labelClass}>{t('ui.emoji')}</label>
+                  <select className={inputClass} value={trackerEmojiEdit} onChange={(e) => setTrackerEmojiEdit(e.target.value)}>
+                    {TRACKER_EMOJIS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.value} {option.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className={labelClass}>{t('ui.alias')}</label>
+                  <input className={inputClass} value={trackerAliasEdit} onChange={(e) => setTrackerAliasEdit(e.target.value)} required />
+                </div>
+              </div>
+              <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.updateTrackerAlias')}</button>
+            </form>
+          ) : <p className="text-sm text-[var(--text-muted)]">{t('ui.loading')}</p>}
+        </>
+      )}
+    </section>
+  )
 
-      {isTrackersSection && isDetailView && canReadTrackers && trackerDetail && (
-      <section className={sectionClass} style={{ borderColor: 'color-mix(in srgb, var(--border-default) 75%, transparent)' }}>
-        <h3 className="mb-4 text-xl font-bold text-[var(--text-primary)]">{t('backoffice.editTrackerAlias')}</h3>
-        <form onSubmit={onUpdateTracker}>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>{t('trackers.serialNumber')}</label>
-              <input className={inputClass} value={trackerDetail.serialNumber} readOnly />
-            </div>
-            <div>
-              <label className={labelClass}>{t('ui.emoji')}</label>
-              <select
-                className={inputClass}
-                value={trackerEmojiEdit}
-                onChange={(e) => setTrackerEmojiEdit(e.target.value)}
-                disabled={!canUpdateTrackers}
+  return (
+    <PageShell title={t('backoffice.title')}>
+      {loading && <p className="text-center text-[var(--text-muted)]">{t('backoffice.loading')}</p>}
+      {renderSectionTabs()}
+      {!isIndexView && renderBack()}
+      {isIndexView && renderIndexActions()}
+      <div className="space-y-8">
+        {isIndexView && renderIndex()}
+        {isCreateView && renderCreate()}
+        {isEditView && renderEdit()}
+      </div>
+      {confirmState && (
+        <div className="fixed inset-0 z-[1400] flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-md rounded-2xl border bg-[var(--bg-surface)] p-5 shadow-2xl">
+            <div className="flex items-center gap-2">
+              <span className="text-xl" aria-hidden="true">
+                {confirmState.entityType === 'company'
+                  ? '🏢'
+                  : confirmState.entityType === 'user'
+                    ? '👤'
+                    : '🚚'}
+              </span>
+              <h4 className={`text-lg font-bold ${
+                confirmState.entityType === 'company'
+                  ? 'text-amber-600'
+                  : confirmState.entityType === 'user'
+                    ? 'text-sky-600'
+                    : 'text-rose-600'
+              }`}
               >
-                {TRACKER_EMOJIS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.value} {option.label}</option>
-                ))}
-              </select>
+                {confirmState.title}
+              </h4>
             </div>
-            <div className="md:col-span-2">
-              <label className={labelClass}>{t('ui.alias')}</label>
-              <input
-                className={inputClass}
-                value={trackerAliasEdit}
-                onChange={(e) => setTrackerAliasEdit(e.target.value)}
-                required
-                readOnly={!canUpdateTrackers}
-              />
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">{confirmState.description}</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-full border px-4 py-2 text-sm font-semibold"
+                onClick={closeConfirmModal}
+                disabled={confirmLoading}
+              >
+                {t('ui.cancel')}
+              </button>
+              <button
+                type="button"
+                className={`rounded-full border px-4 py-2 text-sm font-semibold text-white ${
+                  confirmState.entityType === 'company'
+                    ? 'border-amber-700 bg-amber-700'
+                    : confirmState.entityType === 'user'
+                      ? 'border-sky-700 bg-sky-700'
+                      : 'border-red-700 bg-red-700'
+                }`}
+                onClick={submitConfirm}
+                disabled={confirmLoading}
+              >
+                {confirmLoading ? t('ui.loading') : confirmState.confirmLabel}
+              </button>
             </div>
           </div>
-          {canUpdateTrackers && (
-            <button className={`${primaryButtonClass} mt-6`} type="submit">{t('backoffice.updateTrackerAlias')}</button>
-          )}
-        </form>
-      </section>
+        </div>
       )}
-      </div>
     </PageShell>
   )
 }

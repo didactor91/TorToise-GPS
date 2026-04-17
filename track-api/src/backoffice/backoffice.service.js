@@ -2,7 +2,7 @@ const argon2 = require('argon2')
 const { validate, errors: { InputError, LogicError } } = require('track-utils')
 const repo = require('./backoffice.repository')
 const { requireAccess } = require('../shared/authorization.service')
-const { ACCESS_VERSION, encodePermissionKeys, encodeFeatureKeys, PERMISSION_KEYS, FEATURE_KEYS } = require('../shared/access-control')
+const { ACCESS_VERSION, encodePermissionKeys, encodeFeatureKeys, PERMISSION_KEYS, FEATURE_KEYS, effectivePermissionKeysForUser } = require('../shared/access-control')
 const { normalizeTrackerEmoji } = require('../shared/emoji-catalog')
 
 const VALID_ROLES = new Set(['staff', 'owner', 'admin', 'dispatcher', 'viewer'])
@@ -64,6 +64,14 @@ const backofficeService = {
     async listCompanies(requesterId) {
         await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
         return repo.listCompanies()
+    },
+
+    async retrieveCompany(requesterId, companyId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.read' })
+        validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
+        const company = await repo.findCompanyById(companyId)
+        if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
+        return company
     },
 
     async createCompany(requesterId, { name, active = true, featureKeys } = {}) {
@@ -135,6 +143,14 @@ const backofficeService = {
             if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
         }
         return repo.countUsers(companyId)
+    },
+
+    async retrieveUser(requesterId, userId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.read' })
+        validate.arguments([{ name: 'userId', value: userId, type: String, notEmpty: true }])
+        const user = await repo.findUserById(userId)
+        if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
+        return user
     },
 
     async listTrackers(requesterId, companyId = null, pagination) {
@@ -291,6 +307,67 @@ const backofficeService = {
         }
 
         return repo.updateTrackerById(trackerId, patch)
+    },
+
+    async deleteCompany(requesterId, companyId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'companies.update' })
+        validate.arguments([{ name: 'companyId', value: companyId, type: String, notEmpty: true }])
+
+        const company = await repo.findCompanyById(companyId)
+        if (!company) throw new LogicError(`company with id ${companyId} doesn't exists`)
+
+        const requester = await repo.findUserById(requesterId)
+        if (requester?.companyId && requester.companyId.toString() === companyId) {
+            throw new LogicError('cannot delete your own company')
+        }
+
+        await Promise.all([
+            repo.deleteUsersByCompanyId(companyId),
+            repo.deleteTrackersByCompanyId(companyId),
+            repo.deletePoisByCompanyId(companyId)
+        ])
+        await repo.deleteCompanyById(companyId)
+    },
+
+    async deleteUser(requesterId, userId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.delete' })
+        validate.arguments([{ name: 'userId', value: userId, type: String, notEmpty: true }])
+        if (requesterId === userId) throw new LogicError('cannot delete current user')
+
+        const user = await repo.findUserById(userId)
+        if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
+        await repo.deleteUserById(userId)
+    },
+
+    async deleteTracker(requesterId, trackerId) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'fleet.delete' })
+        validate.arguments([{ name: 'trackerId', value: trackerId, type: String, notEmpty: true }])
+
+        const tracker = await repo.findTrackerById(trackerId)
+        if (!tracker) throw new LogicError(`tracker with id ${trackerId} doesn't exists`)
+        await repo.deleteTrackerById(trackerId)
+    },
+
+    async setUserPermission(requesterId, userId, permissionKey, enabled) {
+        await requireAccess(requesterId, { feature: 'backoffice', permission: 'users.update' })
+        validate.arguments([
+            { name: 'userId', value: userId, type: String, notEmpty: true },
+            { name: 'permissionKey', value: permissionKey, type: String, notEmpty: true }
+        ])
+        if (typeof enabled !== 'boolean') throw new InputError('enabled should be a boolean')
+        if (!PERMISSION_KEYS.includes(permissionKey)) throw new InputError(`unknown permission key ${permissionKey}`)
+
+        const user = await repo.findUserById(userId)
+        if (!user) throw new LogicError(`user with id ${userId} doesn't exists`)
+
+        const next = new Set(effectivePermissionKeysForUser(user))
+        if (enabled) next.add(permissionKey)
+        else next.delete(permissionKey)
+
+        await repo.updateUserById(userId, {
+            permissionsVersion: ACCESS_VERSION,
+            permissionsPacked: encodePermissionKeys([...next])
+        })
     },
 
     async updateUser(requesterId, userId, { name, surname, email, language, role, companyId, permissionKeys } = {}) {

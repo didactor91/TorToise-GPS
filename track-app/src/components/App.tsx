@@ -51,36 +51,55 @@ function TrackingDetailRoute({ darkmode }: TrackingDetailRouteProps) {
 }
 
 interface BackofficeRouteProps {
+  mode: 'index' | 'create' | 'edit'
+  canReadCompanies: boolean
+  canCreateCompanies: boolean
+  canUpdateCompanies: boolean
   canReadUsers: boolean
   canCreateUsers: boolean
   canUpdateUsers: boolean
+  canDeleteUsers: boolean
   canReadTrackers: boolean
   canUpdateTrackers: boolean
   canCreateTrackers: boolean
+  canDeleteTrackers: boolean
 }
 
 function BackofficeRoute({
+  mode,
+  canReadCompanies,
+  canCreateCompanies,
+  canUpdateCompanies,
   canReadUsers,
   canCreateUsers,
   canUpdateUsers,
+  canDeleteUsers,
   canReadTrackers,
   canUpdateTrackers,
-  canCreateTrackers
+  canCreateTrackers,
+  canDeleteTrackers
 }: BackofficeRouteProps) {
   const { section, entityId } = useParams<{ section: string, entityId?: string }>()
   const normalizedSection = normalizeBackofficeSection(section)
   if (section !== normalizedSection) return <Navigate to="/backoffice/companies" replace />
+  if (mode === 'edit' && !entityId) return <Navigate to={`/backoffice/${normalizedSection}`} replace />
 
   return (
     <Backoffice
       section={normalizedSection}
+      mode={mode}
       entityId={entityId}
+      canReadCompanies={canReadCompanies}
+      canCreateCompanies={canCreateCompanies}
+      canUpdateCompanies={canUpdateCompanies}
       canReadUsers={canReadUsers}
       canCreateUsers={canCreateUsers}
       canUpdateUsers={canUpdateUsers}
+      canDeleteUsers={canDeleteUsers}
       canReadTrackers={canReadTrackers}
       canUpdateTrackers={canUpdateTrackers}
       canCreateTrackers={canCreateTrackers}
+      canDeleteTrackers={canDeleteTrackers}
     />
   )
 }
@@ -103,6 +122,22 @@ function App() {
     meData?.me?.featureKeys?.includes('backoffice') &&
     meData?.me?.permissionKeys?.includes('users.read')
   )
+  const canDeleteUsers = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('users.delete')
+  )
+  const canReadCompanies = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('companies.read')
+  )
+  const canCreateCompanies = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('companies.create')
+  )
+  const canUpdateCompanies = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('companies.update')
+  )
   const canCreateUsers = Boolean(
     meData?.me?.featureKeys?.includes('backoffice') &&
     meData?.me?.permissionKeys?.includes('users.create')
@@ -123,14 +158,24 @@ function App() {
     meData?.me?.featureKeys?.includes('backoffice') &&
     meData?.me?.permissionKeys?.includes('fleet.update')
   )
+  const canDeleteTrackers = Boolean(
+    meData?.me?.featureKeys?.includes('backoffice') &&
+    meData?.me?.permissionKeys?.includes('fleet.delete')
+  )
   const canAccessBackoffice = Boolean(
     meData?.me?.featureKeys?.includes('backoffice') &&
     (
       meData?.me?.permissionKeys?.includes('companies.read') ||
+      meData?.me?.permissionKeys?.includes('companies.create') ||
+      meData?.me?.permissionKeys?.includes('companies.update') ||
       meData?.me?.permissionKeys?.includes('users.read') ||
+      meData?.me?.permissionKeys?.includes('users.create') ||
+      meData?.me?.permissionKeys?.includes('users.update') ||
+      meData?.me?.permissionKeys?.includes('users.delete') ||
       meData?.me?.permissionKeys?.includes('fleet.read') ||
       meData?.me?.permissionKeys?.includes('fleet.create') ||
-      meData?.me?.permissionKeys?.includes('fleet.update')
+      meData?.me?.permissionKeys?.includes('fleet.update') ||
+      meData?.me?.permissionKeys?.includes('fleet.delete')
     )
   )
 
@@ -226,12 +271,37 @@ function App() {
           path="/backoffice/:section"
           element={staffGuard(
             <BackofficeRoute
+              mode="index"
+              canReadCompanies={canReadCompanies}
+              canCreateCompanies={canCreateCompanies}
+              canUpdateCompanies={canUpdateCompanies}
               canReadUsers={canReadUsers}
               canCreateUsers={canCreateUsers}
               canUpdateUsers={canUpdateUsers}
+              canDeleteUsers={canDeleteUsers}
               canReadTrackers={canReadTrackers}
               canUpdateTrackers={canUpdateTrackers}
               canCreateTrackers={canCreateTrackers}
+              canDeleteTrackers={canDeleteTrackers}
+            />
+          )}
+        />
+        <Route
+          path="/backoffice/:section/new"
+          element={staffGuard(
+            <BackofficeRoute
+              mode="create"
+              canReadCompanies={canReadCompanies}
+              canCreateCompanies={canCreateCompanies}
+              canUpdateCompanies={canUpdateCompanies}
+              canReadUsers={canReadUsers}
+              canCreateUsers={canCreateUsers}
+              canUpdateUsers={canUpdateUsers}
+              canDeleteUsers={canDeleteUsers}
+              canReadTrackers={canReadTrackers}
+              canUpdateTrackers={canUpdateTrackers}
+              canCreateTrackers={canCreateTrackers}
+              canDeleteTrackers={canDeleteTrackers}
             />
           )}
         />
@@ -239,12 +309,18 @@ function App() {
           path="/backoffice/:section/:entityId"
           element={staffGuard(
             <BackofficeRoute
+              mode="edit"
+              canReadCompanies={canReadCompanies}
+              canCreateCompanies={canCreateCompanies}
+              canUpdateCompanies={canUpdateCompanies}
               canReadUsers={canReadUsers}
               canCreateUsers={canCreateUsers}
               canUpdateUsers={canUpdateUsers}
+              canDeleteUsers={canDeleteUsers}
               canReadTrackers={canReadTrackers}
               canUpdateTrackers={canUpdateTrackers}
               canCreateTrackers={canCreateTrackers}
+              canDeleteTrackers={canDeleteTrackers}
             />
           )}
         />

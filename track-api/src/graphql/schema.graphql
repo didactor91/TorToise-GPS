@@ -195,11 +195,13 @@ type Query {
   pois(offset: Int = 0, limit: Int = 20): PagedPOIs!
   poi(id: ID!): POI!
   backofficeCompanies: [Company!]!
+  backofficeCompany(id: ID!): Company!
   backofficeUsers(
     companyId: ID
     offset: Int = 0
     limit: Int = 20
   ): PagedBackofficeUsers!
+  backofficeUser(id: ID!): BackofficeUser!
   backofficeTrackers(
     companyId: ID
     offset: Int = 0
@@ -228,6 +230,14 @@ type Mutation {
   backofficeCreateTracker(input: BackofficeCreateTrackerInput!): MutationResult!
   backofficeUpdateTrackerAlias(id: ID!, alias: String!): MutationResult!
   backofficeUpdateTracker(id: ID!, input: BackofficeUpdateTrackerInput!): MutationResult!
+  backofficeDeleteCompany(id: ID!): MutationResult!
+  backofficeDeleteUser(id: ID!): MutationResult!
+  backofficeDeleteTracker(id: ID!): MutationResult!
+  backofficeSetUserPermission(
+    id: ID!
+    permissionKey: String!
+    enabled: Boolean!
+  ): MutationResult!
   backofficeUpdateUser(
     id: ID!
     input: BackofficeUpdateUserInput!

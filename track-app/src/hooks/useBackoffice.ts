@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { gql, useMutation } from '@apollo/client'
+import { gql, useMutation, useQuery } from '@apollo/client'
 import { toast } from 'react-toastify'
 import {
     BackofficeTrackerDocument,
@@ -21,6 +21,69 @@ import {
 const BACKOFFICE_UPDATE_TRACKER_MUTATION = gql`
     mutation BackofficeUpdateTracker($id: ID!, $input: BackofficeUpdateTrackerInput!) {
         backofficeUpdateTracker(id: $id, input: $input) {
+            success
+            message
+        }
+    }
+`
+
+const BACKOFFICE_COMPANY_QUERY = gql`
+    query BackofficeCompany($id: ID!) {
+        backofficeCompany(id: $id) {
+            id
+            name
+            slug
+            active
+            featureKeys
+        }
+    }
+`
+
+const BACKOFFICE_USER_QUERY = gql`
+    query BackofficeUser($id: ID!) {
+        backofficeUser(id: $id) {
+            id
+            name
+            surname
+            email
+            language
+            role
+            companyId
+            permissionKeys
+        }
+    }
+`
+
+const BACKOFFICE_DELETE_COMPANY_MUTATION = gql`
+    mutation BackofficeDeleteCompany($id: ID!) {
+        backofficeDeleteCompany(id: $id) {
+            success
+            message
+        }
+    }
+`
+
+const BACKOFFICE_DELETE_USER_MUTATION = gql`
+    mutation BackofficeDeleteUser($id: ID!) {
+        backofficeDeleteUser(id: $id) {
+            success
+            message
+        }
+    }
+`
+
+const BACKOFFICE_DELETE_TRACKER_MUTATION = gql`
+    mutation BackofficeDeleteTracker($id: ID!) {
+        backofficeDeleteTracker(id: $id) {
+            success
+            message
+        }
+    }
+`
+
+const BACKOFFICE_SET_USER_PERMISSION_MUTATION = gql`
+    mutation BackofficeSetUserPermission($id: ID!, $permissionKey: String!, $enabled: Boolean!) {
+        backofficeSetUserPermission(id: $id, permissionKey: $permissionKey, enabled: $enabled) {
             success
             message
         }
@@ -60,7 +123,9 @@ export function useBackoffice(
     trackersPage = 1,
     trackersPageSize = 20,
     enableTrackersQuery = false,
-    trackerId?: string
+    trackerId?: string,
+    companyId?: string,
+    userId?: string
 ) {
     const offset = Math.max(0, (usersPage - 1) * pageSize)
     const trackersOffset = Math.max(0, (trackersPage - 1) * trackersPageSize)
@@ -88,6 +153,20 @@ export function useBackoffice(
         errorPolicy: 'all',
         skip: !trackerId,
         variables: { id: trackerId || '' },
+        onError: (err) => toast.error(err.message)
+    })
+    const companyDetailQuery = useQuery(BACKOFFICE_COMPANY_QUERY, {
+        fetchPolicy: 'cache-and-network',
+        errorPolicy: 'all',
+        skip: !companyId,
+        variables: { id: companyId || '' },
+        onError: (err) => toast.error(err.message)
+    })
+    const userDetailQuery = useQuery(BACKOFFICE_USER_QUERY, {
+        fetchPolicy: 'cache-and-network',
+        errorPolicy: 'all',
+        skip: !userId,
+        variables: { id: userId || '' },
         onError: (err) => toast.error(err.message)
     })
 
@@ -119,6 +198,18 @@ export function useBackoffice(
         onError: (err) => toast.error(err.message)
     })
     const [updateTrackerMutation] = useMutation(BACKOFFICE_UPDATE_TRACKER_MUTATION, {
+        onError: (err) => toast.error(err.message)
+    })
+    const [deleteCompanyMutation] = useMutation(BACKOFFICE_DELETE_COMPANY_MUTATION, {
+        onError: (err) => toast.error(err.message)
+    })
+    const [deleteUserMutation] = useMutation(BACKOFFICE_DELETE_USER_MUTATION, {
+        onError: (err) => toast.error(err.message)
+    })
+    const [deleteTrackerMutation] = useMutation(BACKOFFICE_DELETE_TRACKER_MUTATION, {
+        onError: (err) => toast.error(err.message)
+    })
+    const [setUserPermissionMutation] = useMutation(BACKOFFICE_SET_USER_PERMISSION_MUTATION, {
         onError: (err) => toast.error(err.message)
     })
 
@@ -165,6 +256,31 @@ export function useBackoffice(
             emoji: t.emoji ?? '🚚'
         }
     }, [trackerDetailQuery.data])
+    const companyDetail = useMemo<BackofficeCompany | null>(() => {
+        const c = companyDetailQuery.data?.backofficeCompany
+        if (!c) return null
+        return {
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            active: c.active,
+            featureKeys: c.featureKeys ?? []
+        }
+    }, [companyDetailQuery.data])
+    const userDetail = useMemo<BackofficeUser | null>(() => {
+        const u = userDetailQuery.data?.backofficeUser
+        if (!u) return null
+        return {
+            id: u.id,
+            name: u.name,
+            surname: u.surname,
+            email: u.email,
+            language: u.language || 'en',
+            role: u.role,
+            companyId: u.companyId ?? null,
+            permissionKeys: u.permissionKeys ?? []
+        }
+    }, [userDetailQuery.data])
 
     const createCompany = async (name: string, active: boolean, featureKeys?: string[]) => {
         const res = await createCompanyMutation({ variables: { input: { name, active, featureKeys } } })
@@ -232,11 +348,41 @@ export function useBackoffice(
         })
         if (res.data?.backofficeUpdateTracker?.success) toast.success(res.data.backofficeUpdateTracker.message)
     }
+    const deleteCompany = async (id: string) => {
+        const res = await deleteCompanyMutation({
+            variables: { id },
+            refetchQueries: [{ query: BackofficeCompaniesDocument }]
+        })
+        if (res.data?.backofficeDeleteCompany?.success) toast.success(res.data.backofficeDeleteCompany.message)
+    }
+    const deleteUser = async (id: string) => {
+        const res = await deleteUserMutation({
+            variables: { id },
+            refetchQueries: [{ query: BackofficeUsersDocument }]
+        })
+        if (res.data?.backofficeDeleteUser?.success) toast.success(res.data.backofficeDeleteUser.message)
+    }
+    const deleteTracker = async (id: string) => {
+        const res = await deleteTrackerMutation({
+            variables: { id },
+            refetchQueries: [{ query: BackofficeTrackersDocument }]
+        })
+        if (res.data?.backofficeDeleteTracker?.success) toast.success(res.data.backofficeDeleteTracker.message)
+    }
+    const setUserPermission = async (id: string, permissionKey: string, enabled: boolean) => {
+        const res = await setUserPermissionMutation({
+            variables: { id, permissionKey, enabled },
+            refetchQueries: [{ query: BackofficeUsersDocument }]
+        })
+        if (res.data?.backofficeSetUserPermission?.success) toast.success(res.data.backofficeSetUserPermission.message)
+    }
 
     return {
         companies,
         users,
         trackers,
+        companyDetail,
+        userDetail,
         trackerDetail,
         usersTotalCount: enableUsersQuery ? (usersQuery.data?.backofficeUsers?.totalCount ?? 0) : 0,
         trackersTotalCount: enableTrackersQuery ? (trackersQuery.data?.backofficeTrackers?.totalCount ?? 0) : 0,
@@ -247,6 +393,10 @@ export function useBackoffice(
         createTracker,
         updateUser,
         updateTrackerAlias,
-        updateTracker
+        updateTracker,
+        deleteCompany,
+        deleteUser,
+        deleteTracker,
+        setUserPermission
     }
 }

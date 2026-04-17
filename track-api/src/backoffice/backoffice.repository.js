@@ -1,4 +1,4 @@
-const { models: { Company, User, Tracker }, mongoose } = require('track-data')
+const { models: { Company, User, Tracker, POI }, mongoose } = require('track-data')
 
 module.exports = {
     async findUserById(id) {
@@ -84,5 +84,35 @@ module.exports = {
     async updateTrackerById(id, patch) {
         if (!mongoose.Types.ObjectId.isValid(id)) return null
         return Tracker.findByIdAndUpdate(id, { $set: patch }, { new: true })
+    },
+
+    async deleteCompanyById(id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) return null
+        return Company.deleteOne({ _id: id })
+    },
+
+    async deleteUsersByCompanyId(companyId) {
+        if (!mongoose.Types.ObjectId.isValid(companyId)) return null
+        return User.deleteMany({ companyId })
+    },
+
+    async deleteTrackersByCompanyId(companyId) {
+        if (!mongoose.Types.ObjectId.isValid(companyId)) return null
+        return Tracker.deleteMany({ companyId })
+    },
+
+    async deletePoisByCompanyId(companyId) {
+        if (!mongoose.Types.ObjectId.isValid(companyId)) return null
+        return POI.deleteMany({ companyId })
+    },
+
+    async deleteUserById(id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) return null
+        return User.deleteOne({ _id: id })
+    },
+
+    async deleteTrackerById(id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) return null
+        return Tracker.deleteOne({ _id: id })
     }
 }

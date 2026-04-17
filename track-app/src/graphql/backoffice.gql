@@ -8,6 +8,16 @@ query BackofficeCompanies {
   }
 }
 
+query BackofficeCompany($id: ID!) {
+  backofficeCompany(id: $id) {
+    id
+    name
+    slug
+    active
+    featureKeys
+  }
+}
+
 query BackofficeUsers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
   backofficeUsers(companyId: $companyId, offset: $offset, limit: $limit) {
     totalCount
@@ -21,6 +31,19 @@ query BackofficeUsers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
       companyId
       permissionKeys
     }
+  }
+}
+
+query BackofficeUser($id: ID!) {
+  backofficeUser(id: $id) {
+    id
+    name
+    surname
+    email
+    language
+    role
+    companyId
+    permissionKeys
   }
 }
 
@@ -85,6 +108,34 @@ mutation BackofficeUpdateTrackerAlias($id: ID!, $alias: String!) {
 
 mutation BackofficeUpdateUser($id: ID!, $input: BackofficeUpdateUserInput!) {
   backofficeUpdateUser(id: $id, input: $input) {
+    success
+    message
+  }
+}
+
+mutation BackofficeDeleteCompany($id: ID!) {
+  backofficeDeleteCompany(id: $id) {
+    success
+    message
+  }
+}
+
+mutation BackofficeDeleteUser($id: ID!) {
+  backofficeDeleteUser(id: $id) {
+    success
+    message
+  }
+}
+
+mutation BackofficeDeleteTracker($id: ID!) {
+  backofficeDeleteTracker(id: $id) {
+    success
+    message
+  }
+}
+
+mutation BackofficeSetUserPermission($id: ID!, $permissionKey: String!, $enabled: Boolean!) {
+  backofficeSetUserPermission(id: $id, permissionKey: $permissionKey, enabled: $enabled) {
     success
     message
   }
