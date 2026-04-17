@@ -42,15 +42,25 @@ jobs:
       - name: TypeScript check (frontend)
         run: cd track-app && npx tsc --noEmit
 
+      - name: Production build (frontend)
+        run: npm run build -w track-app
+
   # ── Deploy to Hetzner ───────────────────────────────────────────────────────
   deploy:
     name: Deploy to Hetzner
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: test
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
     steps:
+      - name: Check deploy secret
+        run: |
+          if [ -z "${{ secrets.HETZNER_SSH_KEY }}" ]; then
+            echo "❌ Missing HETZNER_SSH_KEY secret"
+            exit 1
+          fi
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:

@@ -50,6 +50,7 @@ type Tracker {
   id: ID!
   serialNumber: String!
   alias: String
+  emoji: String
 }
 
 type Track {
@@ -76,6 +77,7 @@ type POI {
   id: ID!
   title: String!
   color: String!
+  emoji: String
   latitude: Float!
   longitude: Float!
 }
@@ -144,22 +146,26 @@ input BackofficeUpdateUserInput {
 input BackofficeCreateTrackerInput {
   serialNumber: String!
   alias: String
+  emoji: String
   companyId: ID!
 }
 
 input AddTrackerInput {
   serialNumber: String!
   alias: String
+  emoji: String
 }
 
 input UpdateTrackerInput {
   serialNumber: String
   alias: String
+  emoji: String
 }
 
 input AddPOIInput {
   title: String!
   color: String!
+  emoji: String
   latitude: Float!
   longitude: Float!
 }
@@ -167,6 +173,7 @@ input AddPOIInput {
 input UpdatePOIInput {
   title: String
   color: String
+  emoji: String
   latitude: Float
   longitude: Float
 }
@@ -188,6 +195,12 @@ type Query {
     offset: Int = 0
     limit: Int = 20
   ): PagedBackofficeUsers!
+  backofficeTrackers(
+    companyId: ID
+    offset: Int = 0
+    limit: Int = 20
+  ): PagedTrackers!
+  backofficeTracker(id: ID!): Tracker!
 }
 
 type Mutation {
@@ -208,6 +221,7 @@ type Mutation {
   ): MutationResult!
   backofficeCreateUser(input: BackofficeCreateUserInput!): MutationResult!
   backofficeCreateTracker(input: BackofficeCreateTrackerInput!): MutationResult!
+  backofficeUpdateTrackerAlias(id: ID!, alias: String!): MutationResult!
   backofficeUpdateUser(
     id: ID!
     input: BackofficeUpdateUserInput!

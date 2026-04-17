@@ -12,6 +12,11 @@ function Places() {
   const { pois, totalCount, loading, deletePOI } = usePOIs(page, 20)
 
   const POI_COLUMNS: Column<Poi>[] = [
+    {
+      key: 'emoji',
+      label: t('ui.emoji'),
+      render: (row) => row.emoji || '📍'
+    },
     { key: 'title', label: t('ui.title') },
     { key: 'latitude', label: t('ui.latitude') },
     { key: 'longitude', label: t('ui.longitude') },
@@ -47,6 +52,7 @@ function Places() {
         : <DataTable
             columns={POI_COLUMNS}
             rows={pois}
+            onEdit={(poi) => navigate(`/places/${poi.id}`)}
             onDelete={handleDelete}
             emptyMessage={t('places.empty')}
             pageSize={20}

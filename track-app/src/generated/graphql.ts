@@ -25,6 +25,7 @@ export type Scalars = {
 
 export type AddPoiInput = {
   color: Scalars['String']['input'];
+  emoji?: InputMaybe<Scalars['String']['input']>;
   latitude: Scalars['Float']['input'];
   longitude: Scalars['Float']['input'];
   title: Scalars['String']['input'];
@@ -32,6 +33,7 @@ export type AddPoiInput = {
 
 export type AddTrackerInput = {
   alias?: InputMaybe<Scalars['String']['input']>;
+  emoji?: InputMaybe<Scalars['String']['input']>;
   serialNumber: Scalars['String']['input'];
 };
 
@@ -50,6 +52,7 @@ export type BackofficeCreateCompanyInput = {
 export type BackofficeCreateTrackerInput = {
   alias?: InputMaybe<Scalars['String']['input']>;
   companyId: Scalars['ID']['input'];
+  emoji?: InputMaybe<Scalars['String']['input']>;
   serialNumber: Scalars['String']['input'];
 };
 
@@ -121,6 +124,7 @@ export type Mutation = {
   backofficeCreateTracker: MutationResult;
   backofficeCreateUser: MutationResult;
   backofficeUpdateCompany: MutationResult;
+  backofficeUpdateTrackerAlias: MutationResult;
   backofficeUpdateUser: MutationResult;
   deletePOI: MutationResult;
   deleteTracker: MutationResult;
@@ -161,6 +165,12 @@ export type MutationBackofficeCreateUserArgs = {
 export type MutationBackofficeUpdateCompanyArgs = {
   id: Scalars['ID']['input'];
   input: BackofficeUpdateCompanyInput;
+};
+
+
+export type MutationBackofficeUpdateTrackerAliasArgs = {
+  alias: Scalars['String']['input'];
+  id: Scalars['ID']['input'];
 };
 
 
@@ -216,6 +226,7 @@ export type MutationResult = {
 export type Poi = {
   __typename?: 'POI';
   color: Scalars['String']['output'];
+  emoji?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   latitude: Scalars['Float']['output'];
   longitude: Scalars['Float']['output'];
@@ -243,6 +254,8 @@ export type PagedTrackers = {
 export type Query = {
   __typename?: 'Query';
   backofficeCompanies: Array<Company>;
+  backofficeTracker: Tracker;
+  backofficeTrackers: PagedTrackers;
   backofficeUsers: PagedBackofficeUsers;
   lastTrack?: Maybe<Track>;
   lastTracks: Array<LiveTrack>;
@@ -254,6 +267,18 @@ export type Query = {
   trackerByAlias: Tracker;
   trackerBySN: Tracker;
   trackers: PagedTrackers;
+};
+
+
+export type QueryBackofficeTrackerArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryBackofficeTrackersArgs = {
+  companyId?: InputMaybe<Scalars['ID']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -334,12 +359,14 @@ export type Track = {
 export type Tracker = {
   __typename?: 'Tracker';
   alias?: Maybe<Scalars['String']['output']>;
+  emoji?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   serialNumber: Scalars['String']['output'];
 };
 
 export type UpdatePoiInput = {
   color?: InputMaybe<Scalars['String']['input']>;
+  emoji?: InputMaybe<Scalars['String']['input']>;
   latitude?: InputMaybe<Scalars['Float']['input']>;
   longitude?: InputMaybe<Scalars['Float']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
@@ -347,6 +374,7 @@ export type UpdatePoiInput = {
 
 export type UpdateTrackerInput = {
   alias?: InputMaybe<Scalars['String']['input']>;
+  emoji?: InputMaybe<Scalars['String']['input']>;
   serialNumber?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -415,6 +443,30 @@ export type BackofficeCreateTrackerMutationVariables = Exact<{
 
 export type BackofficeCreateTrackerMutation = { __typename?: 'Mutation', backofficeCreateTracker: { __typename?: 'MutationResult', success: boolean, message: string } };
 
+export type BackofficeTrackersQueryVariables = Exact<{
+  companyId?: InputMaybe<Scalars['ID']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type BackofficeTrackersQuery = { __typename?: 'Query', backofficeTrackers: { __typename?: 'PagedTrackers', totalCount: number, items: Array<{ __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null, emoji?: string | null }> } };
+
+export type BackofficeTrackerQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type BackofficeTrackerQuery = { __typename?: 'Query', backofficeTracker: { __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null, emoji?: string | null } };
+
+export type BackofficeUpdateTrackerAliasMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  alias: Scalars['String']['input'];
+}>;
+
+
+export type BackofficeUpdateTrackerAliasMutation = { __typename?: 'Mutation', backofficeUpdateTrackerAlias: { __typename?: 'MutationResult', success: boolean, message: string } };
+
 export type BackofficeUpdateUserMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   input: BackofficeUpdateUserInput;
@@ -429,14 +481,21 @@ export type GetTrackersQueryVariables = Exact<{
 }>;
 
 
-export type GetTrackersQuery = { __typename?: 'Query', trackers: { __typename?: 'PagedTrackers', totalCount: number, items: Array<{ __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null }> } };
+export type GetTrackersQuery = { __typename?: 'Query', trackers: { __typename?: 'PagedTrackers', totalCount: number, items: Array<{ __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null, emoji?: string | null }> } };
+
+export type TrackerQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type TrackerQuery = { __typename?: 'Query', tracker: { __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null, emoji?: string | null } };
 
 export type TrackerBySnQueryVariables = Exact<{
   serialNumber: Scalars['String']['input'];
 }>;
 
 
-export type TrackerBySnQuery = { __typename?: 'Query', trackerBySN: { __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null } };
+export type TrackerBySnQuery = { __typename?: 'Query', trackerBySN: { __typename?: 'Tracker', id: string, serialNumber: string, alias?: string | null, emoji?: string | null } };
 
 export type AddTrackerMutationVariables = Exact<{
   input: AddTrackerInput;
@@ -498,7 +557,14 @@ export type GetPoIsQueryVariables = Exact<{
 }>;
 
 
-export type GetPoIsQuery = { __typename?: 'Query', pois: { __typename?: 'PagedPOIs', totalCount: number, items: Array<{ __typename?: 'POI', id: string, title: string, color: string, latitude: number, longitude: number }> } };
+export type GetPoIsQuery = { __typename?: 'Query', pois: { __typename?: 'PagedPOIs', totalCount: number, items: Array<{ __typename?: 'POI', id: string, title: string, color: string, emoji?: string | null, latitude: number, longitude: number }> } };
+
+export type GetPoiQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetPoiQuery = { __typename?: 'Query', poi: { __typename?: 'POI', id: string, title: string, color: string, emoji?: string | null, latitude: number, longitude: number } };
 
 export type AddPoiMutationVariables = Exact<{
   input: AddPoiInput;
@@ -506,6 +572,14 @@ export type AddPoiMutationVariables = Exact<{
 
 
 export type AddPoiMutation = { __typename?: 'Mutation', addPOI: { __typename?: 'MutationResult', success: boolean, message: string } };
+
+export type UpdatePoiMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdatePoiInput;
+}>;
+
+
+export type UpdatePoiMutation = { __typename?: 'Mutation', updatePOI: { __typename?: 'MutationResult', success: boolean, message: string } };
 
 export type DeletePoiMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -772,6 +846,138 @@ export function useBackofficeCreateTrackerMutation(baseOptions?: Apollo.Mutation
 export type BackofficeCreateTrackerMutationHookResult = ReturnType<typeof useBackofficeCreateTrackerMutation>;
 export type BackofficeCreateTrackerMutationResult = Apollo.MutationResult<BackofficeCreateTrackerMutation>;
 export type BackofficeCreateTrackerMutationOptions = Apollo.BaseMutationOptions<BackofficeCreateTrackerMutation, BackofficeCreateTrackerMutationVariables>;
+export const BackofficeTrackersDocument = gql`
+    query BackofficeTrackers($companyId: ID, $offset: Int = 0, $limit: Int = 20) {
+  backofficeTrackers(companyId: $companyId, offset: $offset, limit: $limit) {
+    totalCount
+    items {
+      id
+      serialNumber
+      alias
+      emoji
+    }
+  }
+}
+    `;
+
+/**
+ * __useBackofficeTrackersQuery__
+ *
+ * To run a query within a React component, call `useBackofficeTrackersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeTrackersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBackofficeTrackersQuery({
+ *   variables: {
+ *      companyId: // value for 'companyId'
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useBackofficeTrackersQuery(baseOptions?: Apollo.QueryHookOptions<BackofficeTrackersQuery, BackofficeTrackersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<BackofficeTrackersQuery, BackofficeTrackersQueryVariables>(BackofficeTrackersDocument, options);
+      }
+export function useBackofficeTrackersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<BackofficeTrackersQuery, BackofficeTrackersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<BackofficeTrackersQuery, BackofficeTrackersQueryVariables>(BackofficeTrackersDocument, options);
+        }
+// @ts-ignore
+export function useBackofficeTrackersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<BackofficeTrackersQuery, BackofficeTrackersQueryVariables>): Apollo.UseSuspenseQueryResult<BackofficeTrackersQuery, BackofficeTrackersQueryVariables>;
+export function useBackofficeTrackersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BackofficeTrackersQuery, BackofficeTrackersQueryVariables>): Apollo.UseSuspenseQueryResult<BackofficeTrackersQuery | undefined, BackofficeTrackersQueryVariables>;
+export function useBackofficeTrackersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BackofficeTrackersQuery, BackofficeTrackersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<BackofficeTrackersQuery, BackofficeTrackersQueryVariables>(BackofficeTrackersDocument, options);
+        }
+export type BackofficeTrackersQueryHookResult = ReturnType<typeof useBackofficeTrackersQuery>;
+export type BackofficeTrackersLazyQueryHookResult = ReturnType<typeof useBackofficeTrackersLazyQuery>;
+export type BackofficeTrackersSuspenseQueryHookResult = ReturnType<typeof useBackofficeTrackersSuspenseQuery>;
+export type BackofficeTrackersQueryResult = Apollo.QueryResult<BackofficeTrackersQuery, BackofficeTrackersQueryVariables>;
+export const BackofficeTrackerDocument = gql`
+    query BackofficeTracker($id: ID!) {
+  backofficeTracker(id: $id) {
+    id
+    serialNumber
+    alias
+    emoji
+  }
+}
+    `;
+
+/**
+ * __useBackofficeTrackerQuery__
+ *
+ * To run a query within a React component, call `useBackofficeTrackerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeTrackerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBackofficeTrackerQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useBackofficeTrackerQuery(baseOptions: Apollo.QueryHookOptions<BackofficeTrackerQuery, BackofficeTrackerQueryVariables> & ({ variables: BackofficeTrackerQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<BackofficeTrackerQuery, BackofficeTrackerQueryVariables>(BackofficeTrackerDocument, options);
+      }
+export function useBackofficeTrackerLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<BackofficeTrackerQuery, BackofficeTrackerQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<BackofficeTrackerQuery, BackofficeTrackerQueryVariables>(BackofficeTrackerDocument, options);
+        }
+// @ts-ignore
+export function useBackofficeTrackerSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<BackofficeTrackerQuery, BackofficeTrackerQueryVariables>): Apollo.UseSuspenseQueryResult<BackofficeTrackerQuery, BackofficeTrackerQueryVariables>;
+export function useBackofficeTrackerSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BackofficeTrackerQuery, BackofficeTrackerQueryVariables>): Apollo.UseSuspenseQueryResult<BackofficeTrackerQuery | undefined, BackofficeTrackerQueryVariables>;
+export function useBackofficeTrackerSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BackofficeTrackerQuery, BackofficeTrackerQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<BackofficeTrackerQuery, BackofficeTrackerQueryVariables>(BackofficeTrackerDocument, options);
+        }
+export type BackofficeTrackerQueryHookResult = ReturnType<typeof useBackofficeTrackerQuery>;
+export type BackofficeTrackerLazyQueryHookResult = ReturnType<typeof useBackofficeTrackerLazyQuery>;
+export type BackofficeTrackerSuspenseQueryHookResult = ReturnType<typeof useBackofficeTrackerSuspenseQuery>;
+export type BackofficeTrackerQueryResult = Apollo.QueryResult<BackofficeTrackerQuery, BackofficeTrackerQueryVariables>;
+export const BackofficeUpdateTrackerAliasDocument = gql`
+    mutation BackofficeUpdateTrackerAlias($id: ID!, $alias: String!) {
+  backofficeUpdateTrackerAlias(id: $id, alias: $alias) {
+    success
+    message
+  }
+}
+    `;
+export type BackofficeUpdateTrackerAliasMutationFn = Apollo.MutationFunction<BackofficeUpdateTrackerAliasMutation, BackofficeUpdateTrackerAliasMutationVariables>;
+
+/**
+ * __useBackofficeUpdateTrackerAliasMutation__
+ *
+ * To run a mutation, you first call `useBackofficeUpdateTrackerAliasMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBackofficeUpdateTrackerAliasMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [backofficeUpdateTrackerAliasMutation, { data, loading, error }] = useBackofficeUpdateTrackerAliasMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      alias: // value for 'alias'
+ *   },
+ * });
+ */
+export function useBackofficeUpdateTrackerAliasMutation(baseOptions?: Apollo.MutationHookOptions<BackofficeUpdateTrackerAliasMutation, BackofficeUpdateTrackerAliasMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BackofficeUpdateTrackerAliasMutation, BackofficeUpdateTrackerAliasMutationVariables>(BackofficeUpdateTrackerAliasDocument, options);
+      }
+export type BackofficeUpdateTrackerAliasMutationHookResult = ReturnType<typeof useBackofficeUpdateTrackerAliasMutation>;
+export type BackofficeUpdateTrackerAliasMutationResult = Apollo.MutationResult<BackofficeUpdateTrackerAliasMutation>;
+export type BackofficeUpdateTrackerAliasMutationOptions = Apollo.BaseMutationOptions<BackofficeUpdateTrackerAliasMutation, BackofficeUpdateTrackerAliasMutationVariables>;
 export const BackofficeUpdateUserDocument = gql`
     mutation BackofficeUpdateUser($id: ID!, $input: BackofficeUpdateUserInput!) {
   backofficeUpdateUser(id: $id, input: $input) {
@@ -815,6 +1021,7 @@ export const GetTrackersDocument = gql`
       id
       serialNumber
       alias
+      emoji
     }
   }
 }
@@ -856,12 +1063,59 @@ export type GetTrackersQueryHookResult = ReturnType<typeof useGetTrackersQuery>;
 export type GetTrackersLazyQueryHookResult = ReturnType<typeof useGetTrackersLazyQuery>;
 export type GetTrackersSuspenseQueryHookResult = ReturnType<typeof useGetTrackersSuspenseQuery>;
 export type GetTrackersQueryResult = Apollo.QueryResult<GetTrackersQuery, GetTrackersQueryVariables>;
+export const TrackerDocument = gql`
+    query Tracker($id: ID!) {
+  tracker(id: $id) {
+    id
+    serialNumber
+    alias
+    emoji
+  }
+}
+    `;
+
+/**
+ * __useTrackerQuery__
+ *
+ * To run a query within a React component, call `useTrackerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTrackerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTrackerQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useTrackerQuery(baseOptions: Apollo.QueryHookOptions<TrackerQuery, TrackerQueryVariables> & ({ variables: TrackerQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TrackerQuery, TrackerQueryVariables>(TrackerDocument, options);
+      }
+export function useTrackerLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TrackerQuery, TrackerQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TrackerQuery, TrackerQueryVariables>(TrackerDocument, options);
+        }
+// @ts-ignore
+export function useTrackerSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<TrackerQuery, TrackerQueryVariables>): Apollo.UseSuspenseQueryResult<TrackerQuery, TrackerQueryVariables>;
+export function useTrackerSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TrackerQuery, TrackerQueryVariables>): Apollo.UseSuspenseQueryResult<TrackerQuery | undefined, TrackerQueryVariables>;
+export function useTrackerSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TrackerQuery, TrackerQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TrackerQuery, TrackerQueryVariables>(TrackerDocument, options);
+        }
+export type TrackerQueryHookResult = ReturnType<typeof useTrackerQuery>;
+export type TrackerLazyQueryHookResult = ReturnType<typeof useTrackerLazyQuery>;
+export type TrackerSuspenseQueryHookResult = ReturnType<typeof useTrackerSuspenseQuery>;
+export type TrackerQueryResult = Apollo.QueryResult<TrackerQuery, TrackerQueryVariables>;
 export const TrackerBySnDocument = gql`
     query TrackerBySN($serialNumber: String!) {
   trackerBySN(serialNumber: $serialNumber) {
     id
     serialNumber
     alias
+    emoji
   }
 }
     `;
@@ -1197,6 +1451,7 @@ export const GetPoIsDocument = gql`
       id
       title
       color
+      emoji
       latitude
       longitude
     }
@@ -1240,6 +1495,54 @@ export type GetPoIsQueryHookResult = ReturnType<typeof useGetPoIsQuery>;
 export type GetPoIsLazyQueryHookResult = ReturnType<typeof useGetPoIsLazyQuery>;
 export type GetPoIsSuspenseQueryHookResult = ReturnType<typeof useGetPoIsSuspenseQuery>;
 export type GetPoIsQueryResult = Apollo.QueryResult<GetPoIsQuery, GetPoIsQueryVariables>;
+export const GetPoiDocument = gql`
+    query GetPOI($id: ID!) {
+  poi(id: $id) {
+    id
+    title
+    color
+    emoji
+    latitude
+    longitude
+  }
+}
+    `;
+
+/**
+ * __useGetPoiQuery__
+ *
+ * To run a query within a React component, call `useGetPoiQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPoiQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPoiQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetPoiQuery(baseOptions: Apollo.QueryHookOptions<GetPoiQuery, GetPoiQueryVariables> & ({ variables: GetPoiQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPoiQuery, GetPoiQueryVariables>(GetPoiDocument, options);
+      }
+export function useGetPoiLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPoiQuery, GetPoiQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPoiQuery, GetPoiQueryVariables>(GetPoiDocument, options);
+        }
+// @ts-ignore
+export function useGetPoiSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPoiQuery, GetPoiQueryVariables>): Apollo.UseSuspenseQueryResult<GetPoiQuery, GetPoiQueryVariables>;
+export function useGetPoiSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPoiQuery, GetPoiQueryVariables>): Apollo.UseSuspenseQueryResult<GetPoiQuery | undefined, GetPoiQueryVariables>;
+export function useGetPoiSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPoiQuery, GetPoiQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetPoiQuery, GetPoiQueryVariables>(GetPoiDocument, options);
+        }
+export type GetPoiQueryHookResult = ReturnType<typeof useGetPoiQuery>;
+export type GetPoiLazyQueryHookResult = ReturnType<typeof useGetPoiLazyQuery>;
+export type GetPoiSuspenseQueryHookResult = ReturnType<typeof useGetPoiSuspenseQuery>;
+export type GetPoiQueryResult = Apollo.QueryResult<GetPoiQuery, GetPoiQueryVariables>;
 export const AddPoiDocument = gql`
     mutation AddPOI($input: AddPOIInput!) {
   addPOI(input: $input) {
@@ -1274,6 +1577,41 @@ export function useAddPoiMutation(baseOptions?: Apollo.MutationHookOptions<AddPo
 export type AddPoiMutationHookResult = ReturnType<typeof useAddPoiMutation>;
 export type AddPoiMutationResult = Apollo.MutationResult<AddPoiMutation>;
 export type AddPoiMutationOptions = Apollo.BaseMutationOptions<AddPoiMutation, AddPoiMutationVariables>;
+export const UpdatePoiDocument = gql`
+    mutation UpdatePOI($id: ID!, $input: UpdatePOIInput!) {
+  updatePOI(id: $id, input: $input) {
+    success
+    message
+  }
+}
+    `;
+export type UpdatePoiMutationFn = Apollo.MutationFunction<UpdatePoiMutation, UpdatePoiMutationVariables>;
+
+/**
+ * __useUpdatePoiMutation__
+ *
+ * To run a mutation, you first call `useUpdatePoiMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdatePoiMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updatePoiMutation, { data, loading, error }] = useUpdatePoiMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdatePoiMutation(baseOptions?: Apollo.MutationHookOptions<UpdatePoiMutation, UpdatePoiMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdatePoiMutation, UpdatePoiMutationVariables>(UpdatePoiDocument, options);
+      }
+export type UpdatePoiMutationHookResult = ReturnType<typeof useUpdatePoiMutation>;
+export type UpdatePoiMutationResult = Apollo.MutationResult<UpdatePoiMutation>;
+export type UpdatePoiMutationOptions = Apollo.BaseMutationOptions<UpdatePoiMutation, UpdatePoiMutationVariables>;
 export const DeletePoiDocument = gql`
     mutation DeletePOI($id: ID!) {
   deletePOI(id: $id) {

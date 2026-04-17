@@ -58,9 +58,9 @@ function Home({ darkmode }: HomeProps) {
     items.forEach(poi => {
       const poiIcon = L.divIcon({
         className: '',
-        html: `<div style="background:${poi.color || '#3b82f6'};width:24px;height:24px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
+        html: `<div style="background:${poi.color || '#3b82f6'};width:28px;height:28px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;">${poi.emoji || '📍'}</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
       })
       const marker = L.marker([poi.latitude, poi.longitude], { icon: poiIcon })
       const popupHtml = `
@@ -89,11 +89,11 @@ function Home({ darkmode }: HomeProps) {
     })
   }
 
-  const makeTruckIcon = (status?: string | null) => {
+  const makeTruckIcon = (status?: string | null, emoji?: string | null) => {
     const bgColor = status === 'ON' ? '#22c55e' : '#ef4444'
     return L.divIcon({
       className: '',
-      html: `<div style="background:${bgColor};width:30px;height:30px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;">🚚</div>`,
+      html: `<div style="background:${bgColor};width:30px;height:30px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;">${emoji || '🚚'}</div>`,
       iconSize: [30, 30],
       iconAnchor: [15, 15]
     })
@@ -140,6 +140,7 @@ function Home({ darkmode }: HomeProps) {
       const freshness = 'date' in truck ? telemetryFreshness(truck.date) : { label: 'STALE', color: '#f59e0b' }
       const sn = truck.serialNumber
       const alias = truck.alias || aliasBySerial.get(sn) || sn
+      const trackerEmoji = trackers.find(item => item.serialNumber === sn)?.emoji || '🚚'
       const popupSignature = `${alias}|${status || ''}|${speed.toFixed(2)}|${freshness.label}`
       const popupHtml = `
         <div class="tracker-popup">
@@ -167,7 +168,7 @@ function Home({ darkmode }: HomeProps) {
         const prevSignature = truckPopupSignatureRef.current.get(sn)
         // Only rewrite popup/icon when visible popup data changed.
         if (prevSignature !== popupSignature) {
-          existing.setIcon(makeTruckIcon(status))
+          existing.setIcon(makeTruckIcon(status, trackerEmoji))
           if (existing.isPopupOpen()) {
             existing.setPopupContent(popupHtml)
             // Leaflet recreates popup DOM when content changes; rebind actions immediately.
@@ -188,7 +189,7 @@ function Home({ darkmode }: HomeProps) {
       } else {
         // First time seeing this truck — create marker
         const marker = L.marker([lat, lng], {
-          icon: makeTruckIcon(status),
+          icon: makeTruckIcon(status, trackerEmoji),
           title: `${t('home.sn')}: ${sn} - ${t('home.speed')}: ${speed} Km/h`
         })
         marker.bindPopup(popupHtml, {

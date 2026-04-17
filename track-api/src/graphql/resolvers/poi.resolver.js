@@ -24,6 +24,7 @@ const poiResolver = {
             id: p._id.toString(),
             title: p.title,
             color: p.color,
+            emoji: p.emoji || '📍',
             latitude: p.latitude,
             longitude: p.longitude
           })),
@@ -44,7 +45,7 @@ const poiResolver = {
       try {
         await requireAccess(userId, { feature: 'poi', permission: 'poi.read' })
         const p = await service.retrieveOnePOI(userId, id)
-        return { id: p._id.toString(), title: p.title, color: p.color, latitude: p.latitude, longitude: p.longitude }
+        return { id: p._id.toString(), title: p.title, color: p.color, emoji: p.emoji || '📍', latitude: p.latitude, longitude: p.longitude }
       } catch (err) {
         throw toGraphQLError(err)
       }

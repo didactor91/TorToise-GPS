@@ -36,6 +36,18 @@ function mapUser(user) {
   }
 }
 
+/**
+ * @param {{ _id: { toString: () => string }, serialNumber: string, alias?: string|null, emoji?: string|null }} tracker
+ */
+function mapTracker(tracker) {
+  return {
+    id: tracker._id.toString(),
+    serialNumber: tracker.serialNumber,
+    alias: tracker.alias || null,
+    emoji: tracker.emoji || '🚚'
+  }
+}
+
 const backofficeResolver = {
   Query: {
     /**
@@ -72,6 +84,43 @@ const backofficeResolver = {
           items: rows.map(mapUser),
           totalCount: Number(totalCount || 0)
         }
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
+    },
+
+    /**
+     * @param {unknown} _
+     * @param {{ companyId?: string|null, offset?: number, limit?: number }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeTrackers(_, { companyId, offset, limit }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        const [result, totalCount] = await Promise.all([
+          service.listTrackers(userId, /** @type {any} */ (companyId), { offset, limit }),
+          service.countTrackers(userId, /** @type {any} */ (companyId))
+        ])
+        const rows = /** @type {any[]} */ (Array.isArray(result) ? result : [])
+        return {
+          items: rows.map(mapTracker),
+          totalCount: Number(totalCount || 0)
+        }
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
+    },
+
+    /**
+     * @param {unknown} _
+     * @param {{ id: string }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeTracker(_, { id }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        const tracker = await service.retrieveTracker(userId, id)
+        return mapTracker(tracker)
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }
@@ -126,7 +175,7 @@ const backofficeResolver = {
 
     /**
      * @param {unknown} _
-     * @param {{ input: { serialNumber: string, alias?: string, companyId: string } }} args
+     * @param {{ input: { serialNumber: string, alias?: string, emoji?: string, companyId: string } }} args
      * @param {{ userId: string|null }} ctx
      */
     async backofficeCreateTracker(_, { input }, ctx) {
@@ -149,6 +198,21 @@ const backofficeResolver = {
       try {
         await service.updateUser(userId, id, input)
         return { success: true, message: 'Ok, user updated.' }
+      } catch (err) {
+        throw toGraphQLError(/** @type {Error} */ (err))
+      }
+    },
+
+    /**
+     * @param {unknown} _
+     * @param {{ id: string, alias: string }} args
+     * @param {{ userId: string|null }} ctx
+     */
+    async backofficeUpdateTrackerAlias(_, { id, alias }, ctx) {
+      const userId = requireAuth(ctx)
+      try {
+        await service.updateTrackerAlias(userId, id, alias)
+        return { success: true, message: 'Ok, tracker alias updated.' }
       } catch (err) {
         throw toGraphQLError(/** @type {Error} */ (err))
       }

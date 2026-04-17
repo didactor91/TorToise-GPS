@@ -2,6 +2,7 @@ import React from 'react'
 import PageShell from '../shared/PageShell'
 import { useAddPOI } from '../../hooks/useAddPOI'
 import { useTranslation } from 'react-i18next'
+import { POI_EMOJIS } from '../../common/emoji-options'
 
 function PlacesNew() {
   const { t } = useTranslation()
@@ -16,7 +17,8 @@ function PlacesNew() {
     const latitude = parseFloat((form.elements.namedItem('latitude') as HTMLInputElement).value)
     const longitude = parseFloat((form.elements.namedItem('longitude') as HTMLInputElement).value)
     const color = (form.elements.namedItem('color') as HTMLSelectElement).value
-    addPOI({ title, color, latitude, longitude })
+    const emoji = (form.elements.namedItem('emoji') as HTMLSelectElement).value
+    addPOI({ title, color, emoji, latitude, longitude })
     form.reset()
   }
 
@@ -57,6 +59,15 @@ function PlacesNew() {
             step="any"
             required
           />
+        </div>
+
+        <div>
+          <label className={labelClass}>{t('ui.emoji')}</label>
+          <select name="emoji" defaultValue="📍" className={inputClass}>
+            {POI_EMOJIS.map((option) => (
+              <option key={option.value} value={option.value}>{option.value} {option.label}</option>
+            ))}
+          </select>
         </div>
 
         <div>

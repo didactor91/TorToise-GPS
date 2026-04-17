@@ -7,7 +7,8 @@ const point = new Schema({
     title: { type: String, required: true },
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
-    color: { type: String, required: true }
+    color: { type: String, required: true },
+    emoji: { type: String }
 })
 
 const TrackSchema = new Schema({
@@ -22,7 +23,8 @@ TrackSchema.index({ serialNumber: 1, date: 1 })
 
 const tracker = new Schema({
     serialNumber: { type: String, required: true, index: true },
-    alias: { type: String }
+    alias: { type: String },
+    emoji: { type: String }
 })
 
 const company = new Schema({
@@ -36,7 +38,8 @@ const company = new Schema({
 const companyTracker = new Schema({
     companyId: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
     serialNumber: { type: String, required: true, unique: true, index: true },
-    alias: { type: String, required: true, index: true }
+    alias: { type: String, required: true, index: true },
+    emoji: { type: String }
 }, { timestamps: true })
 
 const poi = new Schema({
@@ -44,7 +47,8 @@ const poi = new Schema({
     title: { type: String, required: true },
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
-    color: { type: String, required: true }
+    color: { type: String, required: true },
+    emoji: { type: String }
 }, { timestamps: true })
 
 const user = new Schema({
