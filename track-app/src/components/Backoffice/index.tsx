@@ -12,6 +12,7 @@ function toggleInArray(list: string[], value: string): string[] {
 }
 
 type ConfirmModalState = {
+  entityType: 'company' | 'user' | 'tracker'
   title: string
   description: string
   confirmLabel: string
@@ -259,8 +260,14 @@ function Backoffice({
     }
   }
 
-  const openDeleteModal = (title: string, description: string, onConfirm: () => Promise<void>) => {
+  const openDeleteModal = (
+    entityType: 'company' | 'user' | 'tracker',
+    title: string,
+    description: string,
+    onConfirm: () => Promise<void>
+  ) => {
     setConfirmState({
+      entityType,
       title,
       description,
       confirmLabel: t('ui.delete'),
@@ -374,6 +381,7 @@ function Backoffice({
           onEdit={canUpdateCompanies ? (company) => navigate(`/backoffice/companies/${company.id}`) : undefined}
           onDelete={canUpdateCompanies ? (company) => {
             openDeleteModal(
+              'company',
               t('backoffice.confirmDeleteTitle'),
               t('backoffice.confirmDeleteMessage', { entity: company.name }),
               () => deleteCompany(company.id)
@@ -390,6 +398,7 @@ function Backoffice({
           onEdit={canUpdateUsers ? (user) => navigate(`/backoffice/users/${user.id}`) : undefined}
           onDelete={canDeleteUsers ? (user) => {
             openDeleteModal(
+              'user',
               t('backoffice.confirmDeleteTitle'),
               t('backoffice.confirmDeleteMessage', { entity: user.email }),
               () => deleteUser(user.id)
@@ -414,6 +423,7 @@ function Backoffice({
           onDelete={canDeleteTrackers ? (tracker) => {
             const entity = tracker.alias || tracker.serialNumber
             openDeleteModal(
+              'tracker',
               t('backoffice.confirmDeleteTitle'),
               t('backoffice.confirmDeleteMessage', { entity }),
               () => deleteTracker(tracker.id)
@@ -726,7 +736,25 @@ function Backoffice({
       {confirmState && (
         <div className="fixed inset-0 z-[1400] flex items-center justify-center bg-black/45 p-4">
           <div className="w-full max-w-md rounded-2xl border bg-[var(--bg-surface)] p-5 shadow-2xl">
-            <h4 className="text-lg font-bold text-[var(--text-primary)]">{confirmState.title}</h4>
+            <div className="flex items-center gap-2">
+              <span className="text-xl" aria-hidden="true">
+                {confirmState.entityType === 'company'
+                  ? '🏢'
+                  : confirmState.entityType === 'user'
+                    ? '👤'
+                    : '🚚'}
+              </span>
+              <h4 className={`text-lg font-bold ${
+                confirmState.entityType === 'company'
+                  ? 'text-amber-600'
+                  : confirmState.entityType === 'user'
+                    ? 'text-sky-600'
+                    : 'text-rose-600'
+              }`}
+              >
+                {confirmState.title}
+              </h4>
+            </div>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">{confirmState.description}</p>
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -739,7 +767,13 @@ function Backoffice({
               </button>
               <button
                 type="button"
-                className="rounded-full border border-red-700 bg-red-700 px-4 py-2 text-sm font-semibold text-white"
+                className={`rounded-full border px-4 py-2 text-sm font-semibold text-white ${
+                  confirmState.entityType === 'company'
+                    ? 'border-amber-700 bg-amber-700'
+                    : confirmState.entityType === 'user'
+                      ? 'border-sky-700 bg-sky-700'
+                      : 'border-red-700 bg-red-700'
+                }`}
                 onClick={submitConfirm}
                 disabled={confirmLoading}
               >
