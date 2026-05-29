@@ -33,7 +33,7 @@
     "jsonwebtoken": "^9.0.3",
     "track-data": "*",
     "track-utils": "*",
-    "ws": "^8.18.0"
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.1.1",
